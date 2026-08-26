@@ -20,7 +20,10 @@ import {
   Printer,
   Trash2,
   Eraser,
-  ChevronDown
+  ChevronDown,
+  Users,
+  Plus,
+  Building2
 } from 'lucide-react';
 
 interface SpreadsheetViewProps {
@@ -448,6 +451,30 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
             </thead>
 
             <tbody className="divide-y divide-slate-300 text-slate-800">
+              {schedule.agents.length === 0 && (
+                <tr>
+                  <td colSpan={days.length + 9} className="py-16 text-center bg-slate-50">
+                    <div className="max-w-md mx-auto flex flex-col items-center justify-center gap-3 text-slate-500">
+                      <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
+                        <Users className="w-7 h-7" />
+                      </div>
+                      <h4 className="text-base font-bold text-slate-800">Planilla en Blanco - Sin Personal Cargado</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Este servicio aún no tiene agentes cargados. Puedes agregar el personal a cargo y definir cómo manejan sus guardias haciendo clic en el botón siguiente:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={onOpenSettings}
+                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm cursor-pointer transition-all mt-1"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Configurar Servicio y Agregar Personal
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )}
+
               {schedule.agents.map((agent, index) => {
                 const stats = calculateAgentStats(agent, schedule, days);
                 const isEven = index % 2 === 0;

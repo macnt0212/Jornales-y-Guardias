@@ -1,52 +1,526 @@
-import { Agent, DayInfo, DayShiftAssignment, MonthSchedule, AgentMonthStats, InhabileMode } from '../types';
+import { Agent, DayInfo, DayShiftAssignment, MonthSchedule, AgentMonthStats, InhabileMode, HospitalServiceConfig, HospitalServiceItem } from '../types';
 
 export const HOURS_PER_SHIFT = 7; // 6 a 13 = 7hs, 13 a 20 = 7hs
 
-export const DEFAULT_AGENTS: Agent[] = [
+export const DEFAULT_SERVICE_CONFIG: HospitalServiceConfig = {
+  hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
+  hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
+  serviceName: 'Servicio de Guardia y Emergencias',
+  jefeName: 'Dr. / Lic. Jefe de Servicio',
+  jefeCargo: 'Jefe de Servicio',
+  jefeLegajo: 'LEG-0001',
+  jornalHorarioLabel: '06:00 a 13:00 hs',
+  extraHabilHorarioLabel: '13:00 a 20:00 hs',
+  inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
+  inhabilTardeHorarioLabel: '13:00 a 20:00 hs',
+};
+
+export interface ServicePreset {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  config: HospitalServiceConfig;
+  agents: Agent[];
+}
+
+export const SERVICE_PRESETS: ServicePreset[] = [
   {
-    id: 'agent_jefe',
-    name: 'Escobar, Eduardo Martin',
-    role: 'soporte_jefe',
-    roleLabel: 'Jefe de Servicio (Soporte Técnico)',
-    category: 'Soporte Técnico',
-    legajo: 'LEG-4820',
-    isJefe: true,
-    allowedInhabileMode: 'pasiva',
+    id: 'blank',
+    name: 'Plantilla en Blanco (Nuevo Servicio)',
+    description: 'Comienza 100% de cero con una planilla en blanco para cargar el nombre de tu servicio, jefe y todo el personal a cargo.',
+    icon: 'FileText',
+    config: {
+      hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
+      hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
+      serviceName: 'Nuevo Servicio / Área Hospitalaria',
+      jefeName: '',
+      jefeCargo: 'Jefe de Servicio',
+      jefeLegajo: '',
+      jornalHorarioLabel: '06:00 a 13:00 hs',
+      extraHabilHorarioLabel: '13:00 a 20:00 hs',
+      inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
+      inhabilTardeHorarioLabel: '13:00 a 20:00 hs',
+    },
+    agents: [],
   },
   {
-    id: 'agent_soporte_1',
-    name: 'Cantero, Miguel Angel',
-    role: 'soporte_tecnico',
-    roleLabel: 'Agente Soporte Técnico',
-    category: 'Soporte Técnico',
-    legajo: 'LEG-5192',
-    allowedInhabileMode: 'activa',
+    id: 'guardia_medica',
+    name: 'Servicio de Guardia Médica y Emergencias',
+    description: 'Especial para servicios médicos con guardias activas y pasivas de fin de semana, feriados y refuerzos.',
+    icon: 'Stethoscope',
+    config: {
+      hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
+      hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
+      serviceName: 'Servicio de Guardia Central y Emergencias',
+      jefeName: 'Dr. Benítez, Carlos Alberto',
+      jefeCargo: 'Jefe de Guardia Médica',
+      jefeLegajo: 'M.P. 3140',
+      jornalHorarioLabel: '07:00 a 13:00 hs',
+      extraHabilHorarioLabel: '13:00 a 20:00 hs',
+      inhabilMananaHorarioLabel: '07:00 a 14:00 hs',
+      inhabilTardeHorarioLabel: '14:00 a 21:00 hs',
+    },
+    agents: [
+      {
+        id: 'agent_med_1',
+        name: 'Dr. Benítez, Carlos Alberto',
+        roleLabel: 'Jefe de Guardia / Médico de Planta',
+        category: 'Médico de Guardia',
+        legajo: 'M.P. 3140',
+        isJefe: true,
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_med_2',
+        name: 'Dra. Giménez, María Elena',
+        roleLabel: 'Médica de Guardia Central',
+        category: 'Médico de Guardia',
+        legajo: 'M.P. 4210',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_med_3',
+        name: 'Dr. Ramírez, Jorge Luis',
+        roleLabel: 'Médico Emergentólogo',
+        category: 'Médico Emergentólogo',
+        legajo: 'M.P. 4890',
+        hasJornal: false,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_med_4',
+        name: 'Dr. Insfrán, Gustavo Daniel',
+        roleLabel: 'Médico Clínico de Guardia',
+        category: 'Médico Clínico',
+        legajo: 'M.P. 5120',
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+      },
+    ],
   },
   {
-    id: 'agent_sigho_1',
-    name: 'Galeano, Cristian Alejandro',
-    role: 'sigho',
-    roleLabel: 'Agente Soporte Informático SIGHO 1',
-    category: 'Soporte Informático SIGHO',
-    legajo: 'LEG-5431',
-    allowedInhabileMode: 'pasiva',
+    id: 'enfermeria',
+    name: 'Servicio de Enfermería General y UTI',
+    description: 'Para equipos de enfermería con jornales rotativos, guardias de fin de semana y cobertura continua.',
+    icon: 'HeartHandshake',
+    config: {
+      hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
+      hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
+      serviceName: 'Servicio de Enfermería y Cuidados Críticos',
+      jefeName: 'Lic. Sosa, Patricia Beatriz',
+      jefeCargo: 'Jefa de Enfermería',
+      jefeLegajo: 'LEG-3912',
+      jornalHorarioLabel: '06:00 a 13:00 hs',
+      extraHabilHorarioLabel: '13:00 a 20:00 hs',
+      inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
+      inhabilTardeHorarioLabel: '13:00 a 20:00 hs',
+    },
+    agents: [
+      {
+        id: 'agent_enf_1',
+        name: 'Lic. Sosa, Patricia Beatriz',
+        roleLabel: 'Jefa de Enfermería',
+        category: 'Lic. en Enfermería',
+        legajo: 'LEG-3912',
+        isJefe: true,
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_enf_2',
+        name: 'Enf. Gómez, Walter David',
+        roleLabel: 'Enfermero Universitario - Turno Mañana',
+        category: 'Enfermero/a',
+        legajo: 'LEG-4501',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_enf_3',
+        name: 'Enf. Bogado, Lorena Soledad',
+        roleLabel: 'Enfermera de Guardia - Turno Tarde',
+        category: 'Enfermero/a',
+        legajo: 'LEG-4833',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_enf_4',
+        name: 'Lic. Cabrera, Fernando Gabriel',
+        roleLabel: 'Enfermero Especialista UTI',
+        category: 'Lic. en Enfermería',
+        legajo: 'LEG-5219',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+    ],
   },
   {
-    id: 'agent_sigho_2',
-    name: 'Amarilla, Nestor Ivan',
-    role: 'sigho',
-    roleLabel: 'Agente Soporte Informático SIGHO 2',
-    category: 'Soporte Informático SIGHO',
-    legajo: 'LEG-5804',
-    allowedInhabileMode: 'pasiva',
+    id: 'laboratorio_imagenes',
+    name: 'Servicio de Diagnóstico por Imágenes y Laboratorio',
+    description: 'Técnicos radiólogos, bioquímicos y personal de laboratorio con guardias pasivas y activas.',
+    icon: 'Activity',
+    config: {
+      hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
+      hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
+      serviceName: 'Servicio de Diagnóstico por Imágenes y Bioquímica',
+      jefeName: 'Bioq. Coronel, Andrea Silvina',
+      jefeCargo: 'Jefa de Laboratorio',
+      jefeLegajo: 'M.P. 1820',
+      jornalHorarioLabel: '06:00 a 13:00 hs',
+      extraHabilHorarioLabel: '13:00 a 20:00 hs',
+      inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
+      inhabilTardeHorarioLabel: '13:00 a 20:00 hs',
+    },
+    agents: [
+      {
+        id: 'agent_lab_1',
+        name: 'Bioq. Coronel, Andrea Silvina',
+        roleLabel: 'Jefa de Laboratorio',
+        category: 'Bioquímico/a',
+        legajo: 'M.P. 1820',
+        isJefe: true,
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+      },
+      {
+        id: 'agent_lab_2',
+        name: 'Téc. Medina, Javier Hernán',
+        roleLabel: 'Técnico Radiólogo de Guardia',
+        category: 'Técnico Radiólogo',
+        legajo: 'LEG-4112',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_lab_3',
+        name: 'Téc. Villalba, Claudia Noemí',
+        roleLabel: 'Técnica de Laboratorio',
+        category: 'Técnico de Laboratorio',
+        legajo: 'LEG-4680',
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+      },
+    ],
+  },
+  {
+    id: 'informatica',
+    name: 'Servicio de Informática y SIGHO',
+    description: 'Esquema de Soporte Técnico y Soporte SIGHO (4 agentes con rotación técnica).',
+    icon: 'Server',
+    config: {
+      hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
+      hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
+      serviceName: 'Servicio de Informática y Estadística',
+      jefeName: 'Escobar, Eduardo Martin',
+      jefeCargo: 'Jefe de Servicio (Soporte Técnico)',
+      jefeLegajo: 'LEG-4820',
+      jornalHorarioLabel: '06:00 a 13:00 hs',
+      extraHabilHorarioLabel: '13:00 a 20:00 hs',
+      inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
+      inhabilTardeHorarioLabel: '13:00 a 20:00 hs',
+    },
+    agents: [
+      {
+        id: 'agent_jefe',
+        name: 'Escobar, Eduardo Martin',
+        roleLabel: 'Jefe de Servicio (Soporte Técnico)',
+        category: 'Soporte Técnico',
+        legajo: 'LEG-4820',
+        isJefe: true,
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+      },
+      {
+        id: 'agent_soporte_1',
+        name: 'Cantero, Miguel Angel',
+        roleLabel: 'Agente Soporte Técnico',
+        category: 'Soporte Técnico',
+        legajo: 'LEG-5192',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_sigho_1',
+        name: 'Galeano, Cristian Alejandro',
+        roleLabel: 'Agente Soporte Informático SIGHO 1',
+        category: 'Soporte Informático SIGHO',
+        legajo: 'LEG-5431',
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+      },
+      {
+        id: 'agent_sigho_2',
+        name: 'Amarilla, Nestor Ivan',
+        roleLabel: 'Agente Soporte Informático SIGHO 2',
+        category: 'Soporte Informático SIGHO',
+        legajo: 'LEG-5804',
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+        isOnlyPasiva: true,
+      },
+    ],
   },
 ];
 
-/**
- * Regla de Inhábiles del Servicio:
- * El único habilitado para Inhábiles Activas (presenciales) es Cantero, Miguel Angel.
- * El resto de los agentes tienen habilitadas Inhábiles Pasivas (disponibilidad).
- */
+export const INITIAL_SERVICES: HospitalServiceItem[] = [
+  {
+    id: 'serv_informatica',
+    name: 'Servicio de Informática y Estadística',
+    config: {
+      hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
+      hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
+      serviceName: 'Servicio de Informática y Estadística',
+      jefeName: 'Escobar, Eduardo Martin',
+      jefeCargo: 'Jefe de Servicio (Soporte Técnico)',
+      jefeLegajo: 'LEG-4820',
+      jornalHorarioLabel: '06:00 a 13:00 hs',
+      extraHabilHorarioLabel: '13:00 a 20:00 hs',
+      inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
+      inhabilTardeHorarioLabel: '13:00 a 20:00 hs',
+    },
+    agents: [
+      {
+        id: 'agent_jefe',
+        name: 'Escobar, Eduardo Martin',
+        roleLabel: 'Jefe de Servicio (Soporte Técnico)',
+        category: 'Soporte Técnico',
+        legajo: 'LEG-4820',
+        isJefe: true,
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+      },
+      {
+        id: 'agent_soporte_1',
+        name: 'Cantero, Miguel Angel',
+        roleLabel: 'Agente Soporte Técnico',
+        category: 'Soporte Técnico',
+        legajo: 'LEG-5192',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_sigho_1',
+        name: 'Galeano, Cristian Alejandro',
+        roleLabel: 'Agente Soporte Informático SIGHO 1',
+        category: 'Soporte Informático SIGHO',
+        legajo: 'LEG-5431',
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+      },
+      {
+        id: 'agent_sigho_2',
+        name: 'Amarilla, Nestor Ivan',
+        roleLabel: 'Agente Soporte Informático SIGHO 2',
+        category: 'Soporte Informático SIGHO',
+        legajo: 'LEG-5804',
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+        isOnlyPasiva: true,
+      },
+    ],
+  },
+  {
+    id: 'serv_guardia_medica',
+    name: 'Servicio de Guardia Central y Emergencias',
+    config: {
+      hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
+      hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
+      serviceName: 'Servicio de Guardia Central y Emergencias',
+      jefeName: 'Dr. Benítez, Carlos Alberto',
+      jefeCargo: 'Jefe de Guardia Médica',
+      jefeLegajo: 'M.P. 3140',
+      jornalHorarioLabel: '07:00 a 13:00 hs',
+      extraHabilHorarioLabel: '13:00 a 20:00 hs',
+      inhabilMananaHorarioLabel: '07:00 a 14:00 hs',
+      inhabilTardeHorarioLabel: '14:00 a 21:00 hs',
+    },
+    agents: [
+      {
+        id: 'agent_med_1',
+        name: 'Dr. Benítez, Carlos Alberto',
+        roleLabel: 'Jefe de Guardia / Médico de Planta',
+        category: 'Médico de Guardia',
+        legajo: 'M.P. 3140',
+        isJefe: true,
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_med_2',
+        name: 'Dra. Giménez, María Elena',
+        roleLabel: 'Médica de Guardia Central',
+        category: 'Médico de Guardia',
+        legajo: 'M.P. 4210',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_med_3',
+        name: 'Dr. Ramírez, Jorge Luis',
+        roleLabel: 'Médico Emergentólogo',
+        category: 'Médico Emergentólogo',
+        legajo: 'M.P. 4890',
+        hasJornal: false,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_med_4',
+        name: 'Dr. Insfrán, Gustavo Daniel',
+        roleLabel: 'Médico Clínico de Guardia',
+        category: 'Médico Clínico',
+        legajo: 'M.P. 5120',
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+      },
+    ],
+  },
+  {
+    id: 'serv_enfermeria',
+    name: 'Servicio de Enfermería y Cuidados Críticos',
+    config: {
+      hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
+      hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
+      serviceName: 'Servicio de Enfermería y Cuidados Críticos',
+      jefeName: 'Lic. Sosa, Patricia Beatriz',
+      jefeCargo: 'Jefa de Enfermería',
+      jefeLegajo: 'LEG-3912',
+      jornalHorarioLabel: '06:00 a 13:00 hs',
+      extraHabilHorarioLabel: '13:00 a 20:00 hs',
+      inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
+      inhabilTardeHorarioLabel: '13:00 a 20:00 hs',
+    },
+    agents: [
+      {
+        id: 'agent_enf_1',
+        name: 'Lic. Sosa, Patricia Beatriz',
+        roleLabel: 'Jefa de Enfermería',
+        category: 'Lic. en Enfermería',
+        legajo: 'LEG-3912',
+        isJefe: true,
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_enf_2',
+        name: 'Enf. Gómez, Walter David',
+        roleLabel: 'Enfermero Universitario - Turno Mañana',
+        category: 'Enfermero/a',
+        legajo: 'LEG-4501',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_enf_3',
+        name: 'Enf. Bogado, Lorena Soledad',
+        roleLabel: 'Enfermera de Guardia - Turno Tarde',
+        category: 'Enfermero/a',
+        legajo: 'LEG-4833',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_enf_4',
+        name: 'Lic. Cabrera, Fernando Gabriel',
+        roleLabel: 'Enfermero Especialista UTI',
+        category: 'Lic. en Enfermería',
+        legajo: 'LEG-5219',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+    ],
+  },
+  {
+    id: 'serv_laboratorio',
+    name: 'Servicio de Diagnóstico por Imágenes y Bioquímica',
+    config: {
+      hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
+      hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
+      serviceName: 'Servicio de Diagnóstico por Imágenes y Bioquímica',
+      jefeName: 'Bioq. Coronel, Andrea Silvina',
+      jefeCargo: 'Jefa de Laboratorio',
+      jefeLegajo: 'M.P. 1820',
+      jornalHorarioLabel: '06:00 a 13:00 hs',
+      extraHabilHorarioLabel: '13:00 a 20:00 hs',
+      inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
+      inhabilTardeHorarioLabel: '13:00 a 20:00 hs',
+    },
+    agents: [
+      {
+        id: 'agent_lab_1',
+        name: 'Bioq. Coronel, Andrea Silvina',
+        roleLabel: 'Jefa de Laboratorio',
+        category: 'Bioquímico/a',
+        legajo: 'M.P. 1820',
+        isJefe: true,
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+      },
+      {
+        id: 'agent_lab_2',
+        name: 'Téc. Medina, Javier Hernán',
+        roleLabel: 'Técnico Radiólogo de Guardia',
+        category: 'Técnico Radiólogo',
+        legajo: 'LEG-4112',
+        hasJornal: true,
+        allowedInhabileMode: 'activa',
+      },
+      {
+        id: 'agent_lab_3',
+        name: 'Téc. Villalba, Claudia Noemí',
+        roleLabel: 'Técnica de Laboratorio',
+        category: 'Técnico de Laboratorio',
+        legajo: 'LEG-4680',
+        hasJornal: true,
+        allowedInhabileMode: 'pasiva',
+      },
+    ],
+  },
+];
+
+export const SERVICES_STORAGE_KEY = 'hcef_hospital_services_list';
+export const ACTIVE_SERVICE_ID_KEY = 'hcef_active_service_id';
+
+export function loadAllServices(): HospitalServiceItem[] {
+  try {
+    const saved = localStorage.getItem(SERVICES_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error('Error loading hospital services:', e);
+  }
+  return INITIAL_SERVICES;
+}
+
+export function saveAllServices(services: HospitalServiceItem[]) {
+  try {
+    localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
+  } catch (e) {
+    console.error('Error saving hospital services:', e);
+  }
+}
+
+export function getActiveServiceId(): string {
+  return localStorage.getItem(ACTIVE_SERVICE_ID_KEY) || 'serv_informatica';
+}
+
+export function setActiveServiceId(serviceId: string) {
+  localStorage.setItem(ACTIVE_SERVICE_ID_KEY, serviceId);
+}
+
+export function getScheduleStorageKey(serviceId: string, year: number, month: number): string {
+  return `hcef_schedule_${serviceId}_${year}_${month}`;
+}
+
+export const DEFAULT_AGENTS: Agent[] = INITIAL_SERVICES[0].agents; // Informática default
+
 export function isAgentInhabileActiva(
   agent: Agent | { name?: string; id?: string; allowedInhabileMode?: InhabileMode } | null | undefined
 ): boolean {
@@ -63,15 +537,11 @@ export function getAgentInhabileMode(
   return isAgentInhabileActiva(agent) ? 'activa' : 'pasiva';
 }
 
-/**
- * Regla de horas extras para Amarilla, Nestor Ivan:
- * El agente Amarilla, Nestor Ivan realiza ÚNICAMENTE horas extras Inhábiles Pasivas
- * (no realiza extras hábiles de 13 a 20 hs en días laborables de lunes a viernes).
- */
 export function isAgentOnlyInhabilePasiva(
-  agent: Agent | { name?: string; id?: string } | null | undefined
+  agent: Agent | { name?: string; id?: string; isOnlyPasiva?: boolean } | null | undefined
 ): boolean {
   if (!agent) return false;
+  if (agent.isOnlyPasiva === true) return true;
   const normalizedName = (agent.name || '').toLowerCase();
   return normalizedName.includes('amarilla') || agent.id === 'agent_sigho_2';
 }
@@ -148,66 +618,181 @@ export function getDaysInMonth(year: number, month: number, customHolidays?: Rec
 }
 
 /**
- * Genera la rotación automática cumpliendo todas las reglas del Hospital Central:
- * - Días hábiles (Lunes a Viernes no feriados):
- *   * Todos los 4 agentes cumplen Jornal de 6 a 13 hs.
- *   * 2 agentes se quedan de 13 a 20 hs (1 de Soporte Técnico y 1 de Soporte Informático SIGHO).
- *   * Se alternan de modo que en una semana a uno le tocan 3 días y al otro 2 días, y viceversa la siguiente semana.
- * - Días inhábiles (Fines de semana y feriados):
- *   * Turnos de 6-13 y 13-20 hs (con modalidad configurable activa/pasiva).
+ * Genera una planilla completamente en blanco (0 horas) para el personal indicado
+ */
+export function generateBlankSchedule(
+  year: number,
+  month: number,
+  agents: Agent[] = [],
+  customHolidays: Record<string, string> = {},
+  serviceConfig?: HospitalServiceConfig
+): MonthSchedule {
+  const days = getDaysInMonth(year, month, customHolidays);
+  const assignments: Record<string, DayShiftAssignment> = {};
+
+  days.forEach((day) => {
+    agents.forEach((agent) => {
+      const agentMode = getAgentInhabileMode(agent);
+      assignments[`${agent.id}_${day.dateStr}`] = {
+        jornal: false,
+        extraHabil: false,
+        extraInhabilManana: false,
+        extraInhabilMananaTipo: agentMode,
+        extraInhabilTarde: false,
+        extraInhabilTardeTipo: agentMode,
+      };
+    });
+  });
+
+  return {
+    year,
+    month,
+    agents,
+    assignments,
+    holidays: customHolidays,
+    serviceConfig,
+  };
+}
+
+/**
+ * Genera la rotación equilibrada según el personal del servicio:
+ * - Para días hábiles: Asigna Jornal (a agentes con hasJornal !== false) y distribuye Extras Hábiles.
+ * - Para días inhábiles: Distribuye turnos de mañana y tarde entre el personal disponible.
  */
 export function generateBalancedSchedule(
   year: number,
   month: number,
   agents: Agent[] = DEFAULT_AGENTS,
   customHolidays: Record<string, string> = {},
-  defaultInhabileMode: InhabileMode = 'activa'
+  serviceConfig?: HospitalServiceConfig
 ): MonthSchedule {
   const days = getDaysInMonth(year, month, customHolidays);
   const assignments: Record<string, DayShiftAssignment> = {};
 
-  // Identificar agentes clave para las duplas del servicio
-  const cantero = agents.find(a => isAgentInhabileActiva(a) || a.name.toLowerCase().includes('cantero')) 
-    || agents.find(a => a.id === 'agent_soporte_1') 
-    || agents[1] 
-    || agents[0];
+  if (!agents || agents.length === 0) {
+    return generateBlankSchedule(year, month, agents, customHolidays, serviceConfig);
+  }
 
-  const escobar = agents.find(a => a.name.toLowerCase().includes('escobar')) 
-    || agents.find(a => a.isJefe || a.id === 'agent_jefe') 
-    || agents[0];
+  // Si son los 4 agentes del servicio de informática tradicionales
+  const isDefaultInformatica = agents.length === 4 && agents.some(a => a.name.toLowerCase().includes('cantero') || a.id.includes('sigho'));
 
-  const galeano = agents.find(a => a.name.toLowerCase().includes('galeano')) 
-    || agents.find(a => a.id === 'agent_sigho_1') 
-    || agents[2] 
-    || agents[0];
+  if (isDefaultInformatica) {
+    const cantero = agents.find(a => isAgentInhabileActiva(a) || a.name.toLowerCase().includes('cantero')) || agents[1] || agents[0];
+    const escobar = agents.find(a => a.name.toLowerCase().includes('escobar') || a.isJefe) || agents[0];
+    const galeano = agents.find(a => a.name.toLowerCase().includes('galeano') || a.id === 'agent_sigho_1') || agents[2] || agents[0];
+    const amarilla = agents.find(a => a.name.toLowerCase().includes('amarilla') || a.id === 'agent_sigho_2') || agents[3] || agents[1] || agents[0];
 
-  const amarilla = agents.find(a => a.name.toLowerCase().includes('amarilla')) 
-    || agents.find(a => a.id === 'agent_sigho_2') 
-    || agents[3] 
-    || agents[1] 
-    || agents[0];
+    let weekendCounter = -1;
+    let prevWasWeekend = false;
+    const weekendIndexMap = new Map<string, number>();
 
-  // Agrupar fines de semana del mes (Sábado y Domingo consecutivos)
-  let weekendCounter = -1;
-  let prevWasWeekend = false;
-  const weekendIndexMap = new Map<string, number>();
-
-  days.forEach((d) => {
-    if (d.isWeekend) {
-      if (!prevWasWeekend) {
-        weekendCounter++;
+    days.forEach((d) => {
+      if (d.isWeekend) {
+        if (!prevWasWeekend) weekendCounter++;
+        weekendIndexMap.set(d.dateStr, weekendCounter);
+        prevWasWeekend = true;
+      } else {
+        prevWasWeekend = false;
       }
-      weekendIndexMap.set(d.dateStr, weekendCounter);
-      prevWasWeekend = true;
-    } else {
-      prevWasWeekend = false;
-    }
-  });
+    });
 
-  let holidayWeekdayCounter = 0;
+    let holidayWeekdayCounter = 0;
+
+    days.forEach((day) => {
+      agents.forEach(agent => {
+        const agentMode = getAgentInhabileMode(agent);
+        assignments[`${agent.id}_${day.dateStr}`] = {
+          jornal: false,
+          extraHabil: false,
+          extraInhabilManana: false,
+          extraInhabilMananaTipo: agentMode,
+          extraInhabilTarde: false,
+          extraInhabilTardeTipo: agentMode,
+        };
+      });
+
+      const isBusinessDay = !day.isWeekend && !day.isHoliday;
+
+      if (isBusinessDay) {
+        agents.forEach(agent => {
+          if (agent.hasJornal !== false) {
+            assignments[`${agent.id}_${day.dateStr}`].jornal = true;
+          }
+        });
+
+        const weekNumber = Math.floor((day.dayNumber - 1) / 7);
+        const isWeekEven = weekNumber % 2 === 0;
+        const isDayOdd = day.dayOfWeek % 2 !== 0;
+
+        const assignedSoporte = (isWeekEven ? isDayOdd : !isDayOdd) ? escobar : cantero;
+        const assignedSigho = isAgentOnlyInhabilePasiva(amarilla) 
+          ? galeano 
+          : ((isWeekEven ? isDayOdd : !isDayOdd) ? galeano : amarilla);
+
+        if (assignedSoporte) assignments[`${assignedSoporte.id}_${day.dateStr}`].extraHabil = true;
+        if (assignedSigho) assignments[`${assignedSigho.id}_${day.dateStr}`].extraHabil = true;
+      } else {
+        if (day.isWeekend) {
+          const wIndex = weekendIndexMap.get(day.dateStr) ?? 0;
+          const isPair1Weekend = wIndex % 2 === 0;
+
+          if (isPair1Weekend) {
+            if (day.dayOfWeek === 6) {
+              assignments[`${cantero.id}_${day.dateStr}`].extraInhabilManana = true;
+              assignments[`${cantero.id}_${day.dateStr}`].extraInhabilMananaTipo = 'activa';
+              assignments[`${escobar.id}_${day.dateStr}`].extraInhabilTarde = true;
+              assignments[`${escobar.id}_${day.dateStr}`].extraInhabilTardeTipo = 'pasiva';
+            } else {
+              assignments[`${escobar.id}_${day.dateStr}`].extraInhabilManana = true;
+              assignments[`${escobar.id}_${day.dateStr}`].extraInhabilMananaTipo = 'pasiva';
+              assignments[`${cantero.id}_${day.dateStr}`].extraInhabilTarde = true;
+              assignments[`${cantero.id}_${day.dateStr}`].extraInhabilTardeTipo = 'activa';
+            }
+          } else {
+            if (day.dayOfWeek === 6) {
+              assignments[`${galeano.id}_${day.dateStr}`].extraInhabilManana = true;
+              assignments[`${galeano.id}_${day.dateStr}`].extraInhabilMananaTipo = 'pasiva';
+              assignments[`${amarilla.id}_${day.dateStr}`].extraInhabilTarde = true;
+              assignments[`${amarilla.id}_${day.dateStr}`].extraInhabilTardeTipo = 'pasiva';
+            } else {
+              assignments[`${amarilla.id}_${day.dateStr}`].extraInhabilManana = true;
+              assignments[`${amarilla.id}_${day.dateStr}`].extraInhabilMananaTipo = 'pasiva';
+              assignments[`${galeano.id}_${day.dateStr}`].extraInhabilTarde = true;
+              assignments[`${galeano.id}_${day.dateStr}`].extraInhabilTardeTipo = 'pasiva';
+            }
+          }
+        } else {
+          if (holidayWeekdayCounter % 2 === 0) {
+            assignments[`${cantero.id}_${day.dateStr}`].extraInhabilManana = true;
+            assignments[`${cantero.id}_${day.dateStr}`].extraInhabilMananaTipo = 'activa';
+            assignments[`${escobar.id}_${day.dateStr}`].extraInhabilTarde = true;
+            assignments[`${escobar.id}_${day.dateStr}`].extraInhabilTardeTipo = 'pasiva';
+          } else {
+            assignments[`${galeano.id}_${day.dateStr}`].extraInhabilManana = true;
+            assignments[`${galeano.id}_${day.dateStr}`].extraInhabilMananaTipo = 'pasiva';
+            assignments[`${amarilla.id}_${day.dateStr}`].extraInhabilTarde = true;
+            assignments[`${amarilla.id}_${day.dateStr}`].extraInhabilTardeTipo = 'pasiva';
+          }
+          holidayWeekdayCounter++;
+        }
+      }
+    });
+
+    return {
+      year,
+      month,
+      agents,
+      assignments,
+      holidays: customHolidays,
+      serviceConfig,
+    };
+  }
+
+  // Rotación genérica adaptable para cualquier servicio y cantidad de agentes
+  let shiftIndex = 0;
+  let extraHabilIndex = 0;
 
   days.forEach((day) => {
-    // Inicializar asignaciones para los 4 agentes
     agents.forEach(agent => {
       const agentMode = getAgentInhabileMode(agent);
       assignments[`${agent.id}_${day.dateStr}`] = {
@@ -223,108 +808,37 @@ export function generateBalancedSchedule(
     const isBusinessDay = !day.isWeekend && !day.isHoliday;
 
     if (isBusinessDay) {
-      // 1. Todos cumplen jornal 06:00 a 13:00 hs
+      // Asignar Jornal a quienes lo tienen habilitado
       agents.forEach(agent => {
-        const key = `${agent.id}_${day.dateStr}`;
-        assignments[key].jornal = true;
+        if (agent.hasJornal !== false) {
+          assignments[`${agent.id}_${day.dateStr}`].jornal = true;
+        }
       });
 
-      // 2. Extra Hábil 13:00 a 20:00 hs
-      // Semana alterna: calculamos según el número de día de la semana (1: Lun, 2: Mar, 3: Mié, 4: Jue, 5: Vie)
-      // y la semana del mes.
-      const weekNumber = Math.floor((day.dayNumber - 1) / 7);
-      const isWeekEven = weekNumber % 2 === 0;
-
-      // En días impares (Lun=1, Mié=3, Vie=5) le toca a uno; en pares (Mar=2, Jue=4) al otro.
-      const isDayOdd = day.dayOfWeek % 2 !== 0; // Lun(1), Mié(3), Vie(5) son impares
-      
-      const assignedSoporte = (isWeekEven ? isDayOdd : !isDayOdd) ? escobar : cantero;
-      // En SIGHO: Galeano, Cristian Alejandro realiza las horas extras hábiles (13 a 20 hs),
-      // ya que el agente Amarilla, Nestor Ivan realiza ÚNICAMENTE horas extras Inhábiles Pasivas.
-      const assignedSigho = isAgentOnlyInhabilePasiva(amarilla) 
-        ? galeano 
-        : ((isWeekEven ? isDayOdd : !isDayOdd) ? galeano : amarilla);
-
-      if (assignedSoporte) {
-        assignments[`${assignedSoporte.id}_${day.dateStr}`].extraHabil = true;
-      }
-      if (assignedSigho) {
-        assignments[`${assignedSigho.id}_${day.dateStr}`].extraHabil = true;
+      // Si hay más de 1 agente, asignar 1 o 2 a Horas Extras Hábiles rotativas
+      const eligibleForExtra = agents.filter(a => !isAgentOnlyInhabilePasiva(a));
+      if (eligibleForExtra.length > 0) {
+        const assignedAgent = eligibleForExtra[extraHabilIndex % eligibleForExtra.length];
+        assignments[`${assignedAgent.id}_${day.dateStr}`].extraHabil = true;
+        extraHabilIndex++;
       }
     } else {
-      // Días Inhábiles (Fines de semana y Feriados)
-      if (day.isWeekend) {
-        const wIndex = weekendIndexMap.get(day.dateStr) ?? 0;
-        const isPair1Weekend = wIndex % 2 === 0;
+      // Días Inhábiles: asignar Mañana y Tarde
+      if (agents.length === 1) {
+        const ag = agents[0];
+        const mode = getAgentInhabileMode(ag);
+        assignments[`${ag.id}_${day.dateStr}`].extraInhabilManana = true;
+        assignments[`${ag.id}_${day.dateStr}`].extraInhabilMananaTipo = mode;
+      } else if (agents.length >= 2) {
+        const ag1 = agents[shiftIndex % agents.length];
+        const ag2 = agents[(shiftIndex + 1) % agents.length];
+        shiftIndex += 2;
 
-        if (isPair1Weekend) {
-          // Pareja 1: Cantero, Miguel Angel (ACTIVA) & Escobar, Eduardo Martin (PASIVA)
-          // Fines de semana de por medio juntos
-          if (day.dayOfWeek === 6) {
-            // Sábado: Cantero Mañana (Activa), Escobar Tarde (Pasiva)
-            const kCantero = `${cantero.id}_${day.dateStr}`;
-            assignments[kCantero].extraInhabilManana = true;
-            assignments[kCantero].extraInhabilMananaTipo = 'activa';
+        assignments[`${ag1.id}_${day.dateStr}`].extraInhabilManana = true;
+        assignments[`${ag1.id}_${day.dateStr}`].extraInhabilMananaTipo = getAgentInhabileMode(ag1);
 
-            const kEscobar = `${escobar.id}_${day.dateStr}`;
-            assignments[kEscobar].extraInhabilTarde = true;
-            assignments[kEscobar].extraInhabilTardeTipo = 'pasiva';
-          } else {
-            // Domingo: Escobar Mañana (Pasiva), Cantero Tarde (Activa)
-            const kEscobar = `${escobar.id}_${day.dateStr}`;
-            assignments[kEscobar].extraInhabilManana = true;
-            assignments[kEscobar].extraInhabilMananaTipo = 'pasiva';
-
-            const kCantero = `${cantero.id}_${day.dateStr}`;
-            assignments[kCantero].extraInhabilTarde = true;
-            assignments[kCantero].extraInhabilTardeTipo = 'activa';
-          }
-        } else {
-          // Pareja 2: Galeano, Cristian Alejandro (PASIVA) & Amarilla, Nestor Ivan (PASIVA)
-          // Fines de semana alternados
-          if (day.dayOfWeek === 6) {
-            // Sábado: Galeano Mañana (Pasiva), Amarilla Tarde (Pasiva)
-            const kGaleano = `${galeano.id}_${day.dateStr}`;
-            assignments[kGaleano].extraInhabilManana = true;
-            assignments[kGaleano].extraInhabilMananaTipo = 'pasiva';
-
-            const kAmarilla = `${amarilla.id}_${day.dateStr}`;
-            assignments[kAmarilla].extraInhabilTarde = true;
-            assignments[kAmarilla].extraInhabilTardeTipo = 'pasiva';
-          } else {
-            // Domingo: Amarilla Mañana (Pasiva), Galeano Tarde (Pasiva)
-            const kAmarilla = `${amarilla.id}_${day.dateStr}`;
-            assignments[kAmarilla].extraInhabilManana = true;
-            assignments[kAmarilla].extraInhabilMananaTipo = 'pasiva';
-
-            const kGaleano = `${galeano.id}_${day.dateStr}`;
-            assignments[kGaleano].extraInhabilTarde = true;
-            assignments[kGaleano].extraInhabilTardeTipo = 'pasiva';
-          }
-        }
-      } else {
-        // Feriados en días de semana (Lunes a Viernes)
-        // Alternan entre Pareja 1 y Pareja 2
-        if (holidayWeekdayCounter % 2 === 0) {
-          // Pareja 1
-          const kCantero = `${cantero.id}_${day.dateStr}`;
-          assignments[kCantero].extraInhabilManana = true;
-          assignments[kCantero].extraInhabilMananaTipo = 'activa';
-
-          const kEscobar = `${escobar.id}_${day.dateStr}`;
-          assignments[kEscobar].extraInhabilTarde = true;
-          assignments[kEscobar].extraInhabilTardeTipo = 'pasiva';
-        } else {
-          // Pareja 2
-          const kGaleano = `${galeano.id}_${day.dateStr}`;
-          assignments[kGaleano].extraInhabilManana = true;
-          assignments[kGaleano].extraInhabilMananaTipo = 'pasiva';
-
-          const kAmarilla = `${amarilla.id}_${day.dateStr}`;
-          assignments[kAmarilla].extraInhabilTarde = true;
-          assignments[kAmarilla].extraInhabilTardeTipo = 'pasiva';
-        }
-        holidayWeekdayCounter++;
+        assignments[`${ag2.id}_${day.dateStr}`].extraInhabilTarde = true;
+        assignments[`${ag2.id}_${day.dateStr}`].extraInhabilTardeTipo = getAgentInhabileMode(ag2);
       }
     }
   });
@@ -335,6 +849,7 @@ export function generateBalancedSchedule(
     agents,
     assignments,
     holidays: customHolidays,
+    serviceConfig,
   };
 }
 
@@ -402,3 +917,4 @@ export function calculateAgentStats(
     totalHorasMes,
   };
 }
+

@@ -5,6 +5,19 @@ function buildVisualTableHtml(schedule: MonthSchedule, days: DayInfo[]) {
   const monthName = MONTH_NAMES[schedule.month - 1];
   const year = schedule.year;
 
+  const serviceConfig = schedule.serviceConfig || {
+    hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
+    hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
+    serviceName: 'Servicio de Guardia y Emergencias',
+    jefeName: '',
+    jefeCargo: 'Jefe de Servicio',
+    jefeLegajo: '',
+    jornalHorarioLabel: '06:00 a 13:00 hs',
+    extraHabilHorarioLabel: '13:00 a 20:00 hs',
+    inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
+    inhabilTardeHorarioLabel: '13:00 a 20:00 hs',
+  };
+
   const totalJornalHoras = schedule.agents.reduce((acc, a) => acc + calculateAgentStats(a, schedule, days).horasJornal, 0);
   const totalExtraHabilHoras = schedule.agents.reduce((acc, a) => acc + calculateAgentStats(a, schedule, days).horasExtraHabil, 0);
   const totalInhabActivaHoras = schedule.agents.reduce((acc, a) => acc + calculateAgentStats(a, schedule, days).horasInhabilActiva, 0);
@@ -155,7 +168,8 @@ function buildVisualTableHtml(schedule: MonthSchedule, days: DayInfo[]) {
     totalGeneral,
     daysHeaderRow1,
     daysHeaderRow2,
-    agentsRowsHtml
+    agentsRowsHtml,
+    serviceConfig
   };
 }
 
@@ -338,7 +352,13 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
 
     <div class="header">
       <div class="header-title">
-        <h1>Hospital Central / Servicio de Informática y Telecomunicaciones</h1>
+        <div style="font-size: 10px; font-weight: bold; color: #047857; text-transform: uppercase; margin-bottom: 2px;">
+          ${data.serviceConfig.hospitalSubtitle || 'Gobierno de la Provincia de Formosa • MDH'}
+        </div>
+        <h1>${data.serviceConfig.hospitalName || 'Hospital Central de Emergencias'}</h1>
+        <h2 style="margin: 3px 0 0 0; font-size: 13px; color: #0f172a; font-weight: bold;">
+          ${data.serviceConfig.serviceName || 'Servicio de Guardia y Emergencias'}
+        </h2>
         <p>Planilla Mensual de Turnos Ordinarios, Guardias y Horas Extras (Hábiles e Inhábiles)</p>
       </div>
       <div class="badge-month">
@@ -348,10 +368,10 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
 
     <div class="legend-bar">
       <span style="font-size: 10px; font-weight: bold; color: #475569; margin-right: 6px;">REFERENCIAS:</span>
-      <span class="legend-item" style="background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd;">J (6-13): Jornal Ordinario (06:00 a 13:00 hs)</span>
-      <span class="legend-item" style="background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7;">E (13-20): Extra Hábil Lun a Vie (13:00 a 20:00 hs)</span>
-      <span class="legend-item" style="background-color: #f3e8ff; color: #581c87; border: 1px solid #d8b4fe;">IA (6-13 / 13-20): Inhábil ACTIVA (Fines de Sem / Feriados)</span>
-      <span class="legend-item" style="background-color: #fef3c7; color: #78350f; border: 1px solid #fde68a;">IP (6-13 / 13-20): Inhábil PASIVA (Fines de Sem / Feriados)</span>
+      <span class="legend-item" style="background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd;">J: Jornal Ordinario (${data.serviceConfig.jornalHorarioLabel || '06-13 hs'})</span>
+      <span class="legend-item" style="background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7;">E: Extra Hábil Lun a Vie (${data.serviceConfig.extraHabilHorarioLabel || '13-20 hs'})</span>
+      <span class="legend-item" style="background-color: #f3e8ff; color: #581c87; border: 1px solid #d8b4fe;">IA: Inhábil ACTIVA (Fines de Sem / Feriados)</span>
+      <span class="legend-item" style="background-color: #fef3c7; color: #78350f; border: 1px solid #fde68a;">IP: Inhábil PASIVA (Fines de Sem / Feriados)</span>
       <span class="legend-item" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1;">-: Franco / Descanso</span>
     </div>
 
@@ -486,8 +506,15 @@ export function exportToWord(schedule: MonthSchedule, days: DayInfo[]) {
       <table style="width: 100%; border: none;">
         <tr style="border: none;">
           <td style="border: none; vertical-align: middle;">
-            <h2 style="margin: 0; color: #0f172a; font-size: 14pt; text-transform: uppercase;">Hospital Central / Servicio de Informática y Telecomunicaciones</h2>
-            <p style="margin: 2pt 0 0 0; color: #475569; font-size: 10pt;">Planilla Oficial Mensual de Turnos, Guardias y Horas Extras</p>
+            <div style="font-size: 9pt; font-weight: bold; color: #047857; text-transform: uppercase;">
+              ${data.serviceConfig.hospitalSubtitle || 'Gobierno de Formosa • MDH'}
+            </div>
+            <h2 style="margin: 2pt 0 0 0; color: #0f172a; font-size: 13pt; text-transform: uppercase;">
+              ${data.serviceConfig.hospitalName || 'Hospital Central de Emergencias'}
+            </h2>
+            <p style="margin: 2pt 0 0 0; color: #047857; font-size: 11pt; font-weight: bold;">
+              ${data.serviceConfig.serviceName || 'Servicio de Guardia y Emergencias'}
+            </p>
           </td>
           <td style="border: none; text-align: right; vertical-align: middle; width: 220pt;">
             <div style="background-color: #047857; color: #ffffff; padding: 6pt 10pt; font-weight: bold; font-size: 11pt; border-radius: 4pt; text-align: center;">
@@ -500,10 +527,10 @@ export function exportToWord(schedule: MonthSchedule, days: DayInfo[]) {
 
     <div style="background-color: #f8fafc; border: 1pt solid #cbd5e1; padding: 4pt 8pt; margin-bottom: 8pt; font-size: 8.5pt;">
       <strong>REFERENCIAS:</strong> 
-      <span style="color: #1e3a8a; font-weight: bold; background-color: #dbeafe; padding: 1pt 4pt; border: 0.5pt solid #93c5fd;">J (6-13): Jornal Ordinario (7 hs)</span> &nbsp;|&nbsp;
-      <span style="color: #065f46; font-weight: bold; background-color: #d1fae5; padding: 1pt 4pt; border: 0.5pt solid #6ee7b7;">E (13-20): Extra Hábil (7 hs)</span> &nbsp;|&nbsp;
-      <span style="color: #581c87; font-weight: bold; background-color: #f3e8ff; padding: 1pt 4pt; border: 0.5pt solid #d8b4fe;">IA (6-13 / 13-20): Inhábil Activa (7 hs)</span> &nbsp;|&nbsp;
-      <span style="color: #78350f; font-weight: bold; background-color: #fef3c7; padding: 1pt 4pt; border: 0.5pt solid #fde68a;">IP (6-13 / 13-20): Inhábil Pasiva (7 hs)</span>
+      <span style="color: #1e3a8a; font-weight: bold; background-color: #dbeafe; padding: 1pt 4pt; border: 0.5pt solid #93c5fd;">J: Jornal (${data.serviceConfig.jornalHorarioLabel || '06-13 hs'})</span> &nbsp;|&nbsp;
+      <span style="color: #065f46; font-weight: bold; background-color: #d1fae5; padding: 1pt 4pt; border: 0.5pt solid #6ee7b7;">E: Extra Hábil (${data.serviceConfig.extraHabilHorarioLabel || '13-20 hs'})</span> &nbsp;|&nbsp;
+      <span style="color: #581c87; font-weight: bold; background-color: #f3e8ff; padding: 1pt 4pt; border: 0.5pt solid #d8b4fe;">IA: Inhábil Activa</span> &nbsp;|&nbsp;
+      <span style="color: #78350f; font-weight: bold; background-color: #fef3c7; padding: 1pt 4pt; border: 0.5pt solid #fde68a;">IP: Inhábil Pasiva</span>
     </div>
 
     <table>
@@ -658,12 +685,12 @@ export function exportToExcelVisual(schedule: MonthSchedule, days: DayInfo[]) {
   <table style="width: 100%; border: none; margin-bottom: 10pt;">
     <tr style="border: none;">
       <td colspan="${days.length + 9}" style="border: none; background-color: #0f172a; color: #ffffff; font-size: 13pt; font-weight: bold; padding: 8pt; text-align: left;">
-        HOSPITAL CENTRAL / SERVICIO DE INFORMÁTICA Y TELECOMUNICACIONES
+        ${data.serviceConfig.hospitalSubtitle ? data.serviceConfig.hospitalSubtitle + ' — ' : ''}${data.serviceConfig.hospitalName || 'HOSPITAL CENTRAL DE EMERGENCIAS'}
       </td>
     </tr>
     <tr style="border: none;">
       <td colspan="${days.length + 9}" style="border: none; background-color: #047857; color: #ffffff; font-size: 11pt; font-weight: bold; padding: 6pt; text-align: left;">
-        PLANILLA MENSUAL DE TURNOS, GUARDIAS Y HORAS EXTRAS (HÁBILES E INHÁBILES) — PERÍODO: ${data.monthName.toUpperCase()} ${data.year}
+        ${data.serviceConfig.serviceName ? data.serviceConfig.serviceName.toUpperCase() + ' — ' : ''}PLANILLA MENSUAL DE TURNOS Y HORAS EXTRAS — PERÍODO: ${data.monthName.toUpperCase()} ${data.year}
       </td>
     </tr>
   </table>
@@ -673,11 +700,11 @@ export function exportToExcelVisual(schedule: MonthSchedule, days: DayInfo[]) {
     <tr>
       <td colspan="${days.length + 9}" style="padding: 5pt; font-size: 9pt; border: none;">
         <strong>REFERENCIAS:</strong> 
-        <span style="background-color: #dbeafe; color: #1e3a8a; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #93c5fd;">J (6-13): Jornal Ordinario (7 hs)</span> &nbsp;|&nbsp;
-        <span style="background-color: #d1fae5; color: #065f46; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #6ee7b7;">E (13-20): Extra Hábil Lun a Vie (7 hs)</span> &nbsp;|&nbsp;
-        <span style="background-color: #f3e8ff; color: #581c87; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #d8b4fe;">IA (6-13 / 13-20): Inhábil Activa (7 hs)</span> &nbsp;|&nbsp;
-        <span style="background-color: #fef3c7; color: #78350f; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #fde68a;">IP (6-13 / 13-20): Inhábil Pasiva (7 hs)</span> &nbsp;|&nbsp;
-        <span style="background-color: #e2e8f0; color: #475569; font-weight: bold; padding: 2pt 4pt;">-: Descanso / Franco</span>
+        <span style="background-color: #dbeafe; color: #1e3a8a; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #93c5fd;">J: Jornal (${data.serviceConfig.jornalHorarioLabel || '06-13 hs'})</span> &nbsp;|&nbsp;
+        <span style="background-color: #d1fae5; color: #065f46; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #6ee7b7;">E: Extra Hábil (${data.serviceConfig.extraHabilHorarioLabel || '13-20 hs'})</span> &nbsp;|&nbsp;
+        <span style="background-color: #f3e8ff; color: #581c87; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #d8b4fe;">IA: Inhábil Activa</span> &nbsp;|&nbsp;
+        <span style="background-color: #fef3c7; color: #78350f; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #fde68a;">IP: Inhábil Pasiva</span> &nbsp;|&nbsp;
+        <span style="background-color: #e2e8f0; color: #475569; font-weight: bold; padding: 2pt 4pt;">-: Franco / Descanso</span>
       </td>
     </tr>
   </table>

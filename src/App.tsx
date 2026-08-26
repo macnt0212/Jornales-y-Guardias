@@ -4,20 +4,37 @@ import {
   DayInfo, 
   Agent, 
   DayShiftAssignment, 
-  InhabileMode 
+  InhabileMode,
+  HospitalServiceConfig,
+  HospitalServiceItem,
+  HospitalAuthSession,
+  UserAccount
 } from './types';
 import { 
   DEFAULT_AGENTS, 
+  DEFAULT_SERVICE_CONFIG,
+  INITIAL_SERVICES,
   getDaysInMonth, 
   generateBalancedSchedule, 
+  generateBlankSchedule,
   calculateAgentStats, 
   HOURS_PER_SHIFT,
   MONTH_NAMES,
   isAgentInhabileActiva,
   getAgentInhabileMode,
-  isAgentOnlyInhabilePasiva
+  isAgentOnlyInhabilePasiva,
+  loadAllServices,
+  saveAllServices,
+  getActiveServiceId,
+  setActiveServiceId,
+  getScheduleStorageKey
 } from './utils/calendar';
-import { exportScheduleToExcel } from './utils/excelExport';
+import { 
+  getCurrentSession, 
+  setCurrentSession, 
+  canAccessService 
+} from './utils/auth';
+import { exportScheduleToExcel, exportBlankExcelTemplate } from './utils/excelExport';
 import { exportVisualHtml, exportToWord, exportToExcelVisual } from './utils/visualExport';
 import { MonthSelectorRibbon } from './components/MonthSelectorRibbon';
 import { Header } from './components/Header';
@@ -25,192 +42,50 @@ import { SpreadsheetView } from './components/SpreadsheetView';
 import { InhabileShiftsTab } from './components/InhabileShiftsTab';
 import { AgentDetailTab } from './components/AgentDetailTab';
 import { LiquidationSummaryTab } from './components/LiquidationSummaryTab';
+import { ConsolidatedRRHHTab } from './components/ConsolidatedRRHHTab';
 import { ShiftEditorModal } from './components/ShiftEditorModal';
 import { SettingsModal } from './components/SettingsModal';
+import { ServiceManagerModal } from './components/ServiceManagerModal';
+import { UserManagerModal } from './components/UserManagerModal';
+import { LoginScreen } from './components/LoginScreen';
 import { CheckCircle, AlertCircle, Info } from 'lucide-react';
 
-const STORAGE_PREFIX = 'hcef_schedule_';
-
 export default function App() {
+  // Authentication & Session State
+  const [session, setSessionState] = useState<HospitalAuthSession | null>(() => {
+    return getCurrentSession();
+  });
+
   const currentDate = new Date();
-  // Default to September 2026 or current date
+  // Default to current year & month (or 2026 / Septiembre)
   const [selectedYear, setSelectedYear] = useState<number>(() => {
     return currentDate.getFullYear() || 2026;
   });
   const [selectedMonth, setSelectedMonth] = useState<number>(() => {
-    // Current month (1-indexed) or default 9 (Septiembre)
     return currentDate.getMonth() + 1 || 9;
   });
 
-  const [activeTab, setActiveTab] = useState<'matriz' | 'inhabiles' | 'detalle' | 'liquidacion'>('matriz');
+  const [activeTab, setActiveTab] = useState<'matriz' | 'inhabiles' | 'detalle' | 'liquidacion' | 'consolidado_rrhh'>('matriz');
 
-  // Stored agents list with official normalization
-  const [agents, setAgents] = useState<Agent[]>(() => {
-    const normalizeAgent = (a: Agent): Agent => {
-      let name = a.name;
-      let legajo = a.legajo;
-      let role = a.role;
-      let roleLabel = a.roleLabel;
-      let category = a.category;
-
-      if (a.id === 'agent_jefe' || a.isJefe) {
-        if (name.includes('Romero') || !name) {
-          name = 'Escobar, Eduardo Martin';
-        }
-        legajo = legajo || 'LEG-4820';
-        category = 'Soporte Técnico';
-        role = 'soporte_jefe';
-        roleLabel = 'Jefe de Servicio (Soporte Técnico)';
-      } else if (a.id === 'agent_soporte_1') {
-        if (name.includes('Benítez') || !name) {
-          name = 'Cantero, Miguel Angel';
-        }
-        legajo = legajo || 'LEG-5192';
-        category = 'Soporte Técnico';
-        role = 'soporte_tecnico';
-        roleLabel = 'Agente Soporte Técnico';
-      } else if (a.id === 'agent_sigho_1') {
-        if (name.includes('Giménez') || !name) {
-          name = 'Galeano, Cristian Alejandro';
-        }
-        legajo = legajo || 'LEG-5431';
-        category = 'Soporte Informático SIGHO';
-        role = 'sigho';
-        roleLabel = 'Agente Soporte Informático SIGHO 1';
-      } else if (a.id === 'agent_sigho_2') {
-        if (name.includes('Fernández') || !name) {
-          name = 'Amarilla, Nestor Ivan';
-        }
-        legajo = legajo || 'LEG-5804';
-        category = 'Soporte Informático SIGHO';
-        role = 'sigho';
-        roleLabel = 'Agente Soporte Informático SIGHO 2';
-      }
-
-      const isCantero = isAgentInhabileActiva({ ...a, name }) || name.toLowerCase().includes('cantero');
-
-      return {
-        ...a,
-        name,
-        legajo,
-        category,
-        role,
-        roleLabel,
-        allowedInhabileMode: isCantero ? 'activa' : 'pasiva',
-      };
-    };
-
-    const saved = localStorage.getItem('hcef_agents');
-    if (saved) {
-      try {
-        const parsed: Agent[] = JSON.parse(saved);
-        return parsed.map(normalizeAgent);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return DEFAULT_AGENTS;
+  // Multi-service state list
+  const [services, setServices] = useState<HospitalServiceItem[]>(() => {
+    return loadAllServices();
   });
 
-  // Current Schedule state
-  const [schedule, setSchedule] = useState<MonthSchedule>(() => {
-    const normalizeAgent = (a: Agent): Agent => {
-      let name = a.name;
-      let legajo = a.legajo;
-      let role = a.role;
-      let roleLabel = a.roleLabel;
-      let category = a.category;
-
-      if (a.id === 'agent_jefe' || a.isJefe) {
-        if (name.includes('Romero') || !name) {
-          name = 'Escobar, Eduardo Martin';
-        }
-        legajo = legajo || 'LEG-4820';
-        category = 'Soporte Técnico';
-        role = 'soporte_jefe';
-        roleLabel = 'Jefe de Servicio (Soporte Técnico)';
-      } else if (a.id === 'agent_soporte_1') {
-        if (name.includes('Benítez') || !name) {
-          name = 'Cantero, Miguel Angel';
-        }
-        legajo = legajo || 'LEG-5192';
-        category = 'Soporte Técnico';
-        role = 'soporte_tecnico';
-        roleLabel = 'Agente Soporte Técnico';
-      } else if (a.id === 'agent_sigho_1') {
-        if (name.includes('Giménez') || !name) {
-          name = 'Galeano, Cristian Alejandro';
-        }
-        legajo = legajo || 'LEG-5431';
-        category = 'Soporte Informático SIGHO';
-        role = 'sigho';
-        roleLabel = 'Agente Soporte Informático SIGHO 1';
-      } else if (a.id === 'agent_sigho_2') {
-        if (name.includes('Fernández') || !name) {
-          name = 'Amarilla, Nestor Ivan';
-        }
-        legajo = legajo || 'LEG-5804';
-        category = 'Soporte Informático SIGHO';
-        role = 'sigho';
-        roleLabel = 'Agente Soporte Informático SIGHO 2';
-      }
-
-      const isCantero = isAgentInhabileActiva({ ...a, name }) || name.toLowerCase().includes('cantero');
-
-      return {
-        ...a,
-        name,
-        legajo,
-        category,
-        role,
-        roleLabel,
-        allowedInhabileMode: isCantero ? 'activa' : 'pasiva',
-      };
-    };
-
-    const storageKey = `${STORAGE_PREFIX}${selectedYear}_${selectedMonth}`;
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        const loaded: MonthSchedule = JSON.parse(saved);
-        const normalizedAgents = loaded.agents.map(normalizeAgent);
-        const normalizedAssignments = { ...loaded.assignments };
-        
-        normalizedAgents.forEach(a => {
-          if (isAgentOnlyInhabilePasiva(a)) {
-            Object.keys(normalizedAssignments).forEach(key => {
-              if (key.startsWith(`${a.id}_`)) {
-                if (normalizedAssignments[key].extraHabil) {
-                  normalizedAssignments[key] = {
-                    ...normalizedAssignments[key],
-                    extraHabil: false,
-                  };
-                }
-                if (normalizedAssignments[key].extraInhabilManana) {
-                  normalizedAssignments[key].extraInhabilMananaTipo = 'pasiva';
-                }
-                if (normalizedAssignments[key].extraInhabilTarde) {
-                  normalizedAssignments[key].extraInhabilTardeTipo = 'pasiva';
-                }
-              }
-            });
-          }
-        });
-
-        return {
-          ...loaded,
-          agents: normalizedAgents,
-          assignments: normalizedAssignments,
-        };
-      } catch (e) {
-        console.error(e);
-      }
+  // Currently selected service ID
+  const [activeServiceId, setActiveServiceIdState] = useState<string>(() => {
+    const currentSess = getCurrentSession();
+    if (currentSess && currentSess.user.role === 'jefe_servicio' && currentSess.user.serviceId) {
+      return currentSess.user.serviceId;
     }
-    return generateBalancedSchedule(selectedYear, selectedMonth, DEFAULT_AGENTS);
+    return getActiveServiceId();
   });
 
   // Modals state
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isServiceManagerOpen, setIsServiceManagerOpen] = useState<boolean>(false);
+  const [isUserManagerOpen, setIsUserManagerOpen] = useState<boolean>(false);
+  const [userManagerTab, setUserManagerTab] = useState<'list' | 'create'>('list');
   const [isShiftEditorOpen, setIsShiftEditorOpen] = useState<boolean>(false);
   const [selectedCell, setSelectedCell] = useState<{ agent: Agent; day: DayInfo } | null>(null);
 
@@ -224,16 +99,208 @@ export default function App() {
     }, 4000);
   };
 
+  // Retrieve active service object
+  const activeService = useMemo(() => {
+    return services.find(s => s.id === activeServiceId) || services[0] || INITIAL_SERVICES[0];
+  }, [services, activeServiceId]);
+
+  // Filtered services according to authenticated user permissions
+  const authorizedServices = useMemo(() => {
+    if (!session) return [];
+    if (session.user.role === 'rrhh') return services;
+    return services.filter(s => canAccessService(session.user, s.id));
+  }, [services, session]);
+
+  // Agents list for the active service
+  const [agents, setAgents] = useState<Agent[]>(() => {
+    const currentServ = loadAllServices().find(s => s.id === getActiveServiceId()) || INITIAL_SERVICES[0];
+    return currentServ.agents || [];
+  });
+
+  // Current Schedule state (scoped strictly to activeServiceId)
+  const [schedule, setSchedule] = useState<MonthSchedule>(() => {
+    const servId = getActiveServiceId();
+    const allServs = loadAllServices();
+    const currentServ = allServs.find(s => s.id === servId) || INITIAL_SERVICES[0];
+    const initialConfig = currentServ.config || DEFAULT_SERVICE_CONFIG;
+    const initialAgents = currentServ.agents || [];
+
+    const storageKey = getScheduleStorageKey(servId, selectedYear, selectedMonth);
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const loaded: MonthSchedule = JSON.parse(saved);
+        return {
+          ...loaded,
+          serviceId: servId,
+          serviceConfig: loaded.serviceConfig || initialConfig,
+        };
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    
+    // If no saved schedule, if service has 0 agents or is a new blank service, return a clean blank schedule
+    if (initialAgents.length === 0) {
+      return generateBlankSchedule(selectedYear, selectedMonth, [], undefined, initialConfig);
+    }
+    return generateBalancedSchedule(selectedYear, selectedMonth, initialAgents, undefined, initialConfig);
+  });
+
+  // Handle Login
+  const handleLoginSuccess = (newSession: HospitalAuthSession) => {
+    setSessionState(newSession);
+    setCurrentSession(newSession);
+
+    // Refresh services to ensure newly registered services are present
+    const freshServices = loadAllServices();
+    setServices(freshServices);
+
+    if (newSession.user.role === 'jefe_servicio' && newSession.user.serviceId) {
+      handleSelectService(newSession.user.serviceId, newSession.user);
+      setActiveTab('matriz');
+    } else {
+      setActiveTab('matriz');
+    }
+    showToast(`✓ Acceso autorizado: ${newSession.user.fullName} (${newSession.user.serviceName || newSession.user.roleTitle})`);
+  };
+
+  // Handle Logout
+  const handleLogout = () => {
+    setCurrentSession(null);
+    setSessionState(null);
+    setActiveTab('matriz');
+  };
+
+
   // Synchronize days list whenever year/month/holidays change
   const days: DayInfo[] = useMemo(() => {
     return getDaysInMonth(schedule.year, schedule.month, schedule.holidays);
   }, [schedule.year, schedule.month, schedule.holidays]);
 
-  // Save to localStorage when schedule updates
+  // Save to localStorage when schedule updates (isolated by serviceId, year and month)
   useEffect(() => {
-    const storageKey = `${STORAGE_PREFIX}${schedule.year}_${schedule.month}`;
+    const currentServId = schedule.serviceId || activeServiceId;
+    const storageKey = getScheduleStorageKey(currentServId, schedule.year, schedule.month);
     localStorage.setItem(storageKey, JSON.stringify(schedule));
-  }, [schedule]);
+  }, [schedule, activeServiceId]);
+
+  // Switch active service (enforces RBAC)
+  const handleSelectService = (newServiceId: string, userOverride?: UserAccount) => {
+    const activeUser = userOverride || session?.user;
+    if (activeUser && !canAccessService(activeUser, newServiceId)) {
+      alert('Acceso restringido: Usted no cuenta con permisos para ver o modificar la planilla de este servicio hospitalario.');
+      return;
+    }
+
+    const currentServices = loadAllServices();
+    const targetService = currentServices.find(s => s.id === newServiceId) || services.find(s => s.id === newServiceId);
+    if (!targetService) return;
+
+    setActiveServiceIdState(newServiceId);
+    setActiveServiceId(newServiceId);
+
+    const targetAgents = targetService.agents || [];
+    setAgents(targetAgents);
+
+    // Load or create schedule for target service
+    const storageKey = getScheduleStorageKey(newServiceId, schedule.year, schedule.month);
+    const saved = localStorage.getItem(storageKey);
+    
+    if (saved) {
+      try {
+        const loaded: MonthSchedule = JSON.parse(saved);
+        setSchedule({
+          ...loaded,
+          serviceId: newServiceId,
+          agents: loaded.agents && loaded.agents.length > 0 ? loaded.agents : targetAgents,
+          serviceConfig: targetService.config,
+        });
+      } catch (e) {
+        console.error(e);
+        const newSched = targetAgents.length > 0 
+          ? generateBalancedSchedule(schedule.year, schedule.month, targetAgents, undefined, targetService.config)
+          : generateBlankSchedule(schedule.year, schedule.month, [], undefined, targetService.config);
+        newSched.serviceId = newServiceId;
+        setSchedule(newSched);
+      }
+    } else {
+      const newSched = targetAgents.length > 0 
+        ? generateBalancedSchedule(schedule.year, schedule.month, targetAgents, undefined, targetService.config)
+        : generateBlankSchedule(schedule.year, schedule.month, [], undefined, targetService.config);
+      newSched.serviceId = newServiceId;
+      setSchedule(newSched);
+    }
+
+    showToast(`✓ Cambiado a: ${targetService.config.serviceName || targetService.name}`);
+  };
+
+  // Create a brand new service (with blank template)
+  const handleCreateNewService = (newService: HospitalServiceItem, startBlankSchedule: boolean) => {
+    const updatedServices = [...services, newService];
+    setServices(updatedServices);
+    saveAllServices(updatedServices);
+
+    setActiveServiceIdState(newService.id);
+    setActiveServiceId(newService.id);
+    setAgents(newService.agents || []);
+
+    const newBlankSchedule = generateBlankSchedule(
+      schedule.year, 
+      schedule.month, 
+      newService.agents || [], 
+      undefined, 
+      newService.config
+    );
+    newBlankSchedule.serviceId = newService.id;
+    setSchedule(newBlankSchedule);
+
+    const storageKey = getScheduleStorageKey(newService.id, schedule.year, schedule.month);
+    localStorage.setItem(storageKey, JSON.stringify(newBlankSchedule));
+
+    showToast(`✓ Servicio "${newService.name}" creado con planilla en blanco`);
+  };
+
+  // Update existing service
+  const handleUpdateService = (updatedService: HospitalServiceItem) => {
+    const updatedServices = services.map(s => s.id === updatedService.id ? updatedService : s);
+    setServices(updatedServices);
+    saveAllServices(updatedServices);
+
+    if (updatedService.id === activeServiceId) {
+      setAgents(updatedService.agents || []);
+      setSchedule(prev => ({
+        ...prev,
+        agents: updatedService.agents || [],
+        serviceConfig: updatedService.config,
+      }));
+    }
+    showToast(`✓ Datos del servicio "${updatedService.name}" guardados`);
+  };
+
+  // Delete service
+  const handleDeleteService = (serviceIdToDelete: string) => {
+    if (services.length <= 1) {
+      alert('Debe quedar al menos un servicio registrado.');
+      return;
+    }
+    const updatedServices = services.filter(s => s.id !== serviceIdToDelete);
+    setServices(updatedServices);
+    saveAllServices(updatedServices);
+
+    if (activeServiceId === serviceIdToDelete) {
+      const nextActive = updatedServices[0];
+      handleSelectService(nextActive.id);
+    }
+    showToast('✓ Servicio eliminado exitosamente');
+  };
+
+  // Export blank excel template for the active service
+  const handleExportBlankExcel = () => {
+    exportBlankExcelTemplate(schedule, days);
+    showToast('✓ Descargando Plantilla Excel en Blanco (.xlsx)...');
+  };
+
 
   // Save agents list when modified
   useEffect(() => {
@@ -245,7 +312,8 @@ export default function App() {
     setSelectedYear(newYear);
     setSelectedMonth(newMonth);
 
-    const storageKey = `${STORAGE_PREFIX}${newYear}_${newMonth}`;
+    const currentServId = schedule.serviceId || activeServiceId;
+    const storageKey = getScheduleStorageKey(currentServId, newYear, newMonth);
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
@@ -259,16 +327,19 @@ export default function App() {
       }
     }
 
-    // Si no existía, generar la rotación balanceada por defecto
-    const newSchedule = generateBalancedSchedule(newYear, newMonth, agents, schedule.holidays);
+    // Si no existía, generar la rotación o planilla en blanco
+    const newSchedule = agents.length > 0
+      ? generateBalancedSchedule(newYear, newMonth, agents, schedule.holidays, schedule.serviceConfig)
+      : generateBlankSchedule(newYear, newMonth, [], schedule.holidays, schedule.serviceConfig);
+    newSchedule.serviceId = currentServId;
     setSchedule(newSchedule);
     const newDays = getDaysInMonth(newYear, newMonth, newSchedule.holidays);
-    showToast(`✓ Generada planilla de ${MONTH_NAMES[newMonth - 1]} ${newYear} (${newDays.length} días y fechas calculadas automáticamente)`);
+    showToast(`✓ Cargada planilla de ${MONTH_NAMES[newMonth - 1]} ${newYear} (${newDays.length} días)`);
   };
 
   // Generate Balanced Schedule
   const handleGenerateBalanced = () => {
-    const newSchedule = generateBalancedSchedule(schedule.year, schedule.month, agents, schedule.holidays);
+    const newSchedule = generateBalancedSchedule(schedule.year, schedule.month, agents, schedule.holidays, schedule.serviceConfig);
     setSchedule(newSchedule);
     showToast(`✓ Rotación equilibrada generada con éxito para ${MONTH_NAMES[schedule.month - 1]} ${schedule.year}`);
   };
@@ -946,14 +1017,36 @@ export default function App() {
   };
 
   // Save Settings from Modal
-  const handleSaveSettings = (updatedAgents: Agent[], updatedHolidays: Record<string, string>) => {
+  const handleSaveSettings = (
+    updatedAgents: Agent[], 
+    updatedHolidays: Record<string, string>,
+    updatedServiceConfig?: HospitalServiceConfig
+  ) => {
+    const configToUse = updatedServiceConfig || schedule.serviceConfig || DEFAULT_SERVICE_CONFIG;
     setAgents(updatedAgents);
     setSchedule(prev => ({
       ...prev,
       agents: updatedAgents,
       holidays: updatedHolidays,
+      serviceConfig: configToUse,
     }));
-    showToast('Configuración de personal y feriados guardada');
+
+    // Update active service in services list
+    const updatedServices = services.map(s => {
+      if (s.id === activeServiceId) {
+        return {
+          ...s,
+          name: configToUse.serviceName || s.name,
+          config: configToUse,
+          agents: updatedAgents,
+        };
+      }
+      return s;
+    });
+    setServices(updatedServices);
+    saveAllServices(updatedServices);
+
+    showToast('✓ Configuración del servicio, personal y feriados guardada exitosamente');
   };
 
   // Overall statistics
@@ -979,6 +1072,10 @@ export default function App() {
     };
   }, [schedule, days]);
 
+  if (!session) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans">
       {/* Toast Notification */}
@@ -997,6 +1094,21 @@ export default function App() {
         totalExtHabilHours={statsOverview.totalExtHabilHours}
         totalInhabActivaHours={statsOverview.totalInhabActivaHours}
         totalInhabPasivaHours={statsOverview.totalInhabPasivaHours}
+        services={authorizedServices}
+        activeServiceId={activeServiceId}
+        currentUser={session.user}
+        onLogout={handleLogout}
+        onOpenUserManager={() => {
+          setUserManagerTab('list');
+          setIsUserManagerOpen(true);
+        }}
+        onOpenCreateUser={() => {
+          setUserManagerTab('create');
+          setIsUserManagerOpen(true);
+        }}
+        onSelectService={handleSelectService}
+        onOpenServiceManager={() => setIsServiceManagerOpen(true)}
+        onExportBlankExcel={handleExportBlankExcel}
         onMonthChange={handleMonthChange}
         onGenerateBalanced={handleGenerateBalanced}
         onExportExcel={handleExportExcel}
@@ -1069,16 +1181,30 @@ export default function App() {
             onPrint={handlePrint}
           />
         )}
+
+        {activeTab === 'consolidado_rrhh' && session?.user.role === 'rrhh' && (
+          <ConsolidatedRRHHTab
+            services={services}
+            year={schedule.year}
+            month={schedule.month}
+            days={days}
+            onSelectService={(servId) => {
+              handleSelectService(servId);
+              setActiveTab('matriz');
+            }}
+            onPrint={handlePrint}
+          />
+        )}
       </main>
 
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 text-[11px] py-4 border-t border-slate-800 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
-            <strong>Hospital Central de Emergencias de Formosa</strong> • Servicio de Informática y Estadística
+            <strong>{schedule.serviceConfig?.hospitalName || 'Hospital Central de Emergencias'}</strong> • {schedule.serviceConfig?.serviceName || 'Servicio de Guardia'}
           </div>
           <div>
-            Control de Jornal (06:00-13:00) y Horas Extras Hábiles (13:00-20:00) e Inhábiles (Activas/Pasivas)
+            Control de Jornal ({schedule.serviceConfig?.jornalHorarioLabel || '06:00-13:00'}) y Horas Extras Hábiles ({schedule.serviceConfig?.extraHabilHorarioLabel || '13:00-20:00'}) e Inhábiles (Activas/Pasivas)
           </div>
         </div>
       </footer>
@@ -1105,6 +1231,32 @@ export default function App() {
         onClose={() => setIsSettingsOpen(false)}
         onSaveSettings={handleSaveSettings}
       />
+
+      {/* Service Manager Modal */}
+      <ServiceManagerModal
+        isOpen={isServiceManagerOpen}
+        onClose={() => setIsServiceManagerOpen(false)}
+        services={services}
+        activeServiceId={activeServiceId}
+        currentUser={session.user}
+        onSelectService={handleSelectService}
+        onCreateNewService={handleCreateNewService}
+        onUpdateService={handleUpdateService}
+        onDeleteService={handleDeleteService}
+        currentSchedule={schedule}
+        days={days}
+      />
+
+      {/* User Manager Modal (Only for RRHH) */}
+      {session.user.role === 'rrhh' && (
+        <UserManagerModal
+          isOpen={isUserManagerOpen}
+          onClose={() => setIsUserManagerOpen(false)}
+          services={services}
+          currentUser={session.user}
+          initialTab={userManagerTab}
+        />
+      )}
     </div>
   );
 }
