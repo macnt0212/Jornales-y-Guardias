@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@layer utilities {
+  /* Print Styles */
+  @media print {
+    @page {
+      size: A3 landscape;
+      margin: 8mm 6mm;
+    }
+
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+
+    body {
+      background: white !important;
+      color: #0f172a !important;
+      font-size: 10px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    header, nav, button, .no-print {
+      display: none !important;
+    }
+
+    .overflow-x-auto, .max-h-\[700px\], .max-h-\[680px\] {
+      overflow: visible !important;
+      max-height: none !important;
+    }
+
+    .printable-area {
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      width: 100% !important;
+    }
+
+    table {
+      page-break-inside: auto;
+      width: 100% !important;
+      font-size: 9px !important;
+      border-collapse: collapse !important;
+    }
+
+    tr {
+      page-break-inside: avoid !important;
+      page-break-after: auto;
+    }
+
+    thead {
+      display: table-header-group !important;
+    }
+
+    tfoot {
+      display: table-footer-group !important;
+    }
+  }
+}
+

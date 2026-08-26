@@ -1,0 +1,6 @@
+{
+  "name": "Planilla de Horas Extras - Informática Hospital Central",
+  "description": "Sistema de gestión y planilla Excel para control de jornal y horas extras hábiles e inhábiles (activas y pasivas) del Servicio de Informática del Hospital Central de Emergencias de Formosa.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
