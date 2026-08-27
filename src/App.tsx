@@ -47,6 +47,7 @@ import { ShiftEditorModal } from './components/ShiftEditorModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ServiceManagerModal } from './components/ServiceManagerModal';
 import { UserManagerModal } from './components/UserManagerModal';
+import { OperationsManualModal } from './components/OperationsManualModal';
 import { LoginScreen } from './components/LoginScreen';
 import { CheckCircle, AlertCircle, Info } from 'lucide-react';
 
@@ -85,6 +86,7 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isServiceManagerOpen, setIsServiceManagerOpen] = useState<boolean>(false);
   const [isUserManagerOpen, setIsUserManagerOpen] = useState<boolean>(false);
+  const [isManualOpen, setIsManualOpen] = useState<boolean>(false);
   const [userManagerTab, setUserManagerTab] = useState<'list' | 'create'>('list');
   const [isShiftEditorOpen, setIsShiftEditorOpen] = useState<boolean>(false);
   const [selectedCell, setSelectedCell] = useState<{ agent: Agent; day: DayInfo } | null>(null);
@@ -1091,7 +1093,20 @@ export default function App() {
   }, [schedule, days]);
 
   if (!session) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <>
+        <LoginScreen 
+          onLoginSuccess={handleLoginSuccess} 
+          onOpenManual={() => setIsManualOpen(true)}
+        />
+        <OperationsManualModal
+          isOpen={isManualOpen}
+          onClose={() => setIsManualOpen(false)}
+          serviceName={schedule.serviceConfig?.serviceName}
+          isRRHH={false}
+        />
+      </>
+    );
   }
 
   return (
@@ -1126,6 +1141,7 @@ export default function App() {
         }}
         onSelectService={handleSelectService}
         onOpenServiceManager={() => setIsServiceManagerOpen(true)}
+        onOpenManual={() => setIsManualOpen(true)}
         onExportBlankExcel={handleExportBlankExcel}
         onMonthChange={handleMonthChange}
         onGenerateBalanced={handleGenerateBalanced}
@@ -1275,6 +1291,14 @@ export default function App() {
           initialTab={userManagerTab}
         />
       )}
+
+      {/* Operations Manual Modal (PDF / Guide) */}
+      <OperationsManualModal
+        isOpen={isManualOpen}
+        onClose={() => setIsManualOpen(false)}
+        serviceName={schedule.serviceConfig?.serviceName}
+        isRRHH={session.user.role === 'rrhh'}
+      />
     </div>
   );
 }

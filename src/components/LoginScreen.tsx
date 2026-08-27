@@ -11,14 +11,16 @@ import {
   Eye, 
   EyeOff, 
   Building2, 
-  AlertCircle
+  AlertCircle,
+  BookOpen
 } from 'lucide-react';
 
 interface LoginScreenProps {
   onLoginSuccess: (session: HospitalAuthSession) => void;
+  onOpenManual?: () => void;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onOpenManual }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -190,15 +192,22 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             </button>
           </form>
 
-          {/* Bottom Security / Privacy Badge */}
+          {/* Bottom Security / Privacy Badge & Manual Button */}
           <div className="mt-5 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
             <div className="flex items-center gap-1.5 text-[11px]">
               <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Aislamiento estricto de nómina y datos por servicio</span>
+              <span>Aislamiento estricto de datos por servicio</span>
             </div>
-            <div className="text-[11px] text-slate-500 font-medium">
-              Gestión de Cuentas: RRHH
-            </div>
+            {onOpenManual && (
+              <button
+                type="button"
+                onClick={onOpenManual}
+                className="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer bg-emerald-950/70 border border-emerald-800/60 px-2 py-1 rounded"
+              >
+                <BookOpen className="w-3 h-3 text-emerald-400" />
+                <span>Manual de Operador (PDF)</span>
+              </button>
+            )}
           </div>
 
         </div>

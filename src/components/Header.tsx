@@ -24,7 +24,8 @@ import {
   BarChart3,
   UserCheck,
   UserPlus,
-  Crown
+  Crown,
+  BookOpen
 } from 'lucide-react';
 import { MONTH_NAMES } from '../utils/calendar';
 import { MonthSchedule, DayInfo, HospitalServiceItem, UserAccount } from '../types';
@@ -44,6 +45,7 @@ interface HeaderProps {
   onOpenCreateUser?: () => void;
   onSelectService?: (serviceId: string) => void;
   onOpenServiceManager?: () => void;
+  onOpenManual?: () => void;
   onExportBlankExcel?: () => void;
   onMonthChange: (year: number, month: number) => void;
   onGenerateBalanced: () => void;
@@ -73,6 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCreateUser,
   onSelectService,
   onOpenServiceManager,
+  onOpenManual,
   onExportBlankExcel,
   onMonthChange,
   onGenerateBalanced,
@@ -478,6 +481,18 @@ export const Header: React.FC<HeaderProps> = ({
               <Printer className="w-3.5 h-3.5 text-slate-300" />
               Imprimir
             </button>
+
+            {onOpenManual && (
+              <button
+                id="btn-open-manual"
+                onClick={onOpenManual}
+                title="Abrir Manual de Operaciones con Diagramas de Flujo (Descargar / Imprimir en PDF)"
+                className="flex items-center gap-1.5 bg-emerald-950/90 hover:bg-emerald-900 text-emerald-300 hover:text-white text-xs font-bold px-3 py-1.5 rounded border border-emerald-600/70 shadow-xs transition-all cursor-pointer ring-1 ring-emerald-500/30"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Manual PDF</span>
+              </button>
+            )}
 
             <button
               id="btn-settings"
