@@ -143,19 +143,22 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
           </div>
           <div>
             <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
-              Reglas Operativas del Servicio de Informática (HCEF)
+              <span>{schedule.serviceConfig?.serviceName || 'Servicio Hospitalario'}</span>
+              <span className="text-[11px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
+                🔒 Nómina Aislada ({schedule.agents.length} agentes)
+              </span>
             </h3>
             <p className="text-xs text-emerald-900/90 mt-0.5 leading-relaxed">
-              <strong>Jornal Ordinario:</strong> Lunes a Viernes 06:00 a 13:00 hs (4 agentes). • 
-              <strong> Horas Extras Hábiles:</strong> Lunes a Viernes 13:00 a 20:00 hs (2 agentes por día: 1 Soporte Técnico + 1 SIGHO). • 
-              <strong> Inhábiles:</strong> Sábados, Domingos y Feriados (06-13 y 13-20 hs, en modalidad Activa o Pasiva).
+              <strong>Jornal Ordinario:</strong> {schedule.serviceConfig?.jornalHorarioLabel || '06:00 a 13:00 hs'} (Lunes a Viernes). • 
+              <strong> Horas Extras Hábiles:</strong> {schedule.serviceConfig?.extraHabilHorarioLabel || '13:00 a 20:00 hs'}. • 
+              <strong> Guardias Inhábiles:</strong> Sábados, Domingos y Feriados ({schedule.serviceConfig?.inhabilMananaHorarioLabel || '06:00 a 13:00'} y {schedule.serviceConfig?.inhabilTardeHorarioLabel || '13:00 a 20:00'} hs, Activa o Pasiva).
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 self-end md:self-center shrink-0">
           <span className="text-[11px] font-medium bg-white px-2.5 py-1 rounded border border-emerald-200 text-emerald-800 shadow-2xs">
-            💡 Haz clic en cualquier celda para editar sus turnos
+            💡 Haz clic en cualquier celda para cargar o editar turnos
           </span>
         </div>
       </div>

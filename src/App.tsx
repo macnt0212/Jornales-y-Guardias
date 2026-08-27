@@ -170,7 +170,25 @@ export default function App() {
     setCurrentSession(null);
     setSessionState(null);
     setActiveTab('matriz');
+    setIsServiceManagerOpen(false);
+    setIsUserManagerOpen(false);
   };
+
+  // Enforce session security constraints
+  useEffect(() => {
+    if (session) {
+      if (session.user.role === 'jefe_servicio' && session.user.serviceId) {
+        if (activeServiceId !== session.user.serviceId) {
+          handleSelectService(session.user.serviceId, session.user);
+        }
+        if (activeTab === 'consolidado_rrhh') {
+          setActiveTab('matriz');
+        }
+        setIsServiceManagerOpen(false);
+        setIsUserManagerOpen(false);
+      }
+    }
+  }, [session, activeServiceId, activeTab]);
 
 
   // Synchronize days list whenever year/month/holidays change

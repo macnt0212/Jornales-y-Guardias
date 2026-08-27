@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { UserAccount, HospitalAuthSession } from '../types';
-import { authenticateUser, loadAllUsers, saveAllUsers } from '../utils/auth';
-import { loadAllServices } from '../utils/calendar';
+import { HospitalAuthSession } from '../types';
+import { authenticateUser, loadAllUsers } from '../utils/auth';
 import { 
   Hospital, 
   Lock, 
@@ -12,12 +11,7 @@ import {
   Eye, 
   EyeOff, 
   Building2, 
-  AlertCircle,
-  CheckCircle2,
-  Sparkles,
-  UserPlus,
-  Check,
-  X
+  AlertCircle
 } from 'lucide-react';
 
 interface LoginScreenProps {
@@ -31,17 +25,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Quick Register Modal State
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [regFullName, setRegFullName] = useState('');
-  const [regLegajo, setRegLegajo] = useState('');
-  const [regServiceId, setRegServiceId] = useState('');
-  const [regUsername, setRegUsername] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regMessage, setRegMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
   const allUsers = loadAllUsers();
-  const allServices = loadAllServices();
 
   // Detect matching user in real-time as user types username
   const matchedUser = username.trim()
@@ -74,77 +58,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     }, 150);
   };
 
-  const handleSuggestRegCredentials = () => {
-    if (!regFullName.trim()) {
-      setRegMessage({ type: 'error', text: 'Escriba primero el Apellido y Nombre.' });
-      return;
-    }
-    const cleanName = regFullName.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, '');
-    const shortUser = `jefe.${cleanName.slice(0, 10)}`;
-    const randomPass = `guardia${Math.floor(1000 + Math.random() * 9000)}`;
-    setRegUsername(shortUser);
-    setRegPassword(randomPass);
-  };
-
-  const handleRegisterNewUser = (e: React.FormEvent) => {
-    e.preventDefault();
-    setRegMessage(null);
-
-    const trimmedUser = regUsername.trim().toLowerCase();
-    if (!trimmedUser || !regPassword.trim() || !regFullName.trim()) {
-      setRegMessage({ type: 'error', text: 'Por favor complete todos los campos obligatorios.' });
-      return;
-    }
-
-    const currentUsers = loadAllUsers();
-    if (currentUsers.some(u => u.username.toLowerCase() === trimmedUser)) {
-      setRegMessage({ type: 'error', text: `El usuario "${trimmedUser}" ya existe. Elija otro nombre de usuario.` });
-      return;
-    }
-
-    const targetServiceId = regServiceId || allServices[0]?.id || 'serv_guardia_medica';
-    const targetService = allServices.find(s => s.id === targetServiceId);
-
-    const newUser: UserAccount = {
-      id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-      username: trimmedUser,
-      password: regPassword.trim(),
-      fullName: regFullName.trim(),
-      role: 'jefe_servicio',
-      roleTitle: `Jefe / Encargado de Carga de ${targetService?.config?.serviceName || targetService?.name || 'Servicio'}`,
-      serviceId: targetServiceId,
-      serviceName: targetService?.config?.serviceName || targetService?.name || 'Servicio Hospitalario',
-      legajo: regLegajo.trim() || undefined,
-      avatarIcon: 'Building2',
-    };
-
-    const updated = [...currentUsers, newUser];
-    saveAllUsers(updated);
-
-    setRegMessage({ type: 'success', text: `✓ Usuario "${newUser.fullName}" dado de alta con éxito para ${newUser.serviceName}.` });
-    
-    // Auto-fill login form
-    setUsername(newUser.username);
-    setPassword(newUser.password || '');
-
-    setTimeout(() => {
-      setIsRegisterOpen(false);
-      setRegFullName('');
-      setRegLegajo('');
-      setRegUsername('');
-      setRegPassword('');
-      setRegMessage(null);
-    }, 1400);
-  };
-
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 text-slate-100 selection:bg-emerald-500 selection:text-white relative overflow-hidden">
       {/* Background radial gradient decoration */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.18),rgba(15,23,42,0))] pointer-events-none" />
 
-      <div className="w-full max-w-xl z-10 space-y-6">
+      <div className="w-full max-w-lg z-10 space-y-6">
         
         {/* Top Header / Institutional Title */}
         <div className="text-center space-y-2.5">
@@ -160,7 +79,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             "DR. RAMÓN CARRILLO" — CONTROL DE HORAS EXTRAS Y JORNAL
           </p>
           <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-            Portal institucional de acceso. Ingrese con su usuario y contraseña habilitados para acceder a la planilla de su servicio.
+            Portal institucional seguro. Cada Jefe o Encargado habilitado accede exclusivamente a la nómina de su propio servicio.
           </p>
         </div>
 
@@ -177,14 +96,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 <p className="text-xs text-slate-400">Credenciales del Servicio Hospitalario</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsRegisterOpen(true)}
-              className="text-xs font-bold text-emerald-300 hover:text-white bg-emerald-950/80 hover:bg-emerald-800 border border-emerald-700/60 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-xs"
-            >
-              <UserPlus className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Dar de Alta Usuario</span>
-            </button>
+            <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-950/70 border border-emerald-800/60 px-2.5 py-1 rounded-full">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Acceso Seguro</span>
+            </div>
           </div>
 
           {errorMsg && (
@@ -208,7 +123,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                   id="input-username"
                   required
                   autoFocus
-                  placeholder="ej: jefe.guardia, rrhh.central, etc."
+                  placeholder="ej: jefe.guardia, jefe.informatica, rrhh.central"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-medium"
@@ -279,15 +194,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           <div className="mt-5 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
             <div className="flex items-center gap-1.5 text-[11px]">
               <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Acceso seguro y restringido por servicio</span>
+              <span>Aislamiento estricto de nómina y datos por servicio</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsRegisterOpen(true)}
-              className="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold underline cursor-pointer"
-            >
-              + Nuevo Responsable
-            </button>
+            <div className="text-[11px] text-slate-500 font-medium">
+              Gestión de Cuentas: RRHH
+            </div>
           </div>
 
         </div>
@@ -298,146 +209,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         </p>
 
       </div>
-
-      {/* Modal de Alta de Usuario para Cargar Guardias */}
-      {isRegisterOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in">
-            <div className="bg-slate-950 px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-                <UserPlus className="w-4 h-4" />
-                <span>Dar de Alta Usuario que Cargará Guardias</span>
-              </div>
-              <button
-                onClick={() => setIsRegisterOpen(false)}
-                className="p-1 text-slate-400 hover:text-white rounded cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleRegisterNewUser} className="p-5 space-y-3.5">
-              {regMessage && (
-                <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 ${
-                  regMessage.type === 'success' ? 'bg-emerald-950 border border-emerald-700 text-emerald-200' : 'bg-rose-950 border border-rose-700 text-rose-200'
-                }`}>
-                  {regMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> : <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />}
-                  <span>{regMessage.text}</span>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Apellido y Nombre del Encargado / Jefe *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="ej: Dr. Insfrán, Marcelo"
-                  value={regFullName}
-                  onChange={(e) => setRegFullName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">
-                    Matrícula / Legajo
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="ej: M.P. 4902"
-                    value={regLegajo}
-                    onChange={(e) => setRegLegajo(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">
-                    Servicio a Cargar *
-                  </label>
-                  <select
-                    value={regServiceId || allServices[0]?.id}
-                    onChange={(e) => setRegServiceId(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-emerald-600/70 text-emerald-300 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    {allServices.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.config?.serviceName || s.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    Credenciales de Login
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleSuggestRegCredentials}
-                    className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold bg-emerald-950/60 border border-emerald-700/50 px-2 py-0.5 rounded flex items-center gap-1 cursor-pointer"
-                  >
-                    <Sparkles className="w-3 h-3 text-emerald-400" />
-                    Sugerir Usuario y Contraseña
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">
-                      Usuario *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="ej: jefe.trauma"
-                      value={regUsername}
-                      onChange={(e) => setRegUsername(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">
-                      Contraseña *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="ej: guardia2026"
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono font-bold text-amber-300"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsRegisterOpen(false)}
-                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-lg cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow cursor-pointer flex items-center gap-1.5"
-                >
-                  <Check className="w-4 h-4" />
-                  Dar de Alta y Guardar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
