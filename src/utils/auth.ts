@@ -20,12 +20,12 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
     id: 'user_jefe_info',
     username: 'jefe.informatica',
     password: 'info2026',
-    fullName: 'Escobar, Eduardo Martin',
+    fullName: 'Cantero, Miguel Angel',
     role: 'jefe_servicio',
-    roleTitle: 'Jefe / Encargado de Carga de Informática y Estadística',
+    roleTitle: 'Jefe del Servicio de Informática',
     serviceId: 'serv_informatica',
     serviceName: 'Servicio de Informática y Estadística',
-    legajo: 'LEG-4820',
+    legajo: 'LEG-5192',
     avatarIcon: 'Server',
   },
   {
@@ -72,7 +72,19 @@ export function loadAllUsers(): UserAccount[] {
     if (saved) {
       const parsed: UserAccount[] = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        // Auto-heal / update jefe.informatica if outdated in localStorage
+        const healed = parsed.map(u => {
+          if (u.username === 'jefe.informatica' || u.id === 'user_jefe_info') {
+            return {
+              ...u,
+              fullName: 'Cantero, Miguel Angel',
+              roleTitle: 'Jefe del Servicio de Informática',
+              legajo: u.legajo === 'LEG-4820' ? 'LEG-5192' : (u.legajo || 'LEG-5192'),
+            };
+          }
+          return u;
+        });
+        return healed;
       }
     }
   } catch (e) {

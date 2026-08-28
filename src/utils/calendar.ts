@@ -215,9 +215,9 @@ export const SERVICE_PRESETS: ServicePreset[] = [
       hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
       hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
       serviceName: 'Servicio de Informática y Estadística',
-      jefeName: 'Escobar, Eduardo Martin',
-      jefeCargo: 'Jefe de Servicio (Soporte Técnico)',
-      jefeLegajo: 'LEG-4820',
+      jefeName: 'Cantero, Miguel Angel',
+      jefeCargo: 'Jefe del Servicio de Informática',
+      jefeLegajo: 'LEG-5192',
       jornalHorarioLabel: '06:00 a 13:00 hs',
       extraHabilHorarioLabel: '13:00 a 20:00 hs',
       inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
@@ -226,22 +226,22 @@ export const SERVICE_PRESETS: ServicePreset[] = [
     agents: [
       {
         id: 'agent_jefe',
-        name: 'Escobar, Eduardo Martin',
-        roleLabel: 'Jefe de Servicio (Soporte Técnico)',
+        name: 'Cantero, Miguel Angel',
+        roleLabel: 'Jefe del Servicio de Informática',
         category: 'Soporte Técnico',
-        legajo: 'LEG-4820',
+        legajo: 'LEG-5192',
         isJefe: true,
         hasJornal: true,
-        allowedInhabileMode: 'pasiva',
+        allowedInhabileMode: 'activa',
       },
       {
         id: 'agent_soporte_1',
-        name: 'Cantero, Miguel Angel',
-        roleLabel: 'Agente Soporte Técnico',
-        category: 'Soporte Técnico',
-        legajo: 'LEG-5192',
+        name: 'Escobar, Eduardo Martin',
+        roleLabel: 'Soporte Informático SIGHO',
+        category: 'Soporte Informático SIGHO',
+        legajo: 'LEG-4820',
         hasJornal: true,
-        allowedInhabileMode: 'activa',
+        allowedInhabileMode: 'pasiva',
       },
       {
         id: 'agent_sigho_1',
@@ -274,9 +274,9 @@ export const INITIAL_SERVICES: HospitalServiceItem[] = [
       hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
       hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
       serviceName: 'Servicio de Informática y Estadística',
-      jefeName: 'Escobar, Eduardo Martin',
-      jefeCargo: 'Jefe de Servicio (Soporte Técnico)',
-      jefeLegajo: 'LEG-4820',
+      jefeName: 'Cantero, Miguel Angel',
+      jefeCargo: 'Jefe del Servicio de Informática',
+      jefeLegajo: 'LEG-5192',
       jornalHorarioLabel: '06:00 a 13:00 hs',
       extraHabilHorarioLabel: '13:00 a 20:00 hs',
       inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
@@ -285,22 +285,22 @@ export const INITIAL_SERVICES: HospitalServiceItem[] = [
     agents: [
       {
         id: 'agent_jefe',
-        name: 'Escobar, Eduardo Martin',
-        roleLabel: 'Jefe de Servicio (Soporte Técnico)',
+        name: 'Cantero, Miguel Angel',
+        roleLabel: 'Jefe del Servicio de Informática',
         category: 'Soporte Técnico',
-        legajo: 'LEG-4820',
+        legajo: 'LEG-5192',
         isJefe: true,
         hasJornal: true,
-        allowedInhabileMode: 'pasiva',
+        allowedInhabileMode: 'activa',
       },
       {
         id: 'agent_soporte_1',
-        name: 'Cantero, Miguel Angel',
-        roleLabel: 'Agente Soporte Técnico',
-        category: 'Soporte Técnico',
-        legajo: 'LEG-5192',
+        name: 'Escobar, Eduardo Martin',
+        roleLabel: 'Soporte Informático SIGHO',
+        category: 'Soporte Informático SIGHO',
+        legajo: 'LEG-4820',
         hasJornal: true,
-        allowedInhabileMode: 'activa',
+        allowedInhabileMode: 'pasiva',
       },
       {
         id: 'agent_sigho_1',
@@ -488,9 +488,47 @@ export function loadAllServices(): HospitalServiceItem[] {
   try {
     const saved = localStorage.getItem(SERVICES_STORAGE_KEY);
     if (saved) {
-      const parsed = JSON.parse(saved);
+      const parsed: HospitalServiceItem[] = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        // Auto-heal / update serv_informatica if jefe was outdated
+        const healed = parsed.map(s => {
+          if (s.id === 'serv_informatica' || s.name.toLowerCase().includes('informática')) {
+            const updatedConfig = {
+              ...s.config,
+              jefeName: 'Cantero, Miguel Angel',
+              jefeCargo: 'Jefe del Servicio de Informática',
+              jefeLegajo: s.config?.jefeLegajo === 'LEG-4820' ? 'LEG-5192' : (s.config?.jefeLegajo || 'LEG-5192'),
+            };
+            const updatedAgents = (s.agents || []).map(a => {
+              if (a.name.toLowerCase().includes('cantero')) {
+                return {
+                  ...a,
+                  isJefe: true,
+                  roleLabel: 'Jefe del Servicio de Informática',
+                  category: 'Soporte Técnico',
+                  allowedInhabileMode: 'activa' as InhabileMode,
+                };
+              }
+              if (a.name.toLowerCase().includes('escobar')) {
+                return {
+                  ...a,
+                  isJefe: false,
+                  roleLabel: 'Soporte Informático SIGHO',
+                  category: 'Soporte Informático SIGHO',
+                  allowedInhabileMode: 'pasiva' as InhabileMode,
+                };
+              }
+              return a;
+            });
+            return {
+              ...s,
+              config: updatedConfig,
+              agents: updatedAgents,
+            };
+          }
+          return s;
+        });
+        return healed;
       }
     }
   } catch (e) {

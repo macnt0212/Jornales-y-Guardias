@@ -132,10 +132,44 @@ export default function App() {
     if (saved) {
       try {
         const loaded: MonthSchedule = JSON.parse(saved);
+        let healedConfig = loaded.serviceConfig || initialConfig;
+        let healedAgents = loaded.agents || initialAgents;
+
+        if (servId === 'serv_informatica' || (healedConfig?.serviceName && healedConfig.serviceName.toLowerCase().includes('informática'))) {
+          healedConfig = {
+            ...healedConfig,
+            jefeName: 'Cantero, Miguel Angel',
+            jefeCargo: 'Jefe del Servicio de Informática',
+            jefeLegajo: healedConfig.jefeLegajo === 'LEG-4820' ? 'LEG-5192' : (healedConfig.jefeLegajo || 'LEG-5192'),
+          };
+          healedAgents = healedAgents.map(a => {
+            if (a.name.toLowerCase().includes('cantero')) {
+              return {
+                ...a,
+                isJefe: true,
+                roleLabel: 'Jefe del Servicio de Informática',
+                category: 'Soporte Técnico',
+                allowedInhabileMode: 'activa' as InhabileMode,
+              };
+            }
+            if (a.name.toLowerCase().includes('escobar')) {
+              return {
+                ...a,
+                isJefe: false,
+                roleLabel: 'Soporte Informático SIGHO',
+                category: 'Soporte Informático SIGHO',
+                allowedInhabileMode: 'pasiva' as InhabileMode,
+              };
+            }
+            return a;
+          });
+        }
+
         return {
           ...loaded,
           serviceId: servId,
-          serviceConfig: loaded.serviceConfig || initialConfig,
+          serviceConfig: healedConfig,
+          agents: healedAgents,
         };
       } catch (e) {
         console.error(e);

@@ -4,7 +4,7 @@ export interface HospitalServiceConfig {
   hospitalName: string; // ej: "HOSPITAL CENTRAL DE EMERGENCIAS DE FORMOSA"
   hospitalSubtitle?: string; // ej: "Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano"
   serviceName: string; // ej: "Servicio de Guardia Médica y Emergencias", "Servicio de Enfermería", "Servicio de Informática y SIGHO", etc.
-  jefeName: string; // ej: "Dr. Pérez, Juan Carlos" o "Escobar, Eduardo Martin"
+  jefeName: string; // ej: "Dr. Pérez, Juan Carlos" o "Cantero, Miguel Angel"
   jefeCargo: string; // ej: "Jefe de Servicio" o "Responsable de Área"
   jefeLegajo: string; // ej: "LEG-4820" o "M.P. 3421"
   jornalHorarioLabel?: string; // ej: "06:00 a 13:00 hs"
