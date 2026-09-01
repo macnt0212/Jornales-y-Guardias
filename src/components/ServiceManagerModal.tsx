@@ -614,102 +614,175 @@ export const ServiceManagerModal: React.FC<ServiceManagerModalProps> = ({
                     {editingAgents.map((agent, index) => (
                       <div
                         key={agent.id}
-                        className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs"
+                        className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs flex flex-col gap-2.5 text-xs"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-[10px] shrink-0">
-                            {index + 1}
-                          </span>
-                          <div className="space-y-1 flex-1">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
-                              <div>
-                                <label className="block text-[10px] text-slate-500 font-semibold">Apellido y Nombre</label>
-                                <input
-                                  type="text"
-                                  value={agent.name}
-                                  onChange={(e) => {
-                                    const updated = [...editingAgents];
-                                    updated[index] = { ...updated[index], name: e.target.value };
-                                    setEditingAgents(updated);
-                                  }}
-                                  className="w-full px-2 py-1 border border-slate-300 rounded font-semibold text-slate-900"
-                                />
-                              </div>
+                        <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-[10px] shrink-0">
+                              {index + 1}
+                            </span>
+                            <span className="font-bold text-slate-900 text-xs">{agent.name || 'Agente'}</span>
+                            <span className="font-mono text-slate-400 text-[11px]">({agent.legajo})</span>
+                          </div>
 
-                              <div>
-                                <label className="block text-[10px] text-slate-500 font-semibold">Legajo / M.P.</label>
-                                <input
-                                  type="text"
-                                  value={agent.legajo}
-                                  onChange={(e) => {
-                                    const updated = [...editingAgents];
-                                    updated[index] = { ...updated[index], legajo: e.target.value };
-                                    setEditingAgents(updated);
-                                  }}
-                                  className="w-full px-2 py-1 border border-slate-300 rounded text-slate-800"
-                                />
-                              </div>
+                          <div className="flex items-center gap-2">
+                            <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-600">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(agent.isJefe)}
+                                onChange={(e) => {
+                                  const updated = [...editingAgents];
+                                  updated[index] = { ...updated[index], isJefe: e.target.checked };
+                                  setEditingAgents(updated);
+                                }}
+                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <span className="font-semibold">Es Jefe/a</span>
+                            </label>
 
-                              <div>
-                                <label className="block text-[10px] text-slate-500 font-semibold">Función / Puesto</label>
-                                <input
-                                  type="text"
-                                  value={agent.roleLabel}
-                                  onChange={(e) => {
-                                    const updated = [...editingAgents];
-                                    updated[index] = { ...updated[index], roleLabel: e.target.value };
-                                    setEditingAgents(updated);
-                                  }}
-                                  className="w-full px-2 py-1 border border-slate-300 rounded text-slate-800"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-[10px] text-slate-500 font-semibold">Modalidad Inhábil</label>
-                                <select
-                                  value={agent.allowedInhabileMode || 'activa'}
-                                  onChange={(e) => {
-                                    const updated = [...editingAgents];
-                                    updated[index] = { ...updated[index], allowedInhabileMode: e.target.value as 'activa' | 'pasiva' };
-                                    setEditingAgents(updated);
-                                  }}
-                                  className="w-full px-2 py-1 border border-slate-300 rounded text-slate-800 font-medium"
-                                >
-                                  <option value="activa">Activa (Presencial)</option>
-                                  <option value="pasiva">Pasiva (Disponibilidad)</option>
-                                </select>
-                              </div>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`¿Eliminar a ${agent.name} de este servicio?`)) {
+                                  setEditingAgents(editingAgents.filter((_, i) => i !== index));
+                                }
+                              }}
+                              className="text-rose-600 hover:text-rose-800 p-1 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                              title="Eliminar agente"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-end gap-2 shrink-0 pt-1 md:pt-0">
-                          <label className="flex items-center gap-1.5 cursor-pointer text-slate-700 select-none">
+                        {/* Campos del agente */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+                          <div>
+                            <label className="block text-[10px] text-slate-500 font-semibold mb-0.5">Apellido y Nombre</label>
                             <input
-                              type="checkbox"
-                              checked={agent.hasJornal !== false}
+                              type="text"
+                              value={agent.name}
                               onChange={(e) => {
                                 const updated = [...editingAgents];
-                                updated[index] = { ...updated[index], hasJornal: e.target.checked };
+                                updated[index] = { ...updated[index], name: e.target.value };
                                 setEditingAgents(updated);
                               }}
-                              className="rounded text-emerald-600 focus:ring-emerald-500"
+                              className="w-full px-2 py-1 border border-slate-300 rounded font-semibold text-slate-900"
                             />
-                            <span>Jornal Ordinario</span>
-                          </label>
+                          </div>
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm(`¿Eliminar a ${agent.name} de este servicio?`)) {
-                                setEditingAgents(editingAgents.filter((_, i) => i !== index));
-                              }
-                            }}
-                            className="text-rose-600 hover:text-rose-800 p-1 hover:bg-rose-50 rounded transition-colors cursor-pointer"
-                            title="Eliminar agente"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div>
+                            <label className="block text-[10px] text-slate-500 font-semibold mb-0.5">Legajo / M.P.</label>
+                            <input
+                              type="text"
+                              value={agent.legajo}
+                              onChange={(e) => {
+                                const updated = [...editingAgents];
+                                updated[index] = { ...updated[index], legajo: e.target.value };
+                                setEditingAgents(updated);
+                              }}
+                              className="w-full px-2 py-1 border border-slate-300 rounded text-slate-800 font-mono"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] text-slate-500 font-semibold mb-0.5">Función / Puesto</label>
+                            <input
+                              type="text"
+                              value={agent.roleLabel}
+                              onChange={(e) => {
+                                const updated = [...editingAgents];
+                                updated[index] = { ...updated[index], roleLabel: e.target.value };
+                                setEditingAgents(updated);
+                              }}
+                              className="w-full px-2 py-1 border border-slate-300 rounded text-slate-800"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] text-slate-500 font-semibold mb-0.5">Guardias Inhábiles</label>
+                            <select
+                              value={agent.allowedInhabileMode || 'activa'}
+                              onChange={(e) => {
+                                const updated = [...editingAgents];
+                                updated[index] = { ...updated[index], allowedInhabileMode: e.target.value as 'activa' | 'pasiva' };
+                                setEditingAgents(updated);
+                              }}
+                              className="w-full px-2 py-1 border border-slate-300 rounded text-slate-800 font-medium"
+                            >
+                              <option value="activa">Activa (Presencial)</option>
+                              <option value="pasiva">Pasiva (Disponibilidad)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Configuración de Modalidad y Turnos */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-2 bg-slate-50 rounded border border-slate-200">
+                          <div>
+                            <label className="block text-[10px] text-slate-600 font-bold mb-0.5">Modalidad de Jornal / Guardias</label>
+                            <select
+                              value={agent.workModality || (agent.hasJornal === false ? 'solo_guardias' : 'jornal_y_guardias')}
+                              onChange={(e) => {
+                                const val = e.target.value as any;
+                                const updated = [...editingAgents];
+                                updated[index] = { 
+                                  ...updated[index], 
+                                  workModality: val,
+                                  hasJornal: val !== 'solo_guardias'
+                                };
+                                setEditingAgents(updated);
+                              }}
+                              className="w-full px-2 py-1 border border-slate-300 rounded text-slate-900 font-semibold bg-white"
+                            >
+                              <option value="jornal_y_guardias">Jornal + Guardias Contraturno</option>
+                              <option value="solo_guardias">Solo Guardias (Jornal en otra inst.)</option>
+                              <option value="solo_jornal">Solo Jornal (Sin Guardias)</option>
+                            </select>
+                          </div>
+
+                          {agent.workModality !== 'solo_guardias' ? (
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold mb-0.5">Horario Habitual de Jornal</label>
+                              <select
+                                value={agent.jornalShift || 'manana'}
+                                onChange={(e) => {
+                                  const updated = [...editingAgents];
+                                  updated[index] = { ...updated[index], jornalShift: e.target.value as any };
+                                  setEditingAgents(updated);
+                                }}
+                                className="w-full px-2 py-1 border border-slate-300 rounded text-slate-900 font-medium bg-white"
+                              >
+                                <option value="manana">Mañana (06:00 a 13:00 hs)</option>
+                                <option value="tarde">Tarde (13:00 a 20:00 hs)</option>
+                                <option value="noche">Noche (20:00 a 07:00 hs)</option>
+                              </select>
+                            </div>
+                          ) : (
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold mb-0.5">Institución Externa de Jornal</label>
+                              <input
+                                type="text"
+                                value={agent.externalInstitution || ''}
+                                onChange={(e) => {
+                                  const updated = [...editingAgents];
+                                  updated[index] = { ...updated[index], externalInstitution: e.target.value };
+                                  setEditingAgents(updated);
+                                }}
+                                placeholder="Ej: Hospital de la Madre y el Niño"
+                                className="w-full px-2 py-1 border border-slate-300 rounded text-slate-900 bg-white"
+                              />
+                            </div>
+                          )}
+
+                          <div className="flex items-center text-[11px] text-slate-500 pt-3 sm:pt-0">
+                            {agent.workModality === 'solo_guardias' ? (
+                              <span>No computa horas de jornal en este hospital. Solo cobra guardias.</span>
+                            ) : agent.workModality === 'solo_jornal' ? (
+                              <span>Cumple solo horas de jornal en su turno asignado. Sin guardias.</span>
+                            ) : (
+                              <span>Jornal en su turno y guardias extras en contraturno.</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}

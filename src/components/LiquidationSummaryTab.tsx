@@ -1,7 +1,14 @@
 import React from 'react';
 import { MonthSchedule, DayInfo } from '../types';
-import { calculateAgentStats, MONTH_NAMES, HOURS_PER_SHIFT } from '../utils/calendar';
-import { CheckCircle2, FileSpreadsheet, Printer, Award, BarChart3, Users, Shield } from 'lucide-react';
+import { 
+  calculateAgentStats, 
+  MONTH_NAMES, 
+  HOURS_PER_SHIFT,
+  getAgentWorkModality,
+  getAgentJornalShift,
+  getContraturnoShiftForAgent
+} from '../utils/calendar';
+import { CheckCircle2, FileSpreadsheet, Printer, Award, BarChart3, Users, Shield, Building2, Sun, Moon, Briefcase } from 'lucide-react';
 
 interface LiquidationSummaryTabProps {
   schedule: MonthSchedule;
@@ -37,6 +44,10 @@ export const LiquidationSummaryTab: React.FC<LiquidationSummaryTabProps> = ({
   });
 
   const maxHours = Math.max(...agentStatsList.map(a => a.stats.totalHorasMes), 1);
+  const serviceName = schedule.serviceConfig?.serviceName || 'Servicio Hospitalario';
+  const hospitalName = schedule.serviceConfig?.hospitalName || 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"';
+  const jefeName = schedule.serviceConfig?.jefeName || 'Cantero, Miguel Angel';
+  const jefeCargo = schedule.serviceConfig?.jefeCargo || 'Jefe del Servicio de Informática';
 
   return (
     <div className="flex flex-col gap-5">
@@ -51,7 +62,7 @@ export const LiquidationSummaryTab: React.FC<LiquidationSummaryTabProps> = ({
               Resumen Oficial de Horas para Liquidación y Recursos Humanos
             </h2>
             <p className="text-xs text-slate-500">
-              Informe consolidado del Servicio de Informática - Hospital Central de Emergencias de Formosa
+              Informe consolidado de {serviceName} • {hospitalName}
             </p>
           </div>
         </div>
@@ -84,10 +95,10 @@ export const LiquidationSummaryTab: React.FC<LiquidationSummaryTabProps> = ({
                 PROVINCIA DE FORMOSA • MINISTERIO DE DESARROLLO HUMANO
               </div>
               <h1 className="text-lg sm:text-xl font-black text-slate-900">
-                HOSPITAL CENTRAL DE EMERGENCIAS DE FORMOSA
+                {hospitalName}
               </h1>
               <div className="text-xs font-bold text-emerald-800 uppercase mt-0.5">
-                SERVICIO DE INFORMÁTICA Y ESTADÍSTICA HOSPITALARIA
+                {serviceName}
               </div>
             </div>
 
@@ -108,10 +119,9 @@ export const LiquidationSummaryTab: React.FC<LiquidationSummaryTabProps> = ({
                 <th className="p-2.5 border border-slate-700 text-center w-8">N°</th>
                 <th className="p-2.5 border border-slate-700">Agente (Apellido y Nombre)</th>
                 <th className="p-2.5 border border-slate-700 text-center">Legajo</th>
-                <th className="p-2.5 border border-slate-700">Función / Cargo</th>
-                <th className="p-2.5 border border-slate-700">Categoría</th>
-                <th className="p-2.5 border border-slate-700 text-center bg-blue-950">Jornal (6-13)</th>
-                <th className="p-2.5 border border-slate-700 text-center bg-emerald-950">Ext. Hábil (13-20)</th>
+                <th className="p-2.5 border border-slate-700">Modalidad / Turno</th>
+                <th className="p-2.5 border border-slate-700 text-center bg-blue-950">Jornal</th>
+                <th className="p-2.5 border border-slate-700 text-center bg-emerald-950">Ext. Hábil</th>
                 <th className="p-2.5 border border-slate-700 text-center bg-purple-950">Inháb. Activa</th>
                 <th className="p-2.5 border border-slate-700 text-center bg-amber-950">Inháb. Pasiva</th>
                 <th className="p-2.5 border border-slate-700 text-center bg-emerald-900 font-bold">Total Extras</th>
@@ -122,6 +132,8 @@ export const LiquidationSummaryTab: React.FC<LiquidationSummaryTabProps> = ({
             <tbody className="divide-y divide-slate-200 text-slate-800">
               {agentStatsList.map(({ agent, stats }, index) => {
                 const isEven = index % 2 === 0;
+                const modality = getAgentWorkModality(agent);
+                const jTurno = getAgentJornalShift(agent);
 
                 return (
                   <tr key={agent.id} className={`${isEven ? 'bg-white' : 'bg-slate-50'} hover:bg-emerald-50/40 transition-colors`}>
@@ -137,27 +149,37 @@ export const LiquidationSummaryTab: React.FC<LiquidationSummaryTabProps> = ({
                           </span>
                         )}
                       </div>
+                      <div className="text-[10px] text-slate-500 font-normal">{agent.roleLabel}</div>
                     </td>
                     <td className="p-2.5 border border-slate-300 text-center font-mono text-slate-600 font-semibold">
                       {agent.legajo}
                     </td>
-                    <td className="p-2.5 border border-slate-300 text-slate-700">
-                      {agent.roleLabel}
-                    </td>
                     <td className="p-2.5 border border-slate-300">
-                      <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded ${
-                        agent.category === 'Soporte Técnico'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-teal-100 text-teal-800'
-                      }`}>
-                        {agent.category}
-                      </span>
+                      {modality === 'solo_guardias' ? (
+                        <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-900 border border-teal-200">
+                          Solo Guardias ({agent.externalInstitution || 'Ext.'})
+                        </span>
+                      ) : modality === 'solo_jornal' ? (
+                        <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">
+                          Solo Jornal ({jTurno === 'tarde' ? 'Tarde' : 'Mañana'})
+                        </span>
+                      ) : (
+                        <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-900 border border-blue-200">
+                          {jTurno === 'tarde' ? 'J. Tarde + Ext. Mañana' : 'J. Mañana + Ext. Tarde'}
+                        </span>
+                      )}
                     </td>
 
                     {/* Jornal */}
                     <td className="p-2.5 border border-slate-300 text-center bg-blue-50/40">
-                      <div className="font-bold text-blue-900">{stats.horasJornal} hs</div>
-                      <div className="text-[10px] text-slate-500">{stats.diasJornal} días</div>
+                      {modality === 'solo_guardias' ? (
+                        <span className="text-[10px] text-teal-700 italic font-semibold">[En otra inst.]</span>
+                      ) : (
+                        <>
+                          <div className="font-bold text-blue-900">{stats.horasJornal} hs</div>
+                          <div className="text-[10px] text-slate-500">{stats.diasJornal} días</div>
+                        </>
+                      )}
                     </td>
 
                     {/* Extra Hábil */}
@@ -195,8 +217,8 @@ export const LiquidationSummaryTab: React.FC<LiquidationSummaryTabProps> = ({
             {/* Totales Generales del Servicio */}
             <tfoot className="bg-slate-900 text-white font-bold border-t-2 border-slate-950 text-xs">
               <tr>
-                <td colSpan={5} className="p-3 border border-slate-700 text-right uppercase tracking-wider">
-                  TOTALES GENERALES DEL SERVICIO DE INFORMÁTICA:
+                <td colSpan={4} className="p-3 border border-slate-700 text-right uppercase tracking-wider">
+                  TOTALES GENERALES DEL SERVICIO:
                 </td>
                 <td className="p-3 border border-slate-700 text-center text-blue-300 font-extrabold">
                   {totalJornalHs} hs
@@ -225,13 +247,11 @@ export const LiquidationSummaryTab: React.FC<LiquidationSummaryTabProps> = ({
         <div className="mt-6 pt-5 border-t border-slate-200">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-indigo-600" />
-            Distribución y Equidad de Horas Totales del Personal
+            Distribución y Carga Horaria del Personal
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {agentStatsList.map(({ agent, stats }) => {
-              const pct = Math.round((stats.totalHorasMes / maxHours) * 100);
-
               return (
                 <div key={agent.id} className="bg-slate-50 border border-slate-200 rounded-lg p-3">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-900 mb-1.5">
@@ -241,26 +261,32 @@ export const LiquidationSummaryTab: React.FC<LiquidationSummaryTabProps> = ({
 
                   {/* Multi-segment Progress Bar */}
                   <div className="w-full bg-slate-200 rounded-full h-3 flex overflow-hidden">
-                    <div 
-                      className="bg-blue-600 h-full" 
-                      style={{ width: `${(stats.horasJornal / stats.totalHorasMes) * 100}%` }}
-                      title={`Jornal: ${stats.horasJornal} hs`}
-                    />
-                    <div 
-                      className="bg-emerald-500 h-full" 
-                      style={{ width: `${(stats.horasExtraHabil / stats.totalHorasMes) * 100}%` }}
-                      title={`Extra Hábil: ${stats.horasExtraHabil} hs`}
-                    />
-                    <div 
-                      className="bg-purple-500 h-full" 
-                      style={{ width: `${(stats.horasInhabilActiva / stats.totalHorasMes) * 100}%` }}
-                      title={`Inhábil Activa: ${stats.horasInhabilActiva} hs`}
-                    />
-                    <div 
-                      className="bg-amber-500 h-full" 
-                      style={{ width: `${(stats.horasInhabilPasiva / stats.totalHorasMes) * 100}%` }}
-                      title={`Inhábil Pasiva: ${stats.horasInhabilPasiva} hs`}
-                    />
+                    {stats.totalHorasMes > 0 ? (
+                      <>
+                        <div 
+                          className="bg-blue-600 h-full" 
+                          style={{ width: `${(stats.horasJornal / stats.totalHorasMes) * 100}%` }}
+                          title={`Jornal: ${stats.horasJornal} hs`}
+                        />
+                        <div 
+                          className="bg-emerald-500 h-full" 
+                          style={{ width: `${(stats.horasExtraHabil / stats.totalHorasMes) * 100}%` }}
+                          title={`Extra Hábil: ${stats.horasExtraHabil} hs`}
+                        />
+                        <div 
+                          className="bg-purple-500 h-full" 
+                          style={{ width: `${(stats.horasInhabilActiva / stats.totalHorasMes) * 100}%` }}
+                          title={`Inhábil Activa: ${stats.horasInhabilActiva} hs`}
+                        />
+                        <div 
+                          className="bg-amber-500 h-full" 
+                          style={{ width: `${(stats.horasInhabilPasiva / stats.totalHorasMes) * 100}%` }}
+                          title={`Inhábil Pasiva: ${stats.horasInhabilPasiva} hs`}
+                        />
+                      </>
+                    ) : (
+                      <div className="bg-slate-300 h-full w-full" />
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between text-[10px] text-slate-500 mt-1.5">
@@ -279,20 +305,20 @@ export const LiquidationSummaryTab: React.FC<LiquidationSummaryTabProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-10 pt-8 border-t-2 border-slate-300 text-center text-xs text-slate-700">
           <div className="flex flex-col items-center">
             <div className="w-48 border-b-2 border-slate-400 mb-2"></div>
-            <strong className="text-slate-900">Lic. Romero, Carlos Alberto</strong>
-            <span className="text-[11px] text-slate-500">Jefe Servicio de Informática</span>
+            <strong className="text-slate-900">{jefeName}</strong>
+            <span className="text-[11px] text-slate-500">{jefeCargo}</span>
           </div>
 
           <div className="flex flex-col items-center">
             <div className="w-48 border-b-2 border-slate-400 mb-2"></div>
             <strong className="text-slate-900">Depto. Recursos Humanos</strong>
-            <span className="text-[11px] text-slate-500">Hospital Central de Emergencias</span>
+            <span className="text-[11px] text-slate-500">{hospitalName}</span>
           </div>
 
           <div className="flex flex-col items-center">
             <div className="w-48 border-b-2 border-slate-400 mb-2"></div>
             <strong className="text-slate-900">Dirección Ejecutiva / Médica</strong>
-            <span className="text-[11px] text-slate-500">Hospital Central de Emergencias</span>
+            <span className="text-[11px] text-slate-500">{hospitalName}</span>
           </div>
         </div>
       </div>

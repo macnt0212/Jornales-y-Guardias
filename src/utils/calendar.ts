@@ -1,4 +1,16 @@
-import { Agent, DayInfo, DayShiftAssignment, MonthSchedule, AgentMonthStats, InhabileMode, HospitalServiceConfig, HospitalServiceItem } from '../types';
+import { 
+  Agent, 
+  DayInfo, 
+  DayShiftAssignment, 
+  MonthSchedule, 
+  AgentMonthStats, 
+  InhabileMode, 
+  HospitalServiceConfig, 
+  HospitalServiceItem,
+  WorkModality,
+  JornalShiftType,
+  ExtraHabilShiftType
+} from '../types';
 
 export const HOURS_PER_SHIFT = 7; // 6 a 13 = 7hs, 13 a 20 = 7hs
 
@@ -559,6 +571,35 @@ export function getScheduleStorageKey(serviceId: string, year: number, month: nu
 
 export const DEFAULT_AGENTS: Agent[] = INITIAL_SERVICES[0].agents; // Informática default
 
+export function getAgentWorkModality(agent: Agent | { workModality?: WorkModality; hasJornal?: boolean } | null | undefined): WorkModality {
+  if (!agent) return 'jornal_y_guardias';
+  if (agent.workModality) return agent.workModality;
+  if (agent.hasJornal === false) return 'solo_guardias';
+  return 'jornal_y_guardias';
+}
+
+export function getAgentJornalShift(agent: Agent | { jornalShift?: JornalShiftType } | null | undefined): JornalShiftType {
+  if (!agent) return 'manana';
+  return agent.jornalShift || 'manana';
+}
+
+export function getContraturnoShiftForAgent(agent: Agent | { jornalShift?: JornalShiftType } | null | undefined): ExtraHabilShiftType {
+  const jShift = getAgentJornalShift(agent);
+  if (jShift === 'tarde') return 'manana';
+  if (jShift === 'noche') return 'manana';
+  return 'tarde';
+}
+
+export function getShiftHoursLabel(shiftType: JornalShiftType | ExtraHabilShiftType | string): string {
+  switch (shiftType) {
+    case 'manana': return '06:00 a 13:00 hs';
+    case 'tarde': return '13:00 a 20:00 hs';
+    case 'noche': return '20:00 a 07:00 hs';
+    case 'rotativo': return 'Horario Rotativo';
+    default: return '06:00 a 13:00 hs';
+  }
+}
+
 export function isAgentInhabileActiva(
   agent: Agent | { name?: string; id?: string; allowedInhabileMode?: InhabileMode } | null | undefined
 ): boolean {
@@ -739,9 +780,13 @@ export function generateBalancedSchedule(
     days.forEach((day) => {
       agents.forEach(agent => {
         const agentMode = getAgentInhabileMode(agent);
+        const jTurno = getAgentJornalShift(agent);
+        const eTurno = getContraturnoShiftForAgent(agent);
         assignments[`${agent.id}_${day.dateStr}`] = {
           jornal: false,
+          jornalTurno: jTurno,
           extraHabil: false,
+          extraHabilTurno: eTurno,
           extraInhabilManana: false,
           extraInhabilMananaTipo: agentMode,
           extraInhabilTarde: false,
@@ -753,8 +798,10 @@ export function generateBalancedSchedule(
 
       if (isBusinessDay) {
         agents.forEach(agent => {
-          if (agent.hasJornal !== false) {
+          const mod = getAgentWorkModality(agent);
+          if (mod !== 'solo_guardias' && agent.hasJornal !== false) {
             assignments[`${agent.id}_${day.dateStr}`].jornal = true;
+            assignments[`${agent.id}_${day.dateStr}`].jornalTurno = getAgentJornalShift(agent);
           }
         });
 
@@ -767,8 +814,14 @@ export function generateBalancedSchedule(
           ? galeano 
           : ((isWeekEven ? isDayOdd : !isDayOdd) ? galeano : amarilla);
 
-        if (assignedSoporte) assignments[`${assignedSoporte.id}_${day.dateStr}`].extraHabil = true;
-        if (assignedSigho) assignments[`${assignedSigho.id}_${day.dateStr}`].extraHabil = true;
+        if (assignedSoporte && getAgentWorkModality(assignedSoporte) !== 'solo_jornal') {
+          assignments[`${assignedSoporte.id}_${day.dateStr}`].extraHabil = true;
+          assignments[`${assignedSoporte.id}_${day.dateStr}`].extraHabilTurno = getContraturnoShiftForAgent(assignedSoporte);
+        }
+        if (assignedSigho && getAgentWorkModality(assignedSigho) !== 'solo_jornal') {
+          assignments[`${assignedSigho.id}_${day.dateStr}`].extraHabil = true;
+          assignments[`${assignedSigho.id}_${day.dateStr}`].extraHabilTurno = getContraturnoShiftForAgent(assignedSigho);
+        }
       } else {
         if (day.isWeekend) {
           const wIndex = weekendIndexMap.get(day.dateStr) ?? 0;
@@ -833,9 +886,13 @@ export function generateBalancedSchedule(
   days.forEach((day) => {
     agents.forEach(agent => {
       const agentMode = getAgentInhabileMode(agent);
+      const jTurno = getAgentJornalShift(agent);
+      const eTurno = getContraturnoShiftForAgent(agent);
       assignments[`${agent.id}_${day.dateStr}`] = {
         jornal: false,
+        jornalTurno: jTurno,
         extraHabil: false,
+        extraHabilTurno: eTurno,
         extraInhabilManana: false,
         extraInhabilMananaTipo: agentMode,
         extraInhabilTarde: false,
@@ -848,28 +905,32 @@ export function generateBalancedSchedule(
     if (isBusinessDay) {
       // Asignar Jornal a quienes lo tienen habilitado
       agents.forEach(agent => {
-        if (agent.hasJornal !== false) {
+        const mod = getAgentWorkModality(agent);
+        if (mod !== 'solo_guardias' && agent.hasJornal !== false) {
           assignments[`${agent.id}_${day.dateStr}`].jornal = true;
+          assignments[`${agent.id}_${day.dateStr}`].jornalTurno = getAgentJornalShift(agent);
         }
       });
 
-      // Si hay más de 1 agente, asignar 1 o 2 a Horas Extras Hábiles rotativas
-      const eligibleForExtra = agents.filter(a => !isAgentOnlyInhabilePasiva(a));
+      // Si hay más de 1 agente, asignar 1 o 2 a Horas Extras Hábiles rotativas (solo los que hacen guardias)
+      const eligibleForExtra = agents.filter(a => !isAgentOnlyInhabilePasiva(a) && getAgentWorkModality(a) !== 'solo_jornal');
       if (eligibleForExtra.length > 0) {
         const assignedAgent = eligibleForExtra[extraHabilIndex % eligibleForExtra.length];
         assignments[`${assignedAgent.id}_${day.dateStr}`].extraHabil = true;
+        assignments[`${assignedAgent.id}_${day.dateStr}`].extraHabilTurno = getContraturnoShiftForAgent(assignedAgent);
         extraHabilIndex++;
       }
     } else {
-      // Días Inhábiles: asignar Mañana y Tarde
-      if (agents.length === 1) {
-        const ag = agents[0];
+      // Días Inhábiles: asignar Mañana y Tarde (solo agentes que hacen guardias)
+      const eligibleInhabiles = agents.filter(a => getAgentWorkModality(a) !== 'solo_jornal');
+      if (eligibleInhabiles.length === 1) {
+        const ag = eligibleInhabiles[0];
         const mode = getAgentInhabileMode(ag);
         assignments[`${ag.id}_${day.dateStr}`].extraInhabilManana = true;
         assignments[`${ag.id}_${day.dateStr}`].extraInhabilMananaTipo = mode;
-      } else if (agents.length >= 2) {
-        const ag1 = agents[shiftIndex % agents.length];
-        const ag2 = agents[(shiftIndex + 1) % agents.length];
+      } else if (eligibleInhabiles.length >= 2) {
+        const ag1 = eligibleInhabiles[shiftIndex % eligibleInhabiles.length];
+        const ag2 = eligibleInhabiles[(shiftIndex + 1) % eligibleInhabiles.length];
         shiftIndex += 2;
 
         assignments[`${ag1.id}_${day.dateStr}`].extraInhabilManana = true;
@@ -896,8 +957,19 @@ export function calculateAgentStats(
   schedule: MonthSchedule,
   days: DayInfo[]
 ): AgentMonthStats {
+  const modality = getAgentWorkModality(agent);
+  const defaultJornalShift = getAgentJornalShift(agent);
+
   let diasJornal = 0;
+  let diasJornalManana = 0;
+  let diasJornalTarde = 0;
+  let diasJornalNoche = 0;
+
   let diasExtraHabil = 0;
+  let horasExtraHabilManana = 0;
+  let horasExtraHabilTarde = 0;
+  let horasExtraHabilNoche = 0;
+
   let turnosInhabilActiva = 0;
   let turnosInhabilPasiva = 0;
 
@@ -906,15 +978,26 @@ export function calculateAgentStats(
     const assign = schedule.assignments[key];
     if (!assign) return;
 
-    if (assign.jornal) {
+    // Jornal ordinario: solo se computa si NO es 'solo_guardias' (los que tienen jornal en otra institución no computan horas de jornal aquí)
+    if (assign.jornal && modality !== 'solo_guardias') {
       diasJornal++;
+      const jTurno = assign.jornalTurno || defaultJornalShift;
+      if (jTurno === 'tarde') diasJornalTarde++;
+      else if (jTurno === 'noche') diasJornalNoche++;
+      else diasJornalManana++;
     }
 
-    if (assign.extraHabil) {
+    // Horas Extras Hábiles en Contraturno: solo si la modalidad NO es 'solo_jornal'
+    if (assign.extraHabil && modality !== 'solo_jornal') {
       diasExtraHabil++;
+      const eTurno = assign.extraHabilTurno || (defaultJornalShift === 'tarde' ? 'manana' : 'tarde');
+      if (eTurno === 'manana') horasExtraHabilManana += HOURS_PER_SHIFT;
+      else if (eTurno === 'noche') horasExtraHabilNoche += HOURS_PER_SHIFT;
+      else horasExtraHabilTarde += HOURS_PER_SHIFT;
     }
 
-    if (assign.extraInhabilManana) {
+    // Inhábiles: solo si la modalidad NO es 'solo_jornal'
+    if (assign.extraInhabilManana && modality !== 'solo_jornal') {
       if (assign.extraInhabilMananaTipo === 'activa') {
         turnosInhabilActiva++;
       } else {
@@ -922,7 +1005,7 @@ export function calculateAgentStats(
       }
     }
 
-    if (assign.extraInhabilTarde) {
+    if (assign.extraInhabilTarde && modality !== 'solo_jornal') {
       if (assign.extraInhabilTardeTipo === 'activa') {
         turnosInhabilActiva++;
       } else {
@@ -931,7 +1014,7 @@ export function calculateAgentStats(
     }
   });
 
-  const horasJornal = diasJornal * HOURS_PER_SHIFT;
+  const horasJornal = modality === 'solo_guardias' ? 0 : (diasJornal * HOURS_PER_SHIFT);
   const horasExtraHabil = diasExtraHabil * HOURS_PER_SHIFT;
   const horasInhabilActiva = turnosInhabilActiva * HOURS_PER_SHIFT;
   const horasInhabilPasiva = turnosInhabilPasiva * HOURS_PER_SHIFT;
@@ -943,10 +1026,19 @@ export function calculateAgentStats(
     agentName: agent.name,
     roleLabel: agent.roleLabel,
     legajo: agent.legajo,
+    workModality: modality,
+    jornalShift: defaultJornalShift,
+    externalInstitution: agent.externalInstitution,
     diasJornal,
     horasJornal,
+    diasJornalManana,
+    diasJornalTarde,
+    diasJornalNoche,
     diasExtraHabil,
     horasExtraHabil,
+    horasExtraHabilManana,
+    horasExtraHabilTarde,
+    horasExtraHabilNoche,
     turnosInhabilActiva,
     horasInhabilActiva,
     turnosInhabilPasiva,

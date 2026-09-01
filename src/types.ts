@@ -1,5 +1,14 @@
 export type InhabileMode = 'activa' | 'pasiva';
 
+// Modalidad de prestación del agente en el servicio
+export type WorkModality = 'jornal_y_guardias' | 'solo_guardias' | 'solo_jornal';
+
+// Turno en el que cumple su Jornal ordinario
+export type JornalShiftType = 'manana' | 'tarde' | 'noche' | 'rotativo';
+
+// Turno en el que cumple Horas Extras Hábiles en contraturno
+export type ExtraHabilShiftType = 'manana' | 'tarde' | 'noche';
+
 export interface HospitalServiceConfig {
   hospitalName: string; // ej: "HOSPITAL CENTRAL DE EMERGENCIAS DE FORMOSA"
   hospitalSubtitle?: string; // ej: "Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano"
@@ -21,22 +30,34 @@ export interface Agent {
   category: string; // ej: "Médico de Guardia", "Lic. en Enfermería", "Soporte Técnico", "Bioquímico", etc.
   legajo: string;
   isJefe?: boolean;
-  hasJornal?: boolean; // true = cumple jornal ordinario de Lunes a Viernes hábiles (06-13 hs)
+  
+  // Modalidad de trabajo
+  workModality?: WorkModality; // 'jornal_y_guardias' | 'solo_guardias' | 'solo_jornal'
+  jornalShift?: JornalShiftType; // 'manana' (06-13) | 'tarde' (13-20) | 'noche' (20-07) | 'rotativo'
+  externalInstitution?: string; // ej: "Hospital de la Madre y el Niño", "Ministerio de Desarrollo Humano", etc. (si es solo_guardias)
+
+  hasJornal?: boolean; // retrocompatibilidad: true si cumple jornal ordinario en este hospital, false si es solo guardias
   allowedInhabileMode?: InhabileMode; // 'activa' | 'pasiva'
   isOnlyPasiva?: boolean; // si solo realiza pasivas
 }
 
 export interface DayShiftAssignment {
-  // Jornal ordinario (ej. 06:00 a 13:00 lunes a viernes hábiles)
+  // Jornal ordinario cumplido en este hospital (ej. Mañana 06-13, Tarde 13-20 o Noche 20-07)
   jornal: boolean;
-  // Extra hábil (ej. 13:00 a 20:00 lunes a viernes)
+  jornalTurno?: JornalShiftType; // 'manana' | 'tarde' | 'noche'
+  
+  // Extra hábil en contraturno
   extraHabil: boolean;
+  extraHabilTurno?: ExtraHabilShiftType; // 'manana' | 'tarde' | 'noche'
+  
   // Extra inhábil mañana (06:00 a 13:00 fines de semana y feriados)
   extraInhabilManana: boolean;
   extraInhabilMananaTipo?: InhabileMode; // 'activa' | 'pasiva'
+  
   // Extra inhábil tarde (13:00 a 20:00 fines de semana y feriados)
   extraInhabilTarde: boolean;
   extraInhabilTardeTipo?: InhabileMode; // 'activa' | 'pasiva'
+  
   // Notas o justificaciones (e.g., 'Licencia', 'Franco compensatorio')
   observaciones?: string;
   isFranco?: boolean;
@@ -78,10 +99,19 @@ export interface AgentMonthStats {
   agentName: string;
   roleLabel: string;
   legajo: string;
+  workModality?: WorkModality;
+  jornalShift?: JornalShiftType;
+  externalInstitution?: string;
   diasJornal: number;
-  horasJornal: number; // 7h por día hábil cumplido
+  horasJornal: number; // 7h por día hábil cumplido en este hospital (0 si es solo_guardias)
+  diasJornalManana?: number;
+  diasJornalTarde?: number;
+  diasJornalNoche?: number;
   diasExtraHabil: number;
   horasExtraHabil: number; // 7h por día
+  horasExtraHabilManana?: number;
+  horasExtraHabilTarde?: number;
+  horasExtraHabilNoche?: number;
   turnosInhabilActiva: number;
   horasInhabilActiva: number; // 7h por turno
   turnosInhabilPasiva: number;

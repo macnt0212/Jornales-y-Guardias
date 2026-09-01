@@ -20,7 +20,10 @@ import {
   Check, 
   Sparkles,
   Lock,
-  Crown
+  Crown,
+  Sun,
+  Moon,
+  Briefcase
 } from 'lucide-react';
 import { downloadOperationsManualPDF } from '../utils/pdfManualGenerator';
 
@@ -63,7 +66,7 @@ export const OperationsManualModal: React.FC<OperationsManualModalProps> = ({
                 </span>
               </h2>
               <p className="text-xs text-slate-300">
-                Guía completa con diagramas de flujo para Operadores, Jefes de Servicio y RRHH
+                Guía oficial con diagramas de flujo para Operadores, Jefes de Servicio y Recursos Humanos
               </p>
             </div>
           </div>
@@ -140,16 +143,16 @@ export const OperationsManualModal: React.FC<OperationsManualModalProps> = ({
                 <strong className="text-emerald-800">1.</strong> Arquitectura y Seguridad (RBAC)
               </div>
               <div className="p-2 rounded bg-slate-50 hover:bg-emerald-50/60 border border-slate-200">
-                <strong className="text-emerald-800">2.</strong> Diagrama del Circuito Mensual
+                <strong className="text-emerald-800">2.</strong> Modalidades Flexibles y Turnos
               </div>
               <div className="p-2 rounded bg-slate-50 hover:bg-emerald-50/60 border border-slate-200">
-                <strong className="text-emerald-800">3.</strong> Régimen y Tipos de Guardias
+                <strong className="text-emerald-800">3.</strong> Diagrama del Circuito Mensual
               </div>
               <div className="p-2 rounded bg-slate-50 hover:bg-emerald-50/60 border border-slate-200">
                 <strong className="text-emerald-800">4.</strong> Paso a Paso: Carga de Planilla
               </div>
               <div className="p-2 rounded bg-slate-50 hover:bg-emerald-50/60 border border-slate-200">
-                <strong className="text-emerald-800">5.</strong> Rotación Equitativa Inteligente
+                <strong className="text-emerald-800">5.</strong> Casos Especiales (Jornal Externo)
               </div>
               <div className="p-2 rounded bg-slate-50 hover:bg-emerald-50/60 border border-slate-200">
                 <strong className="text-emerald-800">6.</strong> Exportación y Firmas Oficiales
@@ -157,7 +160,7 @@ export const OperationsManualModal: React.FC<OperationsManualModalProps> = ({
             </div>
           </div>
 
-          {/* SECCIÓN 1: DIAGRAMA DE FLUJO DE SEGURIDAD Y ACCESO POR ROLES */}
+          {/* SECCIÓN 1: SEGURIDAD Y CONTROL DE ACCESO POR ROLES */}
           <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4 break-inside-avoid">
             <div className="flex items-center gap-2 text-emerald-900 border-b pb-2">
               <ShieldCheck className="w-5 h-5 text-emerald-700" />
@@ -167,300 +170,195 @@ export const OperationsManualModal: React.FC<OperationsManualModalProps> = ({
               El sistema implementa un esquema estricto de seguridad basado en roles. Cada Jefe o Encargado únicamente puede ver y cargar los datos correspondientes a los agentes de su servicio asignado.
             </p>
 
-            {/* DIAGRAMA VECTORIAL 1: ACCESO POR ROLES */}
             <div className="p-4 bg-slate-900 text-white rounded-xl border border-slate-800 space-y-4">
               <div className="text-center font-bold text-xs tracking-wider uppercase text-emerald-400">
-                DIAGRAMA 1: FLUJO DE AUTENTICACIÓN Y SEGURIDAD POR ROL
+                DIAGRAMA 1: ROLES Y RESPONSABILIDADES EN EL SISTEMA
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                {/* ROL 1: JEFE DE SERVICIO */}
-                <div className="bg-slate-950 p-4 rounded-xl border border-blue-500/40 space-y-3">
-                  <div className="flex items-center gap-2 text-blue-400 font-bold text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* ROL 1 */}
+                <div className="bg-slate-950 p-3.5 rounded-xl border border-blue-500/40 space-y-2 text-xs">
+                  <div className="flex items-center gap-1.5 text-blue-400 font-bold text-xs">
                     <UserCheck className="w-4 h-4" />
-                    <span>Jefe / Encargado de Servicio</span>
+                    <span>Jefe del Servicio de Informática</span>
                   </div>
-                  <div className="text-xs text-slate-300 space-y-2">
-                    <div className="flex items-start gap-2 bg-slate-900 p-2 rounded border border-slate-800">
-                      <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">1</div>
-                      <span>Ingreso con Usuario y Contraseña personal</span>
-                    </div>
-                    <div className="flex items-start gap-2 bg-slate-900 p-2 rounded border border-slate-800">
-                      <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">2</div>
-                      <span>Apertura directa de su <strong>Servicio Exclusivo</strong></span>
-                    </div>
-                    <div className="flex items-start gap-2 bg-slate-900 p-2 rounded border border-slate-800">
-                      <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">3</div>
-                      <span>Carga y edición de <strong>únicamente su personal</strong></span>
-                    </div>
-                    <div className="flex items-start gap-2 bg-blue-950/60 p-2 rounded border border-blue-800/60 text-blue-200">
-                      <Lock className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                      <span><strong>Aislamiento Total:</strong> No tiene acceso a otros servicios ni al consolidado general.</span>
-                    </div>
-                  </div>
+                  <div className="font-bold text-slate-100">Cantero, Miguel Angel</div>
+                  <p className="text-[11px] text-slate-300">
+                    Aprobación final de la rotación mensual, control de carga horaria y firma oficial de la planilla de liquidación.
+                  </p>
                 </div>
 
-                {/* ROL 2: ADMINISTRADOR CENTRAL RRHH */}
-                <div className="bg-slate-950 p-4 rounded-xl border border-amber-500/40 space-y-3">
-                  <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                {/* ROL 2 */}
+                <div className="bg-slate-950 p-3.5 rounded-xl border border-teal-500/40 space-y-2 text-xs">
+                  <div className="flex items-center gap-1.5 text-teal-400 font-bold text-xs">
+                    <Users className="w-4 h-4" />
+                    <span>Soporte Informático SIGHO</span>
+                  </div>
+                  <div className="font-bold text-slate-100">Escobar, Eduardo Martin</div>
+                  <p className="text-[11px] text-slate-300">
+                    Soporte operativo al sistema hospitalario SIGHO, mantenimiento técnico y asistencia en la carga de turnos.
+                  </p>
+                </div>
+
+                {/* ROL 3 */}
+                <div className="bg-slate-950 p-3.5 rounded-xl border border-amber-500/40 space-y-2 text-xs">
+                  <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
                     <Crown className="w-4 h-4" />
-                    <span>Administrador General (RRHH)</span>
+                    <span>Dirección de RRHH</span>
                   </div>
-                  <div className="text-xs text-slate-300 space-y-2">
-                    <div className="flex items-start gap-2 bg-slate-900 p-2 rounded border border-slate-800">
-                      <div className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">1</div>
-                      <span>Ingreso como <code>rrhh.central</code></span>
-                    </div>
-                    <div className="flex items-start gap-2 bg-slate-900 p-2 rounded border border-slate-800">
-                      <div className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">2</div>
-                      <span><strong>Supervisión Global:</strong> Puede alternar y auditar cualquier servicio</span>
-                    </div>
-                    <div className="flex items-start gap-2 bg-slate-900 p-2 rounded border border-slate-800">
-                      <div className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">3</div>
-                      <span>Acceso a <strong>Consolidado Hospitalario General</strong></span>
-                    </div>
-                    <div className="flex items-start gap-2 bg-amber-950/60 p-2 rounded border border-amber-800/60 text-amber-200">
-                      <Crown className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                      <span><strong>Gestión de Cuentas:</strong> Alta de nuevos usuarios y creación de servicios.</span>
-                    </div>
-                  </div>
+                  <div className="font-bold text-slate-100">rrhh.central</div>
+                  <p className="text-[11px] text-slate-300">
+                    Supervisión integral de todos los servicios hospitalarios, consolidado general y procesamiento de haberes.
+                  </p>
                 </div>
-
               </div>
             </div>
           </section>
 
-          {/* SECCIÓN 2: DIAGRAMA DEL CICLO MENSUAL OPERATIVO */}
-          <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4 break-inside-avoid">
-            <div className="flex items-center gap-2 text-emerald-900 border-b pb-2">
-              <Calendar className="w-5 h-5 text-emerald-700" />
-              <h2 className="text-lg font-bold">2. Diagrama del Circuito Mensual de Carga y Liquidación</h2>
-            </div>
-
-            {/* DIAGRAMA VECTORIAL 2: ETAPAS DEL PROCESO */}
-            <div className="p-4 bg-slate-900 text-white rounded-xl border border-slate-800 space-y-4">
-              <div className="text-center font-bold text-xs tracking-wider uppercase text-emerald-400">
-                DIAGRAMA 2: CIRCUITO OPERATIVO DE 5 PASOS
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-center text-xs">
-                
-                {/* Paso 1 */}
-                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2 flex flex-col justify-between">
-                  <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold mx-auto">1</div>
-                  <div className="font-bold text-emerald-300">Seleccionar Período</div>
-                  <p className="text-[11px] text-slate-400">Elegir Año y Mes en la cinta superior (calendario automático y feriados).</p>
-                </div>
-
-                {/* Paso 2 */}
-                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2 flex flex-col justify-between">
-                  <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold mx-auto">2</div>
-                  <div className="font-bold text-emerald-300">Nómina de Agentes</div>
-                  <p className="text-[11px] text-slate-400">Revisar agentes, matrículas y roles en "Personal del Servicio".</p>
-                </div>
-
-                {/* Paso 3 */}
-                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2 flex flex-col justify-between">
-                  <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold mx-auto">3</div>
-                  <div className="font-bold text-emerald-300">Asignar Guardias</div>
-                  <p className="text-[11px] text-slate-400">Cargar Jornal (06-13), Extras (13-20) e Inhábiles (Activas/Pasivas).</p>
-                </div>
-
-                {/* Paso 4 */}
-                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2 flex flex-col justify-between">
-                  <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold mx-auto">4</div>
-                  <div className="font-bold text-emerald-300">Auditar Totales</div>
-                  <p className="text-[11px] text-slate-400">Verificar balance de horas en "Fichas" y "Liquidación".</p>
-                </div>
-
-                {/* Paso 5 */}
-                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2 flex flex-col justify-between">
-                  <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold mx-auto">5</div>
-                  <div className="font-bold text-emerald-300">Exportar y Firmar</div>
-                  <p className="text-[11px] text-slate-400">Generar PDF Oficial, Excel (.xls) o Word (.doc) para elevación.</p>
-                </div>
-
-              </div>
-            </div>
-          </section>
-
-          {/* SECCIÓN 3: RÉGIMEN HORARIO Y TIPOS DE TURNOS */}
+          {/* SECCIÓN 2: MODALIDADES FLEXIBLES */}
           <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4 break-inside-avoid">
             <div className="flex items-center gap-2 text-emerald-900 border-b pb-2">
               <Clock className="w-5 h-5 text-emerald-700" />
-              <h2 className="text-lg font-bold">3. Régimen Horario y Nomenclatura Oficial de Turnos</h2>
+              <h2 className="text-lg font-bold">2. Modalidades de Trabajo y Horarios Flexibles</h2>
             </div>
             
-            <div className="overflow-x-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-blue-900">
+                  <Sun className="w-4 h-4 text-blue-600" />
+                  <span>Jornal + Guardias Contraturno</span>
+                </div>
+                <p className="text-[11px] text-slate-600">
+                  Agentes que cumplen su jornada habitual en el hospital (Mañana de 06:00 a 13:00 o Tarde de 13:00 a 20:00) y realizan sus guardias extras en el contraturno opuesto.
+                </p>
+              </div>
+
+              <div className="p-3.5 bg-teal-50 border border-teal-200 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-teal-900">
+                  <Briefcase className="w-4 h-4 text-teal-600" />
+                  <span>Solo Guardias (Jornal Externo)</span>
+                </div>
+                <p className="text-[11px] text-slate-600">
+                  Agentes que cumplen su jornal obligatorio en otra institución de salud. En este hospital <strong>no computan horas de jornal</strong> (marcado con <code>[Ext]</code>) y solo cobran sus guardias asignadas.
+                </p>
+              </div>
+
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                  <CheckCircle2 className="w-4 h-4 text-amber-600" />
+                  <span>Solo Jornal (Sin Guardias)</span>
+                </div>
+                <p className="text-[11px] text-slate-600">
+                  Personal abocado con exclusividad a sus tareas de jornal en su turno asignado. No se les programan guardias extraordinarias en días hábiles ni fines de semana.
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto mt-3">
               <table className="w-full text-left text-xs border border-slate-300 rounded-lg overflow-hidden">
                 <thead className="bg-slate-800 text-white uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="p-2.5">Concepto</th>
-                    <th className="p-2.5">Días de Aplicación</th>
-                    <th className="p-2.5">Horario Habitual</th>
-                    <th className="p-2.5">Horas Cómputo</th>
-                    <th className="p-2.5">Código Celda</th>
-                    <th className="p-2.5">Color Celda</th>
+                    <th className="p-2.5">Turno / Código</th>
+                    <th className="p-2.5">Días Habilitados</th>
+                    <th className="p-2.5">Horario Oficial</th>
+                    <th className="p-2.5">Cómputo</th>
+                    <th className="p-2.5">Regla Operativa</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  <tr className="bg-blue-50/50">
-                    <td className="p-2.5 font-bold text-blue-900">Jornal Ordinario</td>
+                  <tr className="bg-blue-50/40">
+                    <td className="p-2.5 font-bold text-blue-900"><span className="px-2 py-0.5 bg-blue-100 border border-blue-300 text-blue-900 rounded font-mono font-bold">JM</span> Jornal Mañana</td>
                     <td className="p-2.5">Lunes a Viernes Hábiles</td>
                     <td className="p-2.5">06:00 a 13:00 hs</td>
                     <td className="p-2.5 font-bold">7 hs</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 bg-blue-100 border border-blue-300 text-blue-900 font-bold rounded">J</span></td>
-                    <td className="p-2.5 text-blue-800">Fondo Azul Suave</td>
+                    <td className="p-2.5 text-slate-600">Jornal estándar matutino.</td>
                   </tr>
-                  <tr className="bg-emerald-50/50">
-                    <td className="p-2.5 font-bold text-emerald-900">Horas Extras Hábiles</td>
+                  <tr className="bg-blue-50/40">
+                    <td className="p-2.5 font-bold text-blue-900"><span className="px-2 py-0.5 bg-blue-100 border border-blue-300 text-blue-900 rounded font-mono font-bold">JT</span> Jornal Tarde</td>
                     <td className="p-2.5">Lunes a Viernes Hábiles</td>
                     <td className="p-2.5">13:00 a 20:00 hs</td>
                     <td className="p-2.5 font-bold">7 hs</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold rounded">H</span></td>
-                    <td className="p-2.5 text-emerald-800">Fondo Verde Suave</td>
+                    <td className="p-2.5 text-slate-600">Jornal vespertino (Guardias en turno mañana).</td>
                   </tr>
-                  <tr className="bg-purple-50/50">
-                    <td className="p-2.5 font-bold text-purple-900">Guardia Inhábil ACTIVA</td>
-                    <td className="p-2.5">Sábados, Domingos y Feriados</td>
-                    <td className="p-2.5">06:00 a 13:00 / 13:00 a 20:00</td>
-                    <td className="p-2.5 font-bold">7 hs (o 12/24hs)</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 bg-purple-100 border border-purple-300 text-purple-900 font-bold rounded">A</span></td>
-                    <td className="p-2.5 text-purple-800">Fondo Púrpura</td>
-                  </tr>
-                  <tr className="bg-amber-50/50">
-                    <td className="p-2.5 font-bold text-amber-900">Guardia Inhábil PASIVA</td>
-                    <td className="p-2.5">Sábados, Domingos y Feriados</td>
-                    <td className="p-2.5">Disponibilidad en Domicilio</td>
-                    <td className="p-2.5 font-bold">7 hs (o 12/24hs)</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 bg-amber-100 border border-amber-300 text-amber-900 font-bold rounded">P</span></td>
-                    <td className="p-2.5 text-amber-800">Fondo Ámbar</td>
-                  </tr>
-                  <tr className="bg-indigo-50/50">
-                    <td className="p-2.5 font-bold text-indigo-900">Jornal + Extra Hábil (Doble)</td>
+                  <tr className="bg-emerald-50/40">
+                    <td className="p-2.5 font-bold text-emerald-900"><span className="px-2 py-0.5 bg-emerald-100 border border-emerald-300 text-emerald-900 rounded font-mono font-bold">EM / ET</span> Extra Contraturno</td>
                     <td className="p-2.5">Lunes a Viernes Hábiles</td>
-                    <td className="p-2.5">06:00 a 20:00 hs continuas</td>
-                    <td className="p-2.5 font-bold">14 hs (7J + 7H)</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 bg-indigo-100 border border-indigo-300 text-indigo-900 font-bold rounded">JH</span></td>
-                    <td className="p-2.5 text-indigo-800">Bicolor Azul/Verde</td>
+                    <td className="p-2.5">06-13 o 13-20 hs</td>
+                    <td className="p-2.5 font-bold">7 hs</td>
+                    <td className="p-2.5 text-slate-600">Guardia en contraturno al horario habitual.</td>
+                  </tr>
+                  <tr className="bg-purple-50/40">
+                    <td className="p-2.5 font-bold text-purple-900"><span className="px-2 py-0.5 bg-purple-100 border border-purple-300 text-purple-900 rounded font-mono font-bold">IA</span> Inhábil Activa</td>
+                    <td className="p-2.5">Sábados, Domingos y Feriados</td>
+                    <td className="p-2.5">06-13 / 13-20 hs</td>
+                    <td className="p-2.5 font-bold">7 hs</td>
+                    <td className="p-2.5 text-slate-600">Guardia presencial de soporte en el hospital.</td>
+                  </tr>
+                  <tr className="bg-amber-50/40">
+                    <td className="p-2.5 font-bold text-amber-900"><span className="px-2 py-0.5 bg-amber-100 border border-amber-300 text-amber-900 rounded font-mono font-bold">IP</span> Inhábil Pasiva</td>
+                    <td className="p-2.5">Sábados, Domingos y Feriados</td>
+                    <td className="p-2.5">Disponibilidad Domiciliaria</td>
+                    <td className="p-2.5 font-bold">7 hs</td>
+                    <td className="p-2.5 text-slate-600">Guardia pasiva para contingencias y llamados.</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </section>
 
-          {/* SECCIÓN 4: GUÍA PASO A PASO PARA EL OPERADOR */}
+          {/* SECCIÓN 3: GUÍA OPERATIVA */}
           <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4 break-inside-avoid">
             <div className="flex items-center gap-2 text-emerald-900 border-b pb-2">
               <CheckCircle2 className="w-5 h-5 text-emerald-700" />
-              <h2 className="text-lg font-bold">4. Guía de Operación Paso a Paso</h2>
+              <h2 className="text-lg font-bold">3. Guía de Operación Paso a Paso</h2>
             </div>
 
-            <div className="space-y-4 text-xs">
-              <div className="flex gap-3 items-start">
-                <div className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                  1
-                </div>
+            <div className="space-y-3.5 text-xs">
+              <div className="flex gap-3 items-start bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0">1</div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm">Cómo Cargar Turnos en la Planilla Matriz</h3>
-                  <p className="text-slate-600 mt-0.5">
-                    Haga <strong>clic sobre cualquier celda</strong> de la tabla correspondiente al día y agente deseado. Se abrirá el <em>Editor Rápido de Turno</em> donde podrá seleccionar Jornal, Horas Extras Hábiles, o Guardias Inhábiles (Activas o Pasivas).
-                  </p>
+                  <h3 className="font-bold text-slate-900 text-sm">Selección del Período Mensual</h3>
+                  <p className="text-slate-600 mt-0.5">En la barra superior, elija el Mes y Año a liquidar. El sistema configurará automáticamente los días hábiles, fines de semana y feriados de Formosa.</p>
                 </div>
               </div>
 
-              <div className="flex gap-3 items-start">
-                <div className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                  2
-                </div>
+              <div className="flex gap-3 items-start bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0">2</div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm">Atajos Rápidos de un Clic</h3>
-                  <p className="text-slate-600 mt-0.5">
-                    Al posar el cursor sobre las celdas en días hábiles, aparecen botones rápidos <code>[J]</code> y <code>[H]</code> para activar o desactivar turnos de manera instantánea sin abrir el modal.
-                  </p>
+                  <h3 className="font-bold text-slate-900 text-sm">Configuración de Modalidad de Personal</h3>
+                  <p className="text-slate-600 mt-0.5">En "Personal del Servicio" o en el editor del agente, configure la modalidad (Jornal + Contraturno, Solo Guardias, o Solo Jornal) y el horario habitual (Mañana/Tarde/Noche).</p>
                 </div>
               </div>
 
-              <div className="flex gap-3 items-start">
-                <div className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                  3
-                </div>
+              <div className="flex gap-3 items-start bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0">3</div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm">Asignación Masiva de Guardias Inhábiles</h3>
-                  <p className="text-slate-600 mt-0.5">
-                    En la pestaña <strong>"Guardias Inhábiles"</strong>, el sistema agrupa todos los sábados, domingos y feriados del mes. Dispone de botones como <em>"Asignar Todo en Activa"</em>, <em>"Asignar Todo en Pasiva"</em> o <em>"Regla Oficial de Fines de Semana"</em> para distribuir en duplas automáticamente.
-                  </p>
+                  <h3 className="font-bold text-slate-900 text-sm">Rotación Automática Equitativa</h3>
+                  <p className="text-slate-600 mt-0.5">El botón "Rotación Automática" distribuye las guardias respetando descansos, contraturnos y modalidades autorizadas sin sobrecargar a ningún agente.</p>
                 </div>
               </div>
 
-              <div className="flex gap-3 items-start">
-                <div className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                  4
-                </div>
+              <div className="flex gap-3 items-start bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0">4</div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm">Auditoría en Tiempo Real y Cero Sobrecargas</h3>
-                  <p className="text-slate-600 mt-0.5">
-                    La columna de totales a la derecha y la barra inferior calculan inmediatamente las horas de Jornal, Extras Hábiles, Inhábiles Activas e Inhábiles Pasivas, evitando errores de cálculo manual.
-                  </p>
+                  <h3 className="font-bold text-slate-900 text-sm">Auditoría en Tiempo Real y Exportación</h3>
+                  <p className="text-slate-600 mt-0.5">Consulte la pestaña "Liquidación del Servicio" para verificar los totales de horas antes de emitir los reportes en Excel (.xls), Word (.doc) o PDF firmado.</p>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* SECCIÓN 5: EXPORTACIÓN Y REPORTES OFICIALES */}
-          <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4 break-inside-avoid">
-            <div className="flex items-center gap-2 text-emerald-900 border-b pb-2">
-              <Download className="w-5 h-5 text-emerald-700" />
-              <h2 className="text-lg font-bold">5. Formatos de Exportación Oficial</h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              
-              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                <div className="flex items-center gap-2 font-bold text-emerald-900 mb-1">
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
-                  <span>Excel Visual (.xls)</span>
-                </div>
-                <p className="text-slate-600 text-[11px]">
-                  Genera la planilla con cuadrícula exacta, colores y fórmulas, 100% compatible con Microsoft Excel.
-                </p>
-              </div>
-
-              <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
-                <div className="flex items-center gap-2 font-bold text-sky-900 mb-1">
-                  <FileText className="w-4 h-4 text-sky-700" />
-                  <span>Word (.doc)</span>
-                </div>
-                <p className="text-slate-600 text-[11px]">
-                  Documento editable para notas institucionales y elevaciones jerárquicas a la Dirección.
-                </p>
-              </div>
-
-              <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-                <div className="flex items-center gap-2 font-bold text-indigo-900 mb-1">
-                  <Printer className="w-4 h-4 text-indigo-700" />
-                  <span>Impresión / PDF Oficial</span>
-                </div>
-                <p className="text-slate-600 text-[11px]">
-                  Diseño apaisado (Landscape A3/A4) con cuadro de firmas de Jefe de Servicio y Dirección Médica.
-                </p>
-              </div>
-
-            </div>
-          </section>
-
-          {/* Cuadro Oficial de Firmas y Validación Institucional */}
+          {/* Cuadro Oficial de Firmas */}
           <div className="pt-6 border-t-2 border-slate-300 grid grid-cols-1 sm:grid-cols-2 gap-8 text-center text-xs break-inside-avoid">
-            <div className="space-y-8">
+            <div className="space-y-4">
               <div className="border-t border-slate-700 pt-2 w-48 mx-auto font-bold text-slate-800">
-                FIRMA Y SELLO
-                <div className="text-[10px] text-slate-500 font-normal">Jefe / Responsable del Servicio</div>
+                Cantero, Miguel Angel
+                <div className="text-[10px] text-slate-500 font-normal">Jefe del Servicio de Informática</div>
               </div>
             </div>
-            <div className="space-y-8">
+            <div className="space-y-4">
               <div className="border-t border-slate-700 pt-2 w-48 mx-auto font-bold text-slate-800">
-                DIRECCIÓN DE PERSONAL / RRHH
+                DIRECCIÓN DE RRHH / MÉDICA
                 <div className="text-[10px] text-slate-500 font-normal">Hospital Central de Emergencias</div>
               </div>
             </div>

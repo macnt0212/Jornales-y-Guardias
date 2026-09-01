@@ -1,5 +1,11 @@
 import { Agent, DayInfo, MonthSchedule } from '../types';
-import { MONTH_NAMES, calculateAgentStats } from './calendar';
+import { 
+  MONTH_NAMES, 
+  calculateAgentStats, 
+  getAgentWorkModality, 
+  getAgentJornalShift, 
+  getContraturnoShiftForAgent 
+} from './calendar';
 
 function buildVisualTableHtml(schedule: MonthSchedule, days: DayInfo[]) {
   const monthName = MONTH_NAMES[schedule.month - 1];
@@ -8,10 +14,10 @@ function buildVisualTableHtml(schedule: MonthSchedule, days: DayInfo[]) {
   const serviceConfig = schedule.serviceConfig || {
     hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
     hospitalSubtitle: 'Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano',
-    serviceName: 'Servicio de Guardia y Emergencias',
-    jefeName: '',
-    jefeCargo: 'Jefe de Servicio',
-    jefeLegajo: '',
+    serviceName: 'Servicio de Informática y Estadística Hospitalaria',
+    jefeName: 'Cantero, Miguel Angel',
+    jefeCargo: 'Jefe del Servicio de Informática',
+    jefeLegajo: 'LEG-1001',
     jornalHorarioLabel: '06:00 a 13:00 hs',
     extraHabilHorarioLabel: '13:00 a 20:00 hs',
     inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
@@ -54,6 +60,9 @@ function buildVisualTableHtml(schedule: MonthSchedule, days: DayInfo[]) {
     const stats = calculateAgentStats(agent, schedule, days);
     const isEven = idx % 2 === 0;
     const baseBg = isEven ? '#ffffff' : '#f8fafc';
+    const modality = getAgentWorkModality(agent);
+    const jTurno = getAgentJornalShift(agent);
+    const cTurno = getContraturnoShiftForAgent(agent);
 
     // FILA 1: JORNAL
     let jornalCells = '';
@@ -71,10 +80,22 @@ function buildVisualTableHtml(schedule: MonthSchedule, days: DayInfo[]) {
       else if (isW) cellBg = '#fffbeb';
 
       // Jornal
-      if (assign?.jornal) {
+      if (modality === 'solo_guardias') {
         jornalCells += `
           <td style="background-color: ${cellBg}; border: 1px solid #cbd5e1; padding: 3px 1px; text-align: center;">
-            <span style="display: inline-block; background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; font-size: 9px; font-weight: bold; border-radius: 3px; padding: 2px 4px;">J (6-13)</span>
+            <span style="display: inline-block; background-color: #ccfbf1; color: #115e59; border: 1px solid #99f6e4; font-size: 8.5px; font-weight: bold; border-radius: 3px; padding: 1px 3px;" title="Jornal en otra institución: ${agent.externalInstitution || 'Externa'}">[Ext]</span>
+          </td>
+        `;
+      } else if (assign?.jornal) {
+        const jCode = assign.jornalTurno === 'tarde' 
+          ? 'JT (13-20)' 
+          : assign.jornalTurno === 'noche' 
+          ? 'JN (20-07)' 
+          : (jTurno === 'tarde' ? 'JT (13-20)' : jTurno === 'noche' ? 'JN (20-07)' : 'JM (6-13)');
+
+        jornalCells += `
+          <td style="background-color: ${cellBg}; border: 1px solid #cbd5e1; padding: 3px 1px; text-align: center;">
+            <span style="display: inline-block; background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; font-size: 9px; font-weight: bold; border-radius: 3px; padding: 2px 4px;">${jCode}</span>
           </td>
         `;
       } else {
@@ -86,7 +107,13 @@ function buildVisualTableHtml(schedule: MonthSchedule, days: DayInfo[]) {
       // Extras
       const badges: string[] = [];
       if (assign?.extraHabil) {
-        badges.push(`<span style="display: block; background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; font-size: 8.5px; font-weight: bold; border-radius: 3px; padding: 1px 3px; margin-bottom: 2px;">E (13-20)</span>`);
+        const eCode = assign.extraHabilTurno === 'manana'
+          ? 'EM (6-13)'
+          : assign.extraHabilTurno === 'noche'
+          ? 'EN (20-07)'
+          : (cTurno === 'manana' ? 'EM (6-13)' : 'ET (13-20)');
+
+        badges.push(`<span style="display: block; background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; font-size: 8.5px; font-weight: bold; border-radius: 3px; padding: 1px 3px; margin-bottom: 2px;">${eCode}</span>`);
       }
       if (assign?.extraInhabilManana) {
         const isActiva = assign.extraInhabilMananaTipo === 'activa';
@@ -118,20 +145,26 @@ function buildVisualTableHtml(schedule: MonthSchedule, days: DayInfo[]) {
       }
     });
 
+    const modalityDesc = modality === 'solo_guardias' 
+      ? `Solo Guardias (${agent.externalInstitution || 'Ext.'})` 
+      : modality === 'solo_jornal' 
+      ? `Solo Jornal (${jTurno === 'tarde' ? 'Tarde' : 'Mañana'})` 
+      : `Jornal ${jTurno === 'tarde' ? 'Tarde' : 'Mañana'} + Contraturno`;
+
     agentsRowsHtml += `
       <!-- FILA 1: JORNAL -->
       <tr style="background-color: ${baseBg};">
-        <td rowspan="2" style="background-color: #ffffff; border: 1px solid #94a3b8; border-bottom: 2px solid #475569; padding: 6px; text-align: left; vertical-align: top; width: 150px;">
+        <td rowspan="2" style="background-color: #ffffff; border: 1px solid #94a3b8; border-bottom: 2px solid #475569; padding: 6px; text-align: left; vertical-align: top; width: 160px;">
           <div style="font-weight: bold; font-size: 11px; color: #0f172a;">${agent.name}</div>
           <div style="font-size: 10px; color: #475569; margin-top: 2px;">${agent.roleLabel} - <span style="font-family: monospace; color: #64748b;">${agent.legajo}</span></div>
           <div style="margin-top: 4px;">
-            <span style="display: inline-block; font-size: 9px; font-weight: bold; padding: 1px 4px; border-radius: 3px; background-color: ${agent.category === 'Soporte Técnico' ? '#dbeafe' : '#ccfbf1'}; color: ${agent.category === 'Soporte Técnico' ? '#1e40af' : '#115e59'}; border: 1px solid ${agent.category === 'Soporte Técnico' ? '#bfdbfe' : '#99f6e4'};">
-              ${agent.category}
+            <span style="display: inline-block; font-size: 8.5px; font-weight: bold; padding: 1px 4px; border-radius: 3px; background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">
+              ${modalityDesc}
             </span>
           </div>
-          <div style="margin-top: 6px; font-size: 9px; border-top: 1px dashed #cbd5e1; padding-top: 4px;">
-            <div style="color: #1d4ed8; font-weight: bold;">• Fila 1: Jornal (06-13)</div>
-            <div style="color: #047857; font-weight: bold;">• Fila 2: Horas Extras</div>
+          <div style="margin-top: 6px; font-size: 8.5px; border-top: 1px dashed #cbd5e1; padding-top: 4px;">
+            <div style="color: #1d4ed8; font-weight: bold;">• Fila 1: ${modality === 'solo_guardias' ? 'Jornal Externo' : `Jornal (${jTurno === 'tarde' ? '13-20' : '06-13'})`}</div>
+            <div style="color: #047857; font-weight: bold;">• Fila 2: ${modality === 'solo_jornal' ? 'Sin Guardias' : `Extras (${cTurno === 'manana' ? '06-13' : '13-20'}) / Inháb.`}</div>
           </div>
         </td>
         ${jornalCells}
@@ -357,7 +390,7 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
         </div>
         <h1>${data.serviceConfig.hospitalName || 'Hospital Central de Emergencias'}</h1>
         <h2 style="margin: 3px 0 0 0; font-size: 13px; color: #0f172a; font-weight: bold;">
-          ${data.serviceConfig.serviceName || 'Servicio de Guardia y Emergencias'}
+          ${data.serviceConfig.serviceName || 'Servicio de Informática y Estadística'}
         </h2>
         <p>Planilla Mensual de Turnos Ordinarios, Guardias y Horas Extras (Hábiles e Inhábiles)</p>
       </div>
@@ -368,20 +401,20 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
 
     <div class="legend-bar">
       <span style="font-size: 10px; font-weight: bold; color: #475569; margin-right: 6px;">REFERENCIAS:</span>
-      <span class="legend-item" style="background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd;">J: Jornal Ordinario (${data.serviceConfig.jornalHorarioLabel || '06-13 hs'})</span>
-      <span class="legend-item" style="background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7;">E: Extra Hábil Lun a Vie (${data.serviceConfig.extraHabilHorarioLabel || '13-20 hs'})</span>
+      <span class="legend-item" style="background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd;">JM / JT: Jornal Ordinario (Mañana 06-13 / Tarde 13-20)</span>
+      <span class="legend-item" style="background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7;">EM / ET: Extra Contraturno (Mañana 06-13 / Tarde 13-20)</span>
       <span class="legend-item" style="background-color: #f3e8ff; color: #581c87; border: 1px solid #d8b4fe;">IA: Inhábil ACTIVA (Fines de Sem / Feriados)</span>
       <span class="legend-item" style="background-color: #fef3c7; color: #78350f; border: 1px solid #fde68a;">IP: Inhábil PASIVA (Fines de Sem / Feriados)</span>
-      <span class="legend-item" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1;">-: Franco / Descanso</span>
+      <span class="legend-item" style="background-color: #ccfbf1; color: #115e59; border: 1px solid #99f6e4;">[Ext]: Jornal Externo</span>
     </div>
 
     <table>
       <thead>
         <tr style="background-color: #0f172a; color: #ffffff;">
-          <th rowspan="2" style="width: 150px; border: 1px solid #334155; padding: 6px; text-align: left; font-size: 10px; text-transform: uppercase;">Agente / Turno</th>
+          <th rowspan="2" style="width: 160px; border: 1px solid #334155; padding: 6px; text-align: left; font-size: 10px; text-transform: uppercase;">Agente / Turno</th>
           ${data.daysHeaderRow1}
-          <th colspan="2" style="background-color: #1e3a8a; color: #ffffff; border: 1px solid #334155; padding: 4px; text-align: center; font-size: 9.5px;">JORNAL (06-13)</th>
-          <th colspan="2" style="background-color: #065f46; color: #ffffff; border: 1px solid #334155; padding: 4px; text-align: center; font-size: 9.5px;">EXT. HÁBIL (13-20)</th>
+          <th colspan="2" style="background-color: #1e3a8a; color: #ffffff; border: 1px solid #334155; padding: 4px; text-align: center; font-size: 9.5px;">JORNAL</th>
+          <th colspan="2" style="background-color: #065f46; color: #ffffff; border: 1px solid #334155; padding: 4px; text-align: center; font-size: 9.5px;">EXT. HÁBIL</th>
           <th colspan="2" style="background-color: #581c87; color: #ffffff; border: 1px solid #334155; padding: 4px; text-align: center; font-size: 9.5px;">INHÁBILES</th>
           <th style="background-color: #047857; color: #ffffff; border: 1px solid #334155; padding: 4px; text-align: center; font-size: 9.5px;">TOT. EXT</th>
           <th rowspan="2" style="width: 50px; background-color: #022c22; color: #ffffff; border: 1px solid #334155; padding: 4px; text-align: center; font-size: 11px;">TOTAL MES</th>
@@ -427,13 +460,16 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
 
     <div class="signature-section">
       <div class="signature-box">
-        Firma y Sello Jefe de Servicio
+        <div>${data.serviceConfig.jefeName || 'Cantero, Miguel Angel'}</div>
+        <div style="font-size: 9.5px; font-weight: normal; color: #64748b;">${data.serviceConfig.jefeCargo || 'Jefe del Servicio de Informática'}</div>
       </div>
       <div class="signature-box">
-        Firma y Sello Dirección Médica / Administrativa
+        <div>Dirección Médica / Ejecutiva</div>
+        <div style="font-size: 9.5px; font-weight: normal; color: #64748b;">Hospital Central de Emergencias</div>
       </div>
       <div class="signature-box">
-        Recepción y Control Recursos Humanos
+        <div>Recepción y Control Recursos Humanos</div>
+        <div style="font-size: 9.5px; font-weight: normal; color: #64748b;">Ministerio de Desarrollo Humano</div>
       </div>
     </div>
   </div>
@@ -444,7 +480,7 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `Planilla_Visual_Informatica_${data.monthName}_${data.year}.html`;
+  link.download = `Planilla_Visual_${data.monthName}_${data.year}.html`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -461,7 +497,7 @@ export function exportToWord(schedule: MonthSchedule, days: DayInfo[]) {
       xmlns='http://www.w3.org/TR/REC-html40'>
 <head>
   <meta charset="utf-8">
-  <title>Planilla Mensual Guardia e Informática - ${data.monthName} ${data.year}</title>
+  <title>Planilla Mensual - ${data.monthName} ${data.year}</title>
   <!--[if gte mso 9]>
   <xml>
     <w:WordDocument>
@@ -527,19 +563,20 @@ export function exportToWord(schedule: MonthSchedule, days: DayInfo[]) {
 
     <div style="background-color: #f8fafc; border: 1pt solid #cbd5e1; padding: 4pt 8pt; margin-bottom: 8pt; font-size: 8.5pt;">
       <strong>REFERENCIAS:</strong> 
-      <span style="color: #1e3a8a; font-weight: bold; background-color: #dbeafe; padding: 1pt 4pt; border: 0.5pt solid #93c5fd;">J: Jornal (${data.serviceConfig.jornalHorarioLabel || '06-13 hs'})</span> &nbsp;|&nbsp;
-      <span style="color: #065f46; font-weight: bold; background-color: #d1fae5; padding: 1pt 4pt; border: 0.5pt solid #6ee7b7;">E: Extra Hábil (${data.serviceConfig.extraHabilHorarioLabel || '13-20 hs'})</span> &nbsp;|&nbsp;
+      <span style="color: #1e3a8a; font-weight: bold; background-color: #dbeafe; padding: 1pt 4pt; border: 0.5pt solid #93c5fd;">JM / JT: Jornal Ordinario</span> &nbsp;|&nbsp;
+      <span style="color: #065f46; font-weight: bold; background-color: #d1fae5; padding: 1pt 4pt; border: 0.5pt solid #6ee7b7;">EM / ET: Extra Contraturno</span> &nbsp;|&nbsp;
       <span style="color: #581c87; font-weight: bold; background-color: #f3e8ff; padding: 1pt 4pt; border: 0.5pt solid #d8b4fe;">IA: Inhábil Activa</span> &nbsp;|&nbsp;
-      <span style="color: #78350f; font-weight: bold; background-color: #fef3c7; padding: 1pt 4pt; border: 0.5pt solid #fde68a;">IP: Inhábil Pasiva</span>
+      <span style="color: #78350f; font-weight: bold; background-color: #fef3c7; padding: 1pt 4pt; border: 0.5pt solid #fde68a;">IP: Inhábil Pasiva</span> &nbsp;|&nbsp;
+      <span style="color: #115e59; font-weight: bold; background-color: #ccfbf1; padding: 1pt 4pt; border: 0.5pt solid #99f6e4;">[Ext]: Jornal Externo</span>
     </div>
 
     <table>
       <thead>
         <tr style="background-color: #0f172a; color: #ffffff;">
-          <th rowspan="2" style="width: 130pt; background-color: #0f172a; color: #ffffff; text-align: left; font-size: 8.5pt;">Agente / Turno</th>
+          <th rowspan="2" style="width: 140pt; background-color: #0f172a; color: #ffffff; text-align: left; font-size: 8.5pt;">Agente / Turno</th>
           ${data.daysHeaderRow1}
-          <th colspan="2" style="background-color: #1e3a8a; color: #ffffff; text-align: center; font-size: 8pt;">JORNAL (06-13)</th>
-          <th colspan="2" style="background-color: #065f46; color: #ffffff; text-align: center; font-size: 8pt;">EXT. HÁBIL (13-20)</th>
+          <th colspan="2" style="background-color: #1e3a8a; color: #ffffff; text-align: center; font-size: 8pt;">JORNAL</th>
+          <th colspan="2" style="background-color: #065f46; color: #ffffff; text-align: center; font-size: 8pt;">EXT. HÁBIL</th>
           <th colspan="2" style="background-color: #581c87; color: #ffffff; text-align: center; font-size: 8pt;">INHÁBILES</th>
           <th style="background-color: #047857; color: #ffffff; text-align: center; font-size: 8pt;">TOT. EXT</th>
           <th rowspan="2" style="width: 45pt; background-color: #022c22; color: #ffffff; text-align: center; font-size: 9.5pt;">TOTAL MES</th>
@@ -594,15 +631,18 @@ export function exportToWord(schedule: MonthSchedule, days: DayInfo[]) {
     <table style="width: 100%; border: none; margin-top: 20pt;">
       <tr style="border: none;">
         <td style="width: 30%; border: none; border-top: 1pt solid #000000; text-align: center; padding-top: 4pt; font-size: 9pt; font-weight: bold;">
-          Firma y Sello Jefe de Servicio
+          ${data.serviceConfig.jefeName || 'Cantero, Miguel Angel'}<br/>
+          <span style="font-size: 8pt; font-weight: normal; color: #64748b;">${data.serviceConfig.jefeCargo || 'Jefe del Servicio de Informática'}</span>
         </td>
         <td style="width: 5%; border: none;"></td>
         <td style="width: 30%; border: none; border-top: 1pt solid #000000; text-align: center; padding-top: 4pt; font-size: 9pt; font-weight: bold;">
-          Firma y Sello Dirección Médica / Administrativa
+          Dirección Médica / Ejecutiva<br/>
+          <span style="font-size: 8pt; font-weight: normal; color: #64748b;">Hospital Central de Emergencias</span>
         </td>
         <td style="width: 5%; border: none;"></td>
         <td style="width: 30%; border: none; border-top: 1pt solid #000000; text-align: center; padding-top: 4pt; font-size: 9pt; font-weight: bold;">
-          Recepción y Control Recursos Humanos
+          Recepción Recursos Humanos<br/>
+          <span style="font-size: 8pt; font-weight: normal; color: #64748b;">Ministerio de Desarrollo Humano</span>
         </td>
       </tr>
     </table>
@@ -617,7 +657,7 @@ export function exportToWord(schedule: MonthSchedule, days: DayInfo[]) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `Planilla_Editable_Informatica_${data.monthName}_${data.year}.doc`;
+  link.download = `Planilla_Editable_${data.monthName}_${data.year}.doc`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -648,9 +688,7 @@ export function exportToExcelVisual(schedule: MonthSchedule, days: DayInfo[]) {
             <x:FitToPage/>
             <x:Print>
               <x:Orientation>Landscape</x:Orientation>
-              <x:ValidPrinterInfo/>
-              <x:PaperSizeIndex>9</x:PaperSizeIndex>
-              <x:Scale>85</x:Scale>
+              <x:PaperSizeIndex>8</x:PaperSizeIndex>
             </x:Print>
           </x:WorksheetOptions>
         </x:ExcelWorksheet>
@@ -660,127 +698,67 @@ export function exportToExcelVisual(schedule: MonthSchedule, days: DayInfo[]) {
   <![endif]-->
   <style>
     body {
-      font-family: Calibri, Arial, sans-serif;
-      font-size: 10pt;
+      font-family: Arial, sans-serif;
+      font-size: 9pt;
       color: #0f172a;
     }
     table {
       border-collapse: collapse;
-      mso-table-lspace: 0pt;
-      mso-table-rspace: 0pt;
+      width: 100%;
     }
     th, td {
-      border: 0.5pt solid #94a3b8;
-      vertical-align: middle;
-      mso-number-format: "\\@";
-    }
-    .num-cell {
-      mso-number-format: "\\#\\,\\#\\#0";
+      border: 0.5pt solid #cbd5e1;
+      padding: 3pt;
       text-align: center;
     }
   </style>
 </head>
 <body>
-  <!-- Encabezado Institucional -->
-  <table style="width: 100%; border: none; margin-bottom: 10pt;">
-    <tr style="border: none;">
-      <td colspan="${days.length + 9}" style="border: none; background-color: #0f172a; color: #ffffff; font-size: 13pt; font-weight: bold; padding: 8pt; text-align: left;">
-        ${data.serviceConfig.hospitalSubtitle ? data.serviceConfig.hospitalSubtitle + ' — ' : ''}${data.serviceConfig.hospitalName || 'HOSPITAL CENTRAL DE EMERGENCIAS'}
-      </td>
-    </tr>
-    <tr style="border: none;">
-      <td colspan="${days.length + 9}" style="border: none; background-color: #047857; color: #ffffff; font-size: 11pt; font-weight: bold; padding: 6pt; text-align: left;">
-        ${data.serviceConfig.serviceName ? data.serviceConfig.serviceName.toUpperCase() + ' — ' : ''}PLANILLA MENSUAL DE TURNOS Y HORAS EXTRAS — PERÍODO: ${data.monthName.toUpperCase()} ${data.year}
-      </td>
-    </tr>
-  </table>
-
-  <!-- Referencias de Colores -->
-  <table style="width: 100%; border: 0.5pt solid #cbd5e1; background-color: #f8fafc; margin-bottom: 8pt;">
+  <table>
     <tr>
-      <td colspan="${days.length + 9}" style="padding: 5pt; font-size: 9pt; border: none;">
-        <strong>REFERENCIAS:</strong> 
-        <span style="background-color: #dbeafe; color: #1e3a8a; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #93c5fd;">J: Jornal (${data.serviceConfig.jornalHorarioLabel || '06-13 hs'})</span> &nbsp;|&nbsp;
-        <span style="background-color: #d1fae5; color: #065f46; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #6ee7b7;">E: Extra Hábil (${data.serviceConfig.extraHabilHorarioLabel || '13-20 hs'})</span> &nbsp;|&nbsp;
-        <span style="background-color: #f3e8ff; color: #581c87; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #d8b4fe;">IA: Inhábil Activa</span> &nbsp;|&nbsp;
-        <span style="background-color: #fef3c7; color: #78350f; font-weight: bold; padding: 2pt 4pt; border: 0.5pt solid #fde68a;">IP: Inhábil Pasiva</span> &nbsp;|&nbsp;
-        <span style="background-color: #e2e8f0; color: #475569; font-weight: bold; padding: 2pt 4pt;">-: Franco / Descanso</span>
+      <td colspan="${days.length + 9}" style="background-color: #0f172a; color: #ffffff; font-size: 14pt; font-weight: bold; text-align: left; padding: 10pt;">
+        ${data.serviceConfig.hospitalName || 'HOSPITAL CENTRAL DE EMERGENCIAS'} - ${data.serviceConfig.serviceName || 'SERVICIO DE INFORMÁTICA'}
+        <div style="font-size: 10pt; color: #a7f3d0; font-weight: normal; margin-top: 3pt;">
+          PLANILLA MENSUAL DE TURNOS Y GUARDIAS - PERÍODO: ${data.monthName.toUpperCase()} ${data.year}
+        </div>
       </td>
     </tr>
-  </table>
-
-  <!-- Tabla Matriz con 2 Filas por Agente -->
-  <table border="1" style="border-collapse: collapse; width: 100%;">
-    <thead>
-      <tr style="background-color: #0f172a; color: #ffffff;">
-        <th rowspan="2" style="width: 160pt; background-color: #0f172a; color: #ffffff; text-align: left; font-size: 9pt; padding: 5pt;">Agente / Turno</th>
-        ${data.daysHeaderRow1}
-        <th colspan="2" style="background-color: #1e3a8a; color: #ffffff; text-align: center; font-size: 8.5pt; padding: 4pt;">JORNAL (06-13)</th>
-        <th colspan="2" style="background-color: #065f46; color: #ffffff; text-align: center; font-size: 8.5pt; padding: 4pt;">EXT. HÁBIL (13-20)</th>
-        <th colspan="2" style="background-color: #581c87; color: #ffffff; text-align: center; font-size: 8.5pt; padding: 4pt;">INHÁBILES</th>
-        <th style="background-color: #047857; color: #ffffff; text-align: center; font-size: 8.5pt; padding: 4pt;">TOT. EXT</th>
-        <th rowspan="2" style="width: 55pt; background-color: #022c22; color: #ffffff; text-align: center; font-size: 10pt; padding: 4pt;">TOTAL MES</th>
-      </tr>
-      <tr>
-        ${data.daysHeaderRow2}
-        <th style="background-color: #172554; color: #bfdbfe; font-size: 8pt; text-align: center; padding: 3pt;">Días</th>
-        <th style="background-color: #172554; color: #bfdbfe; font-size: 8pt; text-align: center; padding: 3pt;">Hs</th>
-        <th style="background-color: #022c22; color: #a7f3d0; font-size: 8pt; text-align: center; padding: 3pt;">Días</th>
-        <th style="background-color: #022c22; color: #a7f3d0; font-size: 8pt; text-align: center; padding: 3pt;">Hs</th>
-        <th style="background-color: #3b0764; color: #e9d5ff; font-size: 8pt; text-align: center; padding: 3pt;">Activa</th>
-        <th style="background-color: #451a03; color: #fde68a; font-size: 8pt; text-align: center; padding: 3pt;">Pasiva</th>
-        <th style="background-color: #064e3b; color: #6ee7b7; font-size: 8pt; text-align: center; padding: 3pt;">Hs Extra</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${data.agentsRowsHtml}
-    </tbody>
-  </table>
-
-  <br/>
-
-  <!-- Cuadro de Totales Globales -->
-  <table border="1" style="width: 100%; border-collapse: collapse; background-color: #f8fafc;">
     <tr>
-      <td style="text-align: center; padding: 6pt; background-color: #eff6ff;">
-        <div style="font-size: 8pt; color: #64748b; font-weight: bold;">TOTAL HORAS JORNAL</div>
-        <div style="font-size: 13pt; font-weight: bold; color: #1d4ed8; margin-top: 2pt;">${data.totalJornalHoras} hs</div>
-      </td>
-      <td style="text-align: center; padding: 6pt; background-color: #ecfdf5;">
-        <div style="font-size: 8pt; color: #64748b; font-weight: bold;">TOTAL HORAS EXTRA HÁBIL</div>
-        <div style="font-size: 13pt; font-weight: bold; color: #059669; margin-top: 2pt;">${data.totalExtraHabilHoras} hs</div>
-      </td>
-      <td style="text-align: center; padding: 6pt; background-color: #f3e8ff;">
-        <div style="font-size: 8pt; color: #64748b; font-weight: bold;">TOTAL INHÁBILES ACTIVAS</div>
-        <div style="font-size: 13pt; font-weight: bold; color: #7c3aed; margin-top: 2pt;">${data.totalInhabActivaHoras} hs</div>
-      </td>
-      <td style="text-align: center; padding: 6pt; background-color: #fef3c7;">
-        <div style="font-size: 8pt; color: #64748b; font-weight: bold;">TOTAL INHÁBILES PASIVAS</div>
-        <div style="font-size: 13pt; font-weight: bold; color: #d97706; margin-top: 2pt;">${data.totalInhabPasivaHoras} hs</div>
-      </td>
-      <td style="text-align: center; padding: 6pt; background-color: #d1fae5;">
-        <div style="font-size: 8pt; color: #065f46; font-weight: bold;">TOTAL GENERAL DEL MES</div>
-        <div style="font-size: 14pt; font-weight: 900; color: #047857; margin-top: 2pt;">${data.totalGeneral} hs</div>
+      <td colspan="${days.length + 9}" style="background-color: #f8fafc; font-size: 8.5pt; text-align: left; padding: 5pt; border: 0.5pt solid #94a3b8;">
+        <b>REFERENCIAS:</b> 
+        JM/JT: Jornal Ordinario | EM/ET: Extra Hábil Contraturno | IA: Inhábil Activa | IP: Inhábil Pasiva | [Ext]: Jornal Externo
       </td>
     </tr>
-  </table>
-
-  <br/><br/>
-
-  <!-- Firmas -->
-  <table style="width: 100%; border: none; margin-top: 25pt;">
-    <tr style="border: none;">
-      <td colspan="5" style="border: none; border-top: 1pt solid #000000; text-align: center; padding-top: 5pt; font-size: 9pt; font-weight: bold; width: 30%;">
-        Firma y Sello Jefe de Servicio
-      </td>
-      <td colspan="2" style="border: none; width: 5%;"></td>
-      <td colspan="5" style="border: none; border-top: 1pt solid #000000; text-align: center; padding-top: 5pt; font-size: 9pt; font-weight: bold; width: 30%;">
-        Firma y Sello Dirección Médica / Administrativa
-      </td>
-      <td colspan="2" style="border: none; width: 5%;"></td>
-      <td colspan="${Math.max(1, days.length + 9 - 14)}" style="border: none; border-top: 1pt solid #000000; text-align: center; padding-top: 5pt; font-size: 9pt; font-weight: bold; width: 30%;">
-        Recepción y Control Recursos Humanos
-      </td>
+    <tr style="background-color: #0f172a; color: #ffffff;">
+      <th rowspan="2" style="background-color: #0f172a; color: #ffffff; width: 140pt; text-align: left; font-size: 9pt;">Agente / Turno</th>
+      ${data.daysHeaderRow1}
+      <th colspan="2" style="background-color: #1e3a8a; color: #ffffff; font-size: 8.5pt;">JORNAL</th>
+      <th colspan="2" style="background-color: #065f46; color: #ffffff; font-size: 8.5pt;">EXT. HÁBIL</th>
+      <th colspan="2" style="background-color: #581c87; color: #ffffff; font-size: 8.5pt;">INHÁBILES</th>
+      <th style="background-color: #047857; color: #ffffff; font-size: 8.5pt;">TOT. EXT</th>
+      <th rowspan="2" style="background-color: #022c22; color: #ffffff; font-size: 10pt; font-weight: bold; width: 45pt;">TOTAL MES</th>
+    </tr>
+    <tr>
+      ${data.daysHeaderRow2}
+      <th style="background-color: #172554; color: #bfdbfe; font-size: 8pt;">Días</th>
+      <th style="background-color: #172554; color: #bfdbfe; font-size: 8pt;">Hs</th>
+      <th style="background-color: #022c22; color: #a7f3d0; font-size: 8pt;">Días</th>
+      <th style="background-color: #022c22; color: #a7f3d0; font-size: 8pt;">Hs</th>
+      <th style="background-color: #3b0764; color: #e9d5ff; font-size: 8pt;">Activa</th>
+      <th style="background-color: #451a03; color: #fde68a; font-size: 8pt;">Pasiva</th>
+      <th style="background-color: #064e3b; color: #6ee7b7; font-size: 8pt;">Hs Extra</th>
+    </tr>
+    ${data.agentsRowsHtml}
+    <tr style="background-color: #0f172a; color: #ffffff; font-weight: bold;">
+      <td colspan="${days.length + 1}" style="text-align: right; padding: 6pt; font-size: 9pt;">TOTALES DEL SERVICIO:</td>
+      <td style="background-color: #1e3a8a; color: #ffffff; font-size: 9pt;">-</td>
+      <td style="background-color: #1e3a8a; color: #ffffff; font-size: 9.5pt; font-weight: bold;">${data.totalJornalHoras}h</td>
+      <td style="background-color: #065f46; color: #ffffff; font-size: 9pt;">-</td>
+      <td style="background-color: #065f46; color: #ffffff; font-size: 9.5pt; font-weight: bold;">${data.totalExtraHabilHoras}h</td>
+      <td style="background-color: #581c87; color: #ffffff; font-size: 9.5pt; font-weight: bold;">${data.totalInhabActivaHoras}h</td>
+      <td style="background-color: #78350f; color: #ffffff; font-size: 9.5pt; font-weight: bold;">${data.totalInhabPasivaHoras}h</td>
+      <td style="background-color: #047857; color: #ffffff; font-size: 10pt; font-weight: 900;">${data.totalExtraHabilHoras + data.totalInhabActivaHoras + data.totalInhabPasivaHoras}h</td>
+      <td style="background-color: #022c22; color: #ffffff; font-size: 11pt; font-weight: 900;">${data.totalGeneral}h</td>
     </tr>
   </table>
 </body>
@@ -793,7 +771,7 @@ export function exportToExcelVisual(schedule: MonthSchedule, days: DayInfo[]) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `Planilla_Visual_Excel_${data.monthName}_${data.year}.xls`;
+  link.download = `Planilla_Visual_${data.monthName}_${data.year}.xls`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
