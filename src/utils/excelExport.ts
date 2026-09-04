@@ -91,6 +91,12 @@ export function exportScheduleToExcel(
         // Fila 2: Extras
         const extraCodes: string[] = [];
         if (assign?.extraHabil) extraCodes.push('E');
+        if (assign?.extraInhabil24h) {
+          extraCodes.push(assign.extraInhabil24hTipo === 'activa' ? 'G24A' : 'G24P');
+        }
+        if (assign?.extraInhabil12h) {
+          extraCodes.push(assign.extraInhabil12hTipo === 'activa' ? 'G12A' : 'G12P');
+        }
         if (assign?.extraInhabilManana) {
           extraCodes.push(assign.extraInhabilMananaTipo === 'activa' ? 'IA (M)' : 'IP (M)');
         }
@@ -138,6 +144,8 @@ export function exportScheduleToExcel(
   matrixData.push(['REFERENCIAS Y CÓDIGOS OFICIALES:']);
   matrixData.push([`Fila 1: J = Jornal Ordinario Días Hábiles (${schedule.serviceConfig?.jornalHorarioLabel || '06:00 a 13:00 hs'} - 7 hs)`]);
   matrixData.push([`Fila 2: E = Horas Extras Días Hábiles (${schedule.serviceConfig?.extraHabilHorarioLabel || '13:00 a 20:00 hs'} - 7 hs)`]);
+  matrixData.push(['Fila 2: G24A / G24P = Guardia 24 Horas Inhábil ACTIVA / PASIVA (24 hs)']);
+  matrixData.push(['Fila 2: G12A / G12P = Guardia 12 Horas Inhábil ACTIVA / PASIVA (12 hs)']);
   matrixData.push(['Fila 2: IA (M) / IA (T) = Horas Extras Inhábiles ACTIVAS Mañana / Tarde (7 hs c/u)']);
   matrixData.push(['Fila 2: IP (M) / IP (T) = Horas Extras Inhábiles PASIVAS Mañana / Tarde (7 hs c/u)']);
 
@@ -151,43 +159,80 @@ export function exportScheduleToExcel(
     [title],
     [`DETALLE DE GUARDIAS E INHÁBILES (SÁBADOS, DOMINGOS Y FERIADOS) - ${monthName.toUpperCase()} ${schedule.year}`],
     [],
-    ['Fecha', 'Día', 'Tipo Día', `Turno Mañana (${schedule.serviceConfig?.inhabilMananaHorarioLabel || '06:00 a 13:00 hs'})`, 'Modalidad Mañana', `Turno Tarde (${schedule.serviceConfig?.inhabilTardeHorarioLabel || '13:00 a 20:00 hs'})`, 'Modalidad Tarde', 'Total Hs Inhábiles'],
+    ['Fecha', 'Día', 'Tipo Día', 'Esquema / Turno', 'Agente Asignado', 'Modalidad (Activa / Pasiva)', 'Hs Inhábiles'],
   ];
 
   const weekendAndHolidays = days.filter(d => d.isWeekend || d.isHoliday);
 
   weekendAndHolidays.forEach(day => {
-    let morningAgentName = '-';
-    let morningMode = '-';
-    let afternoonAgentName = '-';
-    let afternoonMode = '-';
-    let hours = 0;
+    let hasAnyAssign = false;
 
     schedule.agents.forEach(agent => {
       const key = `${agent.id}_${day.dateStr}`;
       const assign = schedule.assignments[key];
-      if (assign?.extraInhabilManana) {
-        morningAgentName = agent.name;
-        morningMode = (assign.extraInhabilMananaTipo || 'activa').toUpperCase();
-        hours += HOURS_PER_SHIFT;
+      if (!assign) return;
+
+      if (assign.extraInhabil24h) {
+        hasAnyAssign = true;
+        inhabilesData.push([
+          day.dateStr,
+          day.dayNameLong,
+          day.isHoliday ? `FERIADO (${day.holidayName || 'Feriado'})` : 'FIN DE SEMANA',
+          'Guardia 24 Horas (08:00 a 08:00)',
+          agent.name,
+          (assign.extraInhabil24hTipo || 'activa').toUpperCase(),
+          24
+        ]);
       }
-      if (assign?.extraInhabilTarde) {
-        afternoonAgentName = agent.name;
-        afternoonMode = (assign.extraInhabilTardeTipo || 'activa').toUpperCase();
-        hours += HOURS_PER_SHIFT;
+      if (assign.extraInhabil12h) {
+        hasAnyAssign = true;
+        inhabilesData.push([
+          day.dateStr,
+          day.dayNameLong,
+          day.isHoliday ? `FERIADO (${day.holidayName || 'Feriado'})` : 'FIN DE SEMANA',
+          'Guardia 12 Horas (08:00 a 20:00)',
+          agent.name,
+          (assign.extraInhabil12hTipo || 'activa').toUpperCase(),
+          12
+        ]);
+      }
+      if (assign.extraInhabilManana) {
+        hasAnyAssign = true;
+        inhabilesData.push([
+          day.dateStr,
+          day.dayNameLong,
+          day.isHoliday ? `FERIADO (${day.holidayName || 'Feriado'})` : 'FIN DE SEMANA',
+          `Turno Mañana (${schedule.serviceConfig?.inhabilMananaHorarioLabel || '06:00 a 13:00'})`,
+          agent.name,
+          (assign.extraInhabilMananaTipo || 'activa').toUpperCase(),
+          7
+        ]);
+      }
+      if (assign.extraInhabilTarde) {
+        hasAnyAssign = true;
+        inhabilesData.push([
+          day.dateStr,
+          day.dayNameLong,
+          day.isHoliday ? `FERIADO (${day.holidayName || 'Feriado'})` : 'FIN DE SEMANA',
+          `Turno Tarde (${schedule.serviceConfig?.inhabilTardeHorarioLabel || '13:00 a 20:00'})`,
+          agent.name,
+          (assign.extraInhabilTardeTipo || 'activa').toUpperCase(),
+          7
+        ]);
       }
     });
 
-    inhabilesData.push([
-      day.dateStr,
-      day.dayNameLong,
-      day.isHoliday ? `FERIADO (${day.holidayName || 'Feriado'})` : 'FIN DE SEMANA',
-      morningAgentName,
-      morningMode,
-      afternoonAgentName,
-      afternoonMode,
-      hours,
-    ]);
+    if (!hasAnyAssign) {
+      inhabilesData.push([
+        day.dateStr,
+        day.dayNameLong,
+        day.isHoliday ? `FERIADO (${day.holidayName || 'Feriado'})` : 'FIN DE SEMANA',
+        'Sin guardia asignada',
+        '-',
+        '-',
+        0
+      ]);
+    }
   });
 
   const wsInhabiles = XLSX.utils.aoa_to_sheet(inhabilesData);

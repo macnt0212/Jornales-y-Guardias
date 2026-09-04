@@ -115,6 +115,22 @@ function buildVisualTableHtml(schedule: MonthSchedule, days: DayInfo[]) {
 
         badges.push(`<span style="display: block; background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; font-size: 8.5px; font-weight: bold; border-radius: 3px; padding: 1px 3px; margin-bottom: 2px;">${eCode}</span>`);
       }
+      if (assign?.extraInhabil24h) {
+        const isActiva = assign.extraInhabil24hTipo === 'activa';
+        const bg = isActiva ? '#6b21a8' : '#d97706';
+        const color = '#ffffff';
+        const border = isActiva ? '#581c87' : '#b45309';
+        const label = isActiva ? 'G24A (24h)' : 'G24P (24h)';
+        badges.push(`<span style="display: block; background-color: ${bg}; color: ${color}; border: 1px solid ${border}; font-size: 8.5px; font-weight: 900; border-radius: 3px; padding: 1px 3px; margin-bottom: 2px;">${label}</span>`);
+      }
+      if (assign?.extraInhabil12h) {
+        const isActiva = assign.extraInhabil12hTipo === 'activa';
+        const bg = isActiva ? '#e0e7ff' : '#fef3c7';
+        const color = isActiva ? '#312e81' : '#78350f';
+        const border = isActiva ? '#a5b4fc' : '#fde68a';
+        const label = isActiva ? 'G12A (12h)' : 'G12P (12h)';
+        badges.push(`<span style="display: block; background-color: ${bg}; color: ${color}; border: 1px solid ${border}; font-size: 8.5px; font-weight: bold; border-radius: 3px; padding: 1px 3px; margin-bottom: 2px;">${label}</span>`);
+      }
       if (assign?.extraInhabilManana) {
         const isActiva = assign.extraInhabilMananaTipo === 'activa';
         const bg = isActiva ? '#f3e8ff' : '#fef3c7';
@@ -401,10 +417,11 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
 
     <div class="legend-bar">
       <span style="font-size: 10px; font-weight: bold; color: #475569; margin-right: 6px;">REFERENCIAS:</span>
-      <span class="legend-item" style="background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd;">JM / JT: Jornal Ordinario (Mañana 06-13 / Tarde 13-20)</span>
-      <span class="legend-item" style="background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7;">EM / ET: Extra Contraturno (Mañana 06-13 / Tarde 13-20)</span>
-      <span class="legend-item" style="background-color: #f3e8ff; color: #581c87; border: 1px solid #d8b4fe;">IA: Inhábil ACTIVA (Fines de Sem / Feriados)</span>
-      <span class="legend-item" style="background-color: #fef3c7; color: #78350f; border: 1px solid #fde68a;">IP: Inhábil PASIVA (Fines de Sem / Feriados)</span>
+      <span class="legend-item" style="background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd;">JM / JT: Jornal Ordinario (06-13 / 13-20)</span>
+      <span class="legend-item" style="background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7;">EM / ET: Extra Contraturno (06-13 / 13-20)</span>
+      <span class="legend-item" style="background-color: #6b21a8; color: #ffffff; border: 1px solid #581c87;">G24A / G24P: Guardia 24hs Inhábil (Activa / Pasiva)</span>
+      <span class="legend-item" style="background-color: #e0e7ff; color: #312e81; border: 1px solid #a5b4fc;">G12A / G12P: Guardia 12hs Inhábil (Activa / Pasiva)</span>
+      <span class="legend-item" style="background-color: #f3e8ff; color: #581c87; border: 1px solid #d8b4fe;">IA / IP: Inhábil 7hs (Activa / Pasiva)</span>
       <span class="legend-item" style="background-color: #ccfbf1; color: #115e59; border: 1px solid #99f6e4;">[Ext]: Jornal Externo</span>
     </div>
 
@@ -565,8 +582,9 @@ export function exportToWord(schedule: MonthSchedule, days: DayInfo[]) {
       <strong>REFERENCIAS:</strong> 
       <span style="color: #1e3a8a; font-weight: bold; background-color: #dbeafe; padding: 1pt 4pt; border: 0.5pt solid #93c5fd;">JM / JT: Jornal Ordinario</span> &nbsp;|&nbsp;
       <span style="color: #065f46; font-weight: bold; background-color: #d1fae5; padding: 1pt 4pt; border: 0.5pt solid #6ee7b7;">EM / ET: Extra Contraturno</span> &nbsp;|&nbsp;
-      <span style="color: #581c87; font-weight: bold; background-color: #f3e8ff; padding: 1pt 4pt; border: 0.5pt solid #d8b4fe;">IA: Inhábil Activa</span> &nbsp;|&nbsp;
-      <span style="color: #78350f; font-weight: bold; background-color: #fef3c7; padding: 1pt 4pt; border: 0.5pt solid #fde68a;">IP: Inhábil Pasiva</span> &nbsp;|&nbsp;
+      <span style="color: #6b21a8; font-weight: bold; background-color: #f3e8ff; padding: 1pt 4pt; border: 0.5pt solid #d8b4fe;">G24A / G24P: Guardia 24hs</span> &nbsp;|&nbsp;
+      <span style="color: #312e81; font-weight: bold; background-color: #e0e7ff; padding: 1pt 4pt; border: 0.5pt solid #a5b4fc;">G12A / G12P: Guardia 12hs</span> &nbsp;|&nbsp;
+      <span style="color: #581c87; font-weight: bold; background-color: #f3e8ff; padding: 1pt 4pt; border: 0.5pt solid #d8b4fe;">IA / IP: Inhábil 7hs</span> &nbsp;|&nbsp;
       <span style="color: #115e59; font-weight: bold; background-color: #ccfbf1; padding: 1pt 4pt; border: 0.5pt solid #99f6e4;">[Ext]: Jornal Externo</span>
     </div>
 
@@ -726,7 +744,7 @@ export function exportToExcelVisual(schedule: MonthSchedule, days: DayInfo[]) {
     <tr>
       <td colspan="${days.length + 9}" style="background-color: #f8fafc; font-size: 8.5pt; text-align: left; padding: 5pt; border: 0.5pt solid #94a3b8;">
         <b>REFERENCIAS:</b> 
-        JM/JT: Jornal Ordinario | EM/ET: Extra Hábil Contraturno | IA: Inhábil Activa | IP: Inhábil Pasiva | [Ext]: Jornal Externo
+        JM/JT: Jornal Ordinario | EM/ET: Extra Hábil Contraturno | G24A/G24P: Guardia 24hs Inhábil | G12A/G12P: Guardia 12hs Inhábil | IA/IP: Inhábil 7hs | [Ext]: Jornal Externo
       </td>
     </tr>
     <tr style="background-color: #0f172a; color: #ffffff;">

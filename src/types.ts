@@ -9,6 +9,9 @@ export type JornalShiftType = 'manana' | 'tarde' | 'noche' | 'rotativo';
 // Turno en el que cumple Horas Extras Hábiles en contraturno
 export type ExtraHabilShiftType = 'manana' | 'tarde' | 'noche';
 
+// Modalidad o duración predominante de guardias inhábiles configurada para el servicio
+export type ServiceInhabileScheme = 'fraccionado_7h' | 'guardia_24h' | 'guardia_12h' | 'flexible';
+
 export interface HospitalServiceConfig {
   hospitalName: string; // ej: "HOSPITAL CENTRAL DE EMERGENCIAS DE FORMOSA"
   hospitalSubtitle?: string; // ej: "Gobierno de la Provincia de Formosa • Ministerio de Desarrollo Humano"
@@ -20,6 +23,9 @@ export interface HospitalServiceConfig {
   extraHabilHorarioLabel?: string; // ej: "13:00 a 20:00 hs"
   inhabilMananaHorarioLabel?: string; // ej: "06:00 a 13:00 hs"
   inhabilTardeHorarioLabel?: string; // ej: "13:00 a 20:00 hs"
+  inhabilScheme?: ServiceInhabileScheme; // 'fraccionado_7h' | 'guardia_24h' | 'guardia_12h' | 'flexible'
+  inhabil24hHorarioLabel?: string; // ej: "08:00 a 08:00 hs (24 hs)" o "06:00 a 06:00 hs (24 hs)"
+  inhabil12hHorarioLabel?: string; // ej: "08:00 a 20:00 hs (12 hs)"
 }
 
 export interface Agent {
@@ -57,6 +63,14 @@ export interface DayShiftAssignment {
   // Extra inhábil tarde (13:00 a 20:00 fines de semana y feriados)
   extraInhabilTarde: boolean;
   extraInhabilTardeTipo?: InhabileMode; // 'activa' | 'pasiva'
+
+  // Guardia Inhábil Completa de 24 Horas (08:00 a 08:00 hs o 06:00 a 06:00 hs)
+  extraInhabil24h?: boolean;
+  extraInhabil24hTipo?: InhabileMode; // 'activa' | 'pasiva'
+
+  // Guardia Inhábil de 12 Horas (08:00 a 20:00 hs)
+  extraInhabil12h?: boolean;
+  extraInhabil12hTipo?: InhabileMode; // 'activa' | 'pasiva'
   
   // Notas o justificaciones (e.g., 'Licencia', 'Franco compensatorio')
   observaciones?: string;
@@ -113,9 +127,13 @@ export interface AgentMonthStats {
   horasExtraHabilTarde?: number;
   horasExtraHabilNoche?: number;
   turnosInhabilActiva: number;
-  horasInhabilActiva: number; // 7h por turno
+  horasInhabilActiva: number; // computa horas totales activas (7h, 12h o 24h)
   turnosInhabilPasiva: number;
-  horasInhabilPasiva: number; // 7h por turno
+  horasInhabilPasiva: number; // computa horas totales pasivas (7h, 12h o 24h)
+  guardias24hActiva?: number;
+  guardias24hPasiva?: number;
+  guardias12hActiva?: number;
+  guardias12hPasiva?: number;
   totalHorasExtras: number; // ExtraHabil + InhabilActiva + InhabilPasiva
   totalHorasMes: number; // Jornal + Extras
 }

@@ -82,6 +82,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
   const [tempLegajo, setTempLegajo] = useState<string>('');
   const [viewMode, setViewMode] = useState<'double' | 'compact'>('double');
   const [showClearMenu, setShowClearMenu] = useState<boolean>(false);
+  const [showHelpBanner, setShowHelpBanner] = useState<boolean>(false);
 
   const startEditAgent = (agent: Agent) => {
     setEditingAgentId(agent.id);
@@ -101,82 +102,99 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Informative Banner / Guidelines */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-slate-800 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-emerald-100 text-emerald-700 rounded-md shrink-0 mt-0.5">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
-              <span>{schedule.serviceConfig?.serviceName || 'Servicio Hospitalario'}</span>
-              <span className="text-[11px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
-                🔒 Nómina de Personal ({schedule.agents.length} agentes)
-              </span>
-            </h3>
-            <p className="text-xs text-emerald-900/90 mt-0.5 leading-relaxed">
-              <strong>Jornales y Turnos Flexibles:</strong> Soporta personal con Jornal de Mañana (06-13), Tarde (13-20) o Noche (20-07) con guardias en contraturno; personal de solo guardias (jornal en otra institución); y personal de solo jornal sin guardias.
-            </p>
-          </div>
+    <div className="flex flex-col gap-3">
+      {/* Compact Informative Bar with Optional Expandable Guidelines */}
+      <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-lg px-3.5 py-2 flex items-center justify-between gap-3 text-slate-800 text-xs shadow-2xs">
+        <div className="flex items-center gap-2 min-w-0">
+          <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
+          <span className="font-bold text-emerald-950 truncate">
+            {schedule.serviceConfig?.serviceName || 'Servicio Hospitalario'}
+          </span>
+          <span className="text-[11px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300 shrink-0">
+            {schedule.agents.length} agentes registrados
+          </span>
+          <span className="hidden md:inline text-slate-500">• Haz clic en cualquier celda para cargar o editar turnos</span>
         </div>
 
-        <div className="flex items-center gap-2 self-end md:self-center shrink-0">
-          <span className="text-[11px] font-medium bg-white px-2.5 py-1 rounded border border-emerald-200 text-emerald-800 shadow-2xs">
-            💡 Haz clic en cualquier celda para cargar o editar turnos
-          </span>
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowHelpBanner(!showHelpBanner)}
+          className="text-[11px] text-emerald-700 hover:text-emerald-900 font-semibold cursor-pointer underline hover:no-underline shrink-0"
+        >
+          {showHelpBanner ? 'Ocultar info' : 'Ver modalidades'}
+        </button>
       </div>
 
+      {showHelpBanner && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-950 animate-in fade-in duration-150">
+          <p className="leading-relaxed">
+            <strong>Jornales y Turnos Flexibles:</strong> Soporta personal con Jornal Ordinario (06-13, 13-20 o 20-07) con guardias en contraturno; personal de solo guardias (que cumple su jornada en otra institución); y personal de solo jornal sin guardias. Las guardias en días inhábiles soportan esquemas de 24hs, 12hs y 7hs en modalidad Activa o Pasiva.
+          </p>
+        </div>
+      )}
+
       {/* Main Excel-like Matrix Table */}
-      <div className="bg-white rounded-lg border border-slate-300 shadow-sm overflow-hidden">
-        {/* Table Header Controls */}
-        <div className="bg-slate-100 px-4 py-2.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-xs text-slate-700 font-bold">
+      <div className="bg-white rounded-lg border border-slate-300 shadow-xs overflow-hidden">
+        {/* Table Header Controls (Clean & focused) */}
+        <div className="bg-slate-100 px-3.5 py-2 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 text-xs text-slate-800 font-bold">
               <Calendar className="w-4 h-4 text-emerald-600" />
               <span>Matriz Mensual: {MONTH_NAMES[schedule.month - 1]} {schedule.year}</span>
-              <span className="text-slate-400 font-normal">| {days.length} días</span>
+              <span className="text-slate-400 font-normal">({days.length} días)</span>
             </div>
 
             {/* Layout Mode Switcher */}
-            <div className="flex items-center bg-slate-200/90 p-0.5 rounded-lg border border-slate-300">
+            <div className="flex items-center bg-slate-200 p-0.5 rounded-md border border-slate-300">
               <button
                 type="button"
                 onClick={() => setViewMode('double')}
-                className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
+                className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
                   viewMode === 'double'
-                    ? 'bg-emerald-700 text-white shadow-xs'
+                    ? 'bg-emerald-700 text-white shadow-2xs'
                     : 'text-slate-700 hover:text-slate-900'
                 }`}
-                title="Vista detallada: Fila de Jornal y Fila de Horas Extras en contraturno / Inhábiles por cada agente"
+                title="Vista detallada: 2 filas por agente (Fila 1: Jornal, Fila 2: Extras)"
               >
-                2 Filas por Agente (Jornal + Extras)
+                2 Filas (Jornal + Extras)
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode('compact')}
-                className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
+                className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
                   viewMode === 'compact'
-                    ? 'bg-emerald-700 text-white shadow-xs'
+                    ? 'bg-emerald-700 text-white shadow-2xs'
                     : 'text-slate-700 hover:text-slate-900'
                 }`}
-                title="Vista unificada en 1 fila por agente"
+                title="Vista compacta: 1 fila por agente"
               >
                 1 Fila Compacta
               </button>
             </div>
           </div>
 
-          {/* Action Export Buttons & Options */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Table Specific Actions */}
+          <div className="flex items-center gap-2">
+            {/* Direct Quick Excel Download */}
+            {onExportExcelVisual && (
+              <button
+                type="button"
+                onClick={onExportExcelVisual}
+                className="flex items-center gap-1 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold px-2.5 py-1 rounded shadow-2xs cursor-pointer transition-all"
+                title="Descargar Planilla con Formato Visual 100% compatible con Microsoft Excel (.xls)"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>Descargar Excel</span>
+              </button>
+            )}
+
             {/* Menu Borrar / Vaciar Celdas */}
             <div className="relative">
               <button
                 type="button"
                 id="btn-clear-cells-menu"
                 onClick={() => setShowClearMenu(!showClearMenu)}
-                className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-xs font-bold px-2.5 py-1.5 rounded shadow-xs cursor-pointer transition-all"
+                className="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-xs font-semibold px-2.5 py-1 rounded cursor-pointer transition-all"
                 title="Opciones para vaciar o borrar celdas del mes"
               >
                 <Trash2 className="w-3.5 h-3.5 text-rose-600" />
@@ -186,10 +204,10 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
 
               {showClearMenu && (
                 <div 
-                  className="absolute right-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-slate-200 py-1.5 z-40 animate-in fade-in zoom-in-95 duration-150"
+                  className="absolute right-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-slate-200 py-1.5 z-40 animate-in fade-in zoom-in-95 duration-100"
                   onClick={() => setShowClearMenu(false)}
                 >
-                  <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                  <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
                     Opciones de Borrado ({MONTH_NAMES[schedule.month - 1]})
                   </div>
 
@@ -243,66 +261,6 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                 </div>
               )}
             </div>
-
-            {onExportExcelVisual && (
-              <button
-                type="button"
-                onClick={onExportExcelVisual}
-                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded shadow-xs cursor-pointer transition-all ring-1 ring-emerald-400/40"
-                title="Descargar Planilla con Formato Visual 100% compatible con Microsoft Excel (.xls)"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                Excel Formato Visual (.xls)
-              </button>
-            )}
-
-            {onExportWord && (
-              <button
-                type="button"
-                onClick={onExportWord}
-                className="flex items-center gap-1.5 bg-sky-700 hover:bg-sky-600 text-white text-xs font-semibold px-2.5 py-1.5 rounded shadow-xs cursor-pointer transition-all"
-                title="Descargar planilla editable en Microsoft Word (.doc)"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                Word (.doc)
-              </button>
-            )}
-
-            {onExportVisualHtml && (
-              <button
-                type="button"
-                onClick={onExportVisualHtml}
-                className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-semibold px-2.5 py-1.5 rounded shadow-xs cursor-pointer transition-all"
-                title="Descargar archivo visual idéntico"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Web / PDF (.html)
-              </button>
-            )}
-
-            {onExportExcel && (
-              <button
-                type="button"
-                onClick={onExportExcel}
-                className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium px-2 py-1.5 rounded border border-slate-600 cursor-pointer transition-all"
-                title="Descargar libro de Excel (.xlsx)"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-slate-400" />
-                Excel (.xlsx)
-              </button>
-            )}
-
-            {onPrint && (
-              <button
-                type="button"
-                onClick={onPrint}
-                className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-slate-100 text-xs font-medium px-2.5 py-1.5 rounded shadow-xs cursor-pointer transition-all"
-                title="Imprimir o Guardar como PDF"
-              >
-                <Printer className="w-3.5 h-3.5 text-slate-300" />
-                Imprimir / PDF
-              </button>
-            )}
           </div>
         </div>
 
@@ -311,16 +269,22 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-semibold text-slate-500 text-[10px] uppercase">Referencias:</span>
             <span className="flex items-center gap-1 bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded font-medium" title="Jornal Ordinario">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span> JM / JT / JN: Jornal (Mañana/Tarde/Noche)
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span> JM / JT / JN: Jornal (06-13 / 13-20 / 20-07)
             </span>
             <span className="flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded font-medium" title="Horas Extras Hábiles en contraturno">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> EM / ET: Extra Contraturno (Mañana/Tarde)
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> EM / ET / EN: Extra Contraturno (7h)
             </span>
-            <span className="flex items-center gap-1 bg-purple-50 text-purple-800 border border-purple-200 px-2 py-0.5 rounded font-medium" title="Inhábil Activa Presencial">
-              <span className="w-2 h-2 rounded-full bg-purple-500"></span> IA: Inhábil Activa
+            <span className="flex items-center gap-1 bg-purple-100 text-purple-900 border border-purple-300 px-2 py-0.5 rounded font-bold shadow-2xs" title="Guardia Inhábil 24 Horas Activa">
+              <span className="w-2 h-2 rounded-full bg-purple-700"></span> G24A: Guardia 24h Activa
             </span>
-            <span className="flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-medium" title="Inhábil Pasiva Disponibilidad">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span> IP: Inhábil Pasiva
+            <span className="flex items-center gap-1 bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded font-bold shadow-2xs" title="Guardia Inhábil 24 Horas Pasiva">
+              <span className="w-2 h-2 rounded-full bg-amber-600"></span> G24P: Guardia 24h Pasiva
+            </span>
+            <span className="flex items-center gap-1 bg-purple-50 text-purple-800 border border-purple-200 px-2 py-0.5 rounded font-medium" title="Inhábil Activa Presencial 7h">
+              <span className="w-2 h-2 rounded-full bg-purple-500"></span> IA: Inhábil Activa 7h
+            </span>
+            <span className="flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-medium" title="Inhábil Pasiva Disponibilidad 7h">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span> IP: Inhábil Pasiva 7h
             </span>
             <span className="flex items-center gap-1 bg-teal-50 text-teal-800 border border-teal-200 px-2 py-0.5 rounded font-medium" title="Jornal en otra institución">
               <span className="w-2 h-2 rounded-full bg-teal-500"></span> [Ext]: Jornal en otra inst.
@@ -647,9 +611,11 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                           const key = `${agent.id}_${day.dateStr}`;
                           const assign = schedule.assignments[key];
                           const hasExtraHabil = assign?.extraHabil;
+                          const hasInhabil24h = assign?.extraInhabil24h;
+                          const hasInhabil12h = assign?.extraInhabil12h;
                           const hasInhabilM = assign?.extraInhabilManana;
                           const hasInhabilT = assign?.extraInhabilTarde;
-                          const hasAnyExtra = hasExtraHabil || hasInhabilM || hasInhabilT;
+                          const hasAnyExtra = hasExtraHabil || hasInhabil24h || hasInhabil12h || hasInhabilM || hasInhabilT;
 
                           const isWeekend = day.isWeekend;
                           const isHoliday = day.isHoliday;
@@ -677,6 +643,8 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                               }`}
                               title={`Horas Extras:\n${agent.name} - ${day.dayNameLong} ${day.dayNumber}\n${
                                 hasExtraHabil ? `• ${extraCode} (7h)\n` : ''
+                              }${hasInhabil24h ? `• Guardia 24hs (${assign?.extraInhabil24hTipo || 'activa'})\n` : ''}${
+                                hasInhabil12h ? `• Guardia 12hs (${assign?.extraInhabil12hTipo || 'activa'})\n` : ''
                               }${hasInhabilM ? `• Inhábil Mañana (${assign?.extraInhabilMananaTipo || 'activa'})\n` : ''}${
                                 hasInhabilT ? `• Inhábil Tarde (${assign?.extraInhabilTardeTipo || 'activa'})\n` : ''
                               }${!hasAnyExtra ? 'Sin horas extras' : ''}`}
@@ -686,6 +654,32 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                                 {hasExtraHabil && (
                                   <span className="w-full py-0.5 text-[8.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 rounded leading-tight shadow-2xs">
                                     {extraCode}
+                                  </span>
+                                )}
+
+                                {/* Badge Guardia 24 Horas */}
+                                {hasInhabil24h && (
+                                  <span 
+                                    className={`w-full py-0.5 text-[8.5px] font-black border rounded px-0.5 leading-tight shadow-2xs ${
+                                      assign?.extraInhabil24hTipo === 'activa'
+                                        ? 'bg-purple-700 text-white border-purple-900'
+                                        : 'bg-amber-600 text-white border-amber-800'
+                                    }`}
+                                  >
+                                    {assign?.extraInhabil24hTipo === 'activa' ? 'G24A (24h)' : 'G24P (24h)'}
+                                  </span>
+                                )}
+
+                                {/* Badge Guardia 12 Horas */}
+                                {hasInhabil12h && (
+                                  <span 
+                                    className={`w-full py-0.5 text-[8.5px] font-bold border rounded px-0.5 leading-tight shadow-2xs ${
+                                      assign?.extraInhabil12hTipo === 'activa'
+                                        ? 'bg-indigo-100 text-indigo-950 border-indigo-300'
+                                        : 'bg-amber-100 text-amber-950 border-amber-300'
+                                    }`}
+                                  >
+                                    {assign?.extraInhabil12hTipo === 'activa' ? 'G12A (12h)' : 'G12P (12h)'}
                                   </span>
                                 )}
 
@@ -789,9 +783,11 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
 
                         const hasJornal = assign?.jornal && modality !== 'solo_guardias';
                         const hasExtraHabil = assign?.extraHabil && modality !== 'solo_jornal';
+                        const hasInhabil24h = assign?.extraInhabil24h && modality !== 'solo_jornal';
+                        const hasInhabil12h = assign?.extraInhabil12h && modality !== 'solo_jornal';
                         const hasInhabilM = assign?.extraInhabilManana && modality !== 'solo_jornal';
                         const hasInhabilT = assign?.extraInhabilTarde && modality !== 'solo_jornal';
-                        const hasAny = hasJornal || hasExtraHabil || hasInhabilM || hasInhabilT;
+                        const hasAny = hasJornal || hasExtraHabil || hasInhabil24h || hasInhabil12h || hasInhabilM || hasInhabilT;
 
                         return (
                           <td
@@ -813,6 +809,24 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                               {hasExtraHabil && (
                                 <span className="w-full py-0.2 text-[8px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200 rounded">
                                   {cTurno === 'manana' ? 'EM' : 'ET'}
+                                </span>
+                              )}
+                              {hasInhabil24h && (
+                                <span className={`w-full py-0.2 text-[8px] font-black rounded ${
+                                  assign?.extraInhabil24hTipo === 'activa'
+                                    ? 'bg-purple-700 text-white border border-purple-900'
+                                    : 'bg-amber-600 text-white border border-amber-800'
+                                }`}>
+                                  {assign?.extraInhabil24hTipo === 'activa' ? '24h ACT' : '24h PAS'}
+                                </span>
+                              )}
+                              {hasInhabil12h && (
+                                <span className={`w-full py-0.2 text-[8px] font-bold rounded ${
+                                  assign?.extraInhabil12hTipo === 'activa'
+                                    ? 'bg-indigo-100 text-indigo-900 border border-indigo-200'
+                                    : 'bg-amber-100 text-amber-900 border border-amber-200'
+                                }`}>
+                                  {assign?.extraInhabil12hTipo === 'activa' ? '12h ACT' : '12h PAS'}
                                 </span>
                               )}
                               {hasInhabilM && (

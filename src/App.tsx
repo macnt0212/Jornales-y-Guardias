@@ -1179,6 +1179,10 @@ export default function App() {
         onExportBlankExcel={handleExportBlankExcel}
         onMonthChange={handleMonthChange}
         onGenerateBalanced={handleGenerateBalanced}
+        onApplyOfficialPolicy={handleApplyOfficialInhabilePolicy}
+        onClearAllMonth={handleClearAllMonth}
+        onClearAllExtrasMonth={handleClearAllExtrasMonth}
+        onClearAllJornalesMonth={handleClearAllJornalesMonth}
         onExportExcel={handleExportExcel}
         onExportExcelVisual={handleExportExcelVisual}
         onExportVisualHtml={handleExportVisualHtml}
@@ -1191,14 +1195,7 @@ export default function App() {
       />
 
       {/* Main Body Content according to Active Tab */}
-      <main className="max-w-7xl w-full mx-auto px-4 py-5 sm:px-6 lg:px-8 flex-1">
-        {/* Interactive Month & Year Quick Selector Ribbon */}
-        <MonthSelectorRibbon
-          schedule={schedule}
-          days={days}
-          onMonthChange={handleMonthChange}
-          onGenerateBalanced={handleGenerateBalanced}
-        />
+      <main className="max-w-7xl w-full mx-auto px-4 py-3 sm:px-6 lg:px-8 flex-1">
 
         {activeTab === 'matriz' && (
           <SpreadsheetView

@@ -80,50 +80,79 @@ export const InhabileShiftsTab: React.FC<InhabileShiftsTabProps> = ({
     });
   });
 
+  const isInformatica = schedule.serviceId === 'serv_informatica' || 
+    (schedule.serviceConfig?.serviceName || '').toLowerCase().includes('informát') || 
+    (schedule.serviceConfig?.serviceName || '').toLowerCase().includes('informat');
+
+  const [isPolicyExpanded, setIsPolicyExpanded] = React.useState(isInformatica);
+
   return (
-    <div className="flex flex-col gap-5">
-      {/* Policy Notice Box */}
-      <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-900 text-white rounded-lg p-4 shadow-sm border border-purple-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-purple-800/80 rounded-lg shrink-0 mt-0.5">
-            <Award className="w-5 h-5 text-amber-300" />
+    <div className="flex flex-col gap-4">
+      {/* Policy Notice Box - Clean, collapsible & service-aware */}
+      <div className="bg-slate-900 text-white rounded-xl p-3.5 shadow-sm border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-900/80 text-purple-300 rounded-lg shrink-0">
+              <Award className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-bold text-sm text-white">
+                  {isInformatica 
+                    ? 'Régimen Oficial de Guardias Inhábiles y Rotación de Duplas'
+                    : `Guardias Inhábiles y Fines de Semana (${schedule.serviceConfig?.serviceName || 'Servicio'})`
+                  }
+                </h3>
+                <span className="bg-emerald-900 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-700/60">
+                  {weekendAndHolidays.length} días inhábiles en {MONTH_NAMES[schedule.month - 1]}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Distribución de guardias Activas (presenciales) y Pasivas (a disponibilidad) los fines de semana y feriados.
+              </p>
+            </div>
           </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-bold text-sm sm:text-base text-white">
-                Régimen Oficial de Guardias Inhábiles y Rotación de Fines de Semana
-              </h3>
-              <span className="bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
-                Regla Exclusiva
-              </span>
-            </div>
-            <div className="text-xs text-purple-100 mt-1.5 leading-relaxed max-w-3xl space-y-1">
-              <p>
-                • <strong>Único habilitado para Inhábiles ACTIVAS:</strong> <strong className="text-amber-300 underline underline-offset-2">Cantero, Miguel Angel</strong> (el resto cumple Inhábiles PASIVAS a disponibilidad).
-              </p>
-              <p>
-                • <strong>Dupla 1 (Fines de semana de por medio):</strong> <strong className="text-white">Cantero, Miguel Angel</strong> (Activa) y <strong className="text-white">Escobar, Eduardo Martin</strong> (Pasiva) hacen guardias juntos.
-              </p>
-              <p>
-                • <strong>Dupla 2 (Fines de semana alternados):</strong> <strong className="text-white">Galeano, Cristian Alejandro</strong> (Pasiva) y <strong className="text-white">Amarilla, Nestor Ivan</strong> (Pasiva) hacen guardias los otros fines de semana.
-              </p>
-              <p>
-                • <strong>Régimen Amarilla, Nestor Ivan:</strong> Realiza <strong className="text-amber-300">ÚNICAMENTE Inhábiles PASIVAS</strong> (no realiza horas extras hábiles de 13 a 20 hs en días hábiles; las horas extras hábiles de SIGHO son cubiertas por Galeano).
-              </p>
-            </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {isInformatica && onApplyOfficialPolicy && (
+              <button
+                id="btn-apply-official-policy"
+                onClick={onApplyOfficialPolicy}
+                className="flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm transition-all cursor-pointer"
+                title="Ajusta automáticamente todas las asignaciones del mes con las duplas y modalidades oficiales"
+              >
+                <ShieldCheck className="w-4 h-4 text-slate-950" />
+                <span>Aplicar Regla Oficial</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setIsPolicyExpanded(!isPolicyExpanded)}
+              className="text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              {isPolicyExpanded ? 'Ocultar pautas' : 'Ver pautas'}
+            </button>
           </div>
         </div>
 
-        {onApplyOfficialPolicy && (
-          <button
-            id="btn-apply-official-policy"
-            onClick={onApplyOfficialPolicy}
-            className="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-lg shadow-md transition-all shrink-0 cursor-pointer hover:scale-[1.02] active:scale-95"
-            title="Ajusta automáticamente todas las asignaciones del mes con las duplas y modalidades oficiales"
-          >
-            <ShieldCheck className="w-4 h-4 text-slate-950" />
-            Aplicar Regla Oficial a Todo el Mes
-          </button>
+        {isPolicyExpanded && (
+          <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-300 leading-relaxed space-y-1.5 animate-in fade-in duration-150">
+            {isInformatica ? (
+              <>
+                <p>• <strong>Único habilitado para Inhábiles ACTIVAS:</strong> <strong className="text-amber-300 underline underline-offset-2">Cantero, Miguel Angel</strong> (el resto cumple Inhábiles PASIVAS a disponibilidad).</p>
+                <p>• <strong>Dupla 1 (Fines de semana de por medio):</strong> <strong className="text-white">Cantero, Miguel Angel</strong> (Activa) y <strong className="text-white">Escobar, Eduardo Martin</strong> (Pasiva) hacen guardias juntos.</p>
+                <p>• <strong>Dupla 2 (Fines de semana alternados):</strong> <strong className="text-white">Galeano, Cristian Alejandro</strong> (Pasiva) y <strong className="text-white">Amarilla, Nestor Ivan</strong> (Pasiva) hacen guardias los otros fines de semana.</p>
+                <p>• <strong>Régimen Amarilla, Nestor Ivan:</strong> Realiza <strong className="text-amber-300">ÚNICAMENTE Inhábiles PASIVAS</strong> (no realiza horas extras hábiles de 13 a 20 hs en días hábiles; las horas extras hábiles de SIGHO son cubiertas por Galeano).</p>
+              </>
+            ) : (
+              <>
+                <p>• <strong>Guardias Activas:</strong> Cumplen presencia física efectiva en la unidad asistencial.</p>
+                <p>• <strong>Guardias Pasivas:</strong> Personal disponible ante llamado o contingencia del servicio.</p>
+                <p>• <strong>Duraciones:</strong> Soporta guardias completas de 24 horas, módulos de 12 horas o fraccionadas mañana (06-13) y tarde (13-20).</p>
+              </>
+            )}
+          </div>
         )}
       </div>
 

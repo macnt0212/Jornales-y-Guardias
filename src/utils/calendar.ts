@@ -13,6 +13,8 @@ import {
 } from '../types';
 
 export const HOURS_PER_SHIFT = 7; // 6 a 13 = 7hs, 13 a 20 = 7hs
+export const HOURS_PER_GUARDIA_24H = 24; // Guardia Inhábil 24 hs = 24hs
+export const HOURS_PER_GUARDIA_12H = 12; // Guardia Inhábil 12 hs = 12hs
 
 export const DEFAULT_SERVICE_CONFIG: HospitalServiceConfig = {
   hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
@@ -25,6 +27,9 @@ export const DEFAULT_SERVICE_CONFIG: HospitalServiceConfig = {
   extraHabilHorarioLabel: '13:00 a 20:00 hs',
   inhabilMananaHorarioLabel: '06:00 a 13:00 hs',
   inhabilTardeHorarioLabel: '13:00 a 20:00 hs',
+  inhabilScheme: 'flexible',
+  inhabil24hHorarioLabel: '08:00 a 08:00 hs (24 hs)',
+  inhabil12hHorarioLabel: '08:00 a 20:00 hs (12 hs)',
 };
 
 export interface ServicePreset {
@@ -719,6 +724,10 @@ export function generateBlankSchedule(
         extraInhabilMananaTipo: agentMode,
         extraInhabilTarde: false,
         extraInhabilTardeTipo: agentMode,
+        extraInhabil24h: false,
+        extraInhabil24hTipo: agentMode,
+        extraInhabil12h: false,
+        extraInhabil12hTipo: agentMode,
       };
     });
   });
@@ -791,6 +800,10 @@ export function generateBalancedSchedule(
           extraInhabilMananaTipo: agentMode,
           extraInhabilTarde: false,
           extraInhabilTardeTipo: agentMode,
+          extraInhabil24h: false,
+          extraInhabil24hTipo: agentMode,
+          extraInhabil12h: false,
+          extraInhabil12hTipo: agentMode,
         };
       });
 
@@ -897,6 +910,10 @@ export function generateBalancedSchedule(
         extraInhabilMananaTipo: agentMode,
         extraInhabilTarde: false,
         extraInhabilTardeTipo: agentMode,
+        extraInhabil24h: false,
+        extraInhabil24hTipo: agentMode,
+        extraInhabil12h: false,
+        extraInhabil12hTipo: agentMode,
       };
     });
 
@@ -972,6 +989,13 @@ export function calculateAgentStats(
 
   let turnosInhabilActiva = 0;
   let turnosInhabilPasiva = 0;
+  let horasInhabilActiva = 0;
+  let horasInhabilPasiva = 0;
+
+  let guardias24hActiva = 0;
+  let guardias24hPasiva = 0;
+  let guardias12hActiva = 0;
+  let guardias12hPasiva = 0;
 
   days.forEach(day => {
     const key = `${agent.id}_${day.dateStr}`;
@@ -996,28 +1020,60 @@ export function calculateAgentStats(
       else horasExtraHabilTarde += HOURS_PER_SHIFT;
     }
 
-    // Inhábiles: solo si la modalidad NO es 'solo_jornal'
-    if (assign.extraInhabilManana && modality !== 'solo_jornal') {
-      if (assign.extraInhabilMananaTipo === 'activa') {
-        turnosInhabilActiva++;
-      } else {
-        turnosInhabilPasiva++;
+    // Guardias Inhábiles (Fines de semana y feriados): solo si la modalidad NO es 'solo_jornal'
+    if (modality !== 'solo_jornal') {
+      // 1) Guardia Completa de 24 Horas
+      if (assign.extraInhabil24h) {
+        if (assign.extraInhabil24hTipo === 'activa') {
+          turnosInhabilActiva++;
+          horasInhabilActiva += HOURS_PER_GUARDIA_24H;
+          guardias24hActiva++;
+        } else {
+          turnosInhabilPasiva++;
+          horasInhabilPasiva += HOURS_PER_GUARDIA_24H;
+          guardias24hPasiva++;
+        }
       }
-    }
 
-    if (assign.extraInhabilTarde && modality !== 'solo_jornal') {
-      if (assign.extraInhabilTardeTipo === 'activa') {
-        turnosInhabilActiva++;
-      } else {
-        turnosInhabilPasiva++;
+      // 2) Guardia de 12 Horas
+      if (assign.extraInhabil12h) {
+        if (assign.extraInhabil12hTipo === 'activa') {
+          turnosInhabilActiva++;
+          horasInhabilActiva += HOURS_PER_GUARDIA_12H;
+          guardias12hActiva++;
+        } else {
+          turnosInhabilPasiva++;
+          horasInhabilPasiva += HOURS_PER_GUARDIA_12H;
+          guardias12hPasiva++;
+        }
+      }
+
+      // 3) Turno Fraccionado Mañana (7 hs)
+      if (assign.extraInhabilManana) {
+        if (assign.extraInhabilMananaTipo === 'activa') {
+          turnosInhabilActiva++;
+          horasInhabilActiva += HOURS_PER_SHIFT;
+        } else {
+          turnosInhabilPasiva++;
+          horasInhabilPasiva += HOURS_PER_SHIFT;
+        }
+      }
+
+      // 4) Turno Fraccionado Tarde (7 hs)
+      if (assign.extraInhabilTarde) {
+        if (assign.extraInhabilTardeTipo === 'activa') {
+          turnosInhabilActiva++;
+          horasInhabilActiva += HOURS_PER_SHIFT;
+        } else {
+          turnosInhabilPasiva++;
+          horasInhabilPasiva += HOURS_PER_SHIFT;
+        }
       }
     }
   });
 
   const horasJornal = modality === 'solo_guardias' ? 0 : (diasJornal * HOURS_PER_SHIFT);
   const horasExtraHabil = diasExtraHabil * HOURS_PER_SHIFT;
-  const horasInhabilActiva = turnosInhabilActiva * HOURS_PER_SHIFT;
-  const horasInhabilPasiva = turnosInhabilPasiva * HOURS_PER_SHIFT;
   const totalHorasExtras = horasExtraHabil + horasInhabilActiva + horasInhabilPasiva;
   const totalHorasMes = horasJornal + totalHorasExtras;
 
@@ -1043,6 +1099,10 @@ export function calculateAgentStats(
     horasInhabilActiva,
     turnosInhabilPasiva,
     horasInhabilPasiva,
+    guardias24hActiva,
+    guardias24hPasiva,
+    guardias12hActiva,
+    guardias12hPasiva,
     totalHorasExtras,
     totalHorasMes,
   };
