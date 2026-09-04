@@ -9,12 +9,202 @@ import {
   HospitalServiceItem,
   WorkModality,
   JornalShiftType,
-  ExtraHabilShiftType
+  ExtraHabilShiftType,
+  RecargoRange,
+  RecargoCategory
 } from '../types';
 
 export const HOURS_PER_SHIFT = 7; // 6 a 13 = 7hs, 13 a 20 = 7hs
 export const HOURS_PER_GUARDIA_24H = 24; // Guardia Inhábil 24 hs = 24hs
 export const HOURS_PER_GUARDIA_12H = 12; // Guardia Inhábil 12 hs = 12hs
+
+/**
+ * Calcula la duración en horas entre dos horarios en formato HH:mm (admite turnos que cruzan la medianoche).
+ */
+export function calculateHoursBetweenTimes(startTime: string, endTime: string): number {
+  if (!startTime || !endTime) return 7;
+  const [startH, startM = 0] = startTime.split(':').map(Number);
+  const [endH, endM = 0] = endTime.split(':').map(Number);
+
+  if (isNaN(startH) || isNaN(endH)) return 7;
+
+  let startTotalMinutes = startH * 60 + startM;
+  let endTotalMinutes = endH * 60 + endM;
+
+  if (endTotalMinutes <= startTotalMinutes) {
+    // Si la hora de fin es menor o igual, asumimos que cruza la medianoche (o es turno de 24 horas si son iguales)
+    if (endTotalMinutes === startTotalMinutes) {
+      return 24;
+    }
+    endTotalMinutes += 24 * 60;
+  }
+
+  const diffMinutes = endTotalMinutes - startTotalMinutes;
+  const hours = Math.round((diffMinutes / 60) * 10) / 10;
+  return hours > 0 ? hours : 7;
+}
+
+export const DEFAULT_RECARGO_RANGES: RecargoRange[] = [
+  // ── RECARGOS HÁBILES (Lunes a Viernes / Días Laborables en Contraturno) ──
+  {
+    id: 'rec_habil_tarde_7h',
+    name: 'Recargo Hábil Tarde (Contraturno Estándar)',
+    category: 'habil',
+    startTime: '13:00',
+    endTime: '20:00',
+    hours: 7,
+    label: '13:00 a 20:00 hs',
+    description: 'Horas extras hábiles turno tarde en contraturno (7 horas)',
+    isSystemDefault: true,
+  },
+  {
+    id: 'rec_habil_manana_7h',
+    name: 'Recargo Hábil Mañana (Contraturno)',
+    category: 'habil',
+    startTime: '06:00',
+    endTime: '13:00',
+    hours: 7,
+    label: '06:00 a 13:00 hs',
+    description: 'Horas extras hábiles para personal con jornal de tarde o noche (7 horas)',
+    isSystemDefault: true,
+  },
+  {
+    id: 'rec_habil_noche_11h',
+    name: 'Recargo Hábil Noche',
+    category: 'habil',
+    startTime: '20:00',
+    endTime: '07:00',
+    hours: 11,
+    label: '20:00 a 07:00 hs',
+    description: 'Horas extras nocturnas en días hábiles (11 horas)',
+    isSystemDefault: true,
+  },
+  {
+    id: 'rec_habil_vespertino_4h',
+    name: 'Refuerzo Hábil Vespertino (4 hs)',
+    category: 'habil',
+    startTime: '14:00',
+    endTime: '18:00',
+    hours: 4,
+    label: '14:00 a 18:00 hs',
+    description: 'Refuerzo de horas extras reducidas en día hábil (4 horas)',
+    isSystemDefault: true,
+  },
+
+  // ── RECARGOS INHÁBILES ACTIVAS (Sábados, Domingos y Feriados con Presencia Activa) ──
+  {
+    id: 'rec_inhabil_activa_manana_7h',
+    name: 'Guardia Inhábil Activa Mañana',
+    category: 'inhabil_activa',
+    startTime: '06:00',
+    endTime: '13:00',
+    hours: 7,
+    label: '06:00 a 13:00 hs',
+    description: 'Guardia activa presencial fin de semana / feriado turno mañana (7 horas)',
+    isSystemDefault: true,
+  },
+  {
+    id: 'rec_inhabil_activa_tarde_7h',
+    name: 'Guardia Inhábil Activa Tarde',
+    category: 'inhabil_activa',
+    startTime: '13:00',
+    endTime: '20:00',
+    hours: 7,
+    label: '13:00 a 20:00 hs',
+    description: 'Guardia activa presencial fin de semana / feriado turno tarde (7 horas)',
+    isSystemDefault: true,
+  },
+  {
+    id: 'rec_inhabil_activa_12h_diurna',
+    name: 'Guardia Inhábil Activa 12 Horas Diurna',
+    category: 'inhabil_activa',
+    startTime: '08:00',
+    endTime: '20:00',
+    hours: 12,
+    label: '08:00 a 20:00 hs',
+    description: 'Guardia activa presencial de 12 horas diurnas (08 a 20 hs)',
+    isSystemDefault: true,
+  },
+  {
+    id: 'rec_inhabil_activa_12h_nocturna',
+    name: 'Guardia Inhábil Activa 12 Horas Nocturna',
+    category: 'inhabil_activa',
+    startTime: '20:00',
+    endTime: '08:00',
+    hours: 12,
+    label: '20:00 a 08:00 hs',
+    description: 'Guardia activa presencial de 12 horas nocturnas (20 a 08 hs)',
+    isSystemDefault: true,
+  },
+  {
+    id: 'rec_inhabil_activa_24h',
+    name: 'Guardia Inhábil Activa 24 Horas',
+    category: 'inhabil_activa',
+    startTime: '08:00',
+    endTime: '08:00',
+    hours: 24,
+    label: '08:00 a 08:00 hs (24 hs)',
+    description: 'Guardia activa presencial de 24 horas continuas de servicio',
+    isSystemDefault: true,
+  },
+
+  // ── RECARGOS INHÁBILES PASIVAS (Disponibilidad Domiciliaria / A Llamado) ──
+  {
+    id: 'rec_inhabil_pasiva_24h',
+    name: 'Guardia Inhábil Pasiva 24 Horas',
+    category: 'inhabil_pasiva',
+    startTime: '08:00',
+    endTime: '08:00',
+    hours: 24,
+    label: '08:00 a 08:00 hs (24 hs pasiva)',
+    description: 'Guardia pasiva a disponibilidad durante 24 horas',
+    isSystemDefault: true,
+  },
+  {
+    id: 'rec_inhabil_pasiva_12h',
+    name: 'Guardia Inhábil Pasiva 12 Horas',
+    category: 'inhabil_pasiva',
+    startTime: '08:00',
+    endTime: '20:00',
+    hours: 12,
+    label: '08:00 a 20:00 hs (12 hs pasiva)',
+    description: 'Guardia pasiva a disponibilidad durante 12 horas',
+    isSystemDefault: true,
+  },
+  {
+    id: 'rec_inhabil_pasiva_7h',
+    name: 'Guardia Inhábil Pasiva 7 Horas',
+    category: 'inhabil_pasiva',
+    startTime: '13:00',
+    endTime: '20:00',
+    hours: 7,
+    label: '13:00 a 20:00 hs (7 hs pasiva)',
+    description: 'Guardia pasiva a disponibilidad turno tarde',
+    isSystemDefault: true,
+  },
+];
+
+export function getServiceRecargoRanges(config?: HospitalServiceConfig): RecargoRange[] {
+  if (config?.recargoRanges && config.recargoRanges.length > 0) {
+    return config.recargoRanges;
+  }
+  const saved = localStorage.getItem('hospital_custom_recargo_ranges');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return DEFAULT_RECARGO_RANGES;
+}
+
+export function saveGlobalRecargoRanges(ranges: RecargoRange[]): void {
+  localStorage.setItem('hospital_custom_recargo_ranges', JSON.stringify(ranges));
+}
 
 export const DEFAULT_SERVICE_CONFIG: HospitalServiceConfig = {
   hospitalName: 'HOSPITAL CENTRAL DE EMERGENCIAS "DR. RAMÓN CARRILLO"',
@@ -30,6 +220,7 @@ export const DEFAULT_SERVICE_CONFIG: HospitalServiceConfig = {
   inhabilScheme: 'flexible',
   inhabil24hHorarioLabel: '08:00 a 08:00 hs (24 hs)',
   inhabil12hHorarioLabel: '08:00 a 20:00 hs (12 hs)',
+  recargoRanges: DEFAULT_RECARGO_RANGES,
 };
 
 export interface ServicePreset {

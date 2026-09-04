@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Agent, DayInfo, DayShiftAssignment, InhabileMode, JornalShiftType, ExtraHabilShiftType } from '../types';
-import { X, Check, Clock, ShieldCheck, Trash2, Eraser, Briefcase, Building2, Sun, Moon, Sunrise, AlertCircle, Zap } from 'lucide-react';
+import { Agent, DayInfo, DayShiftAssignment, InhabileMode, JornalShiftType, ExtraHabilShiftType, RecargoRange } from '../types';
+import { X, Check, Clock, ShieldCheck, Trash2, Eraser, Briefcase, Building2, Sun, Moon, Sunrise, AlertCircle, Zap, Timer } from 'lucide-react';
 import { 
   isAgentInhabileActiva, 
   getAgentInhabileMode, 
@@ -10,7 +10,8 @@ import {
   getContraturnoShiftForAgent,
   HOURS_PER_SHIFT,
   HOURS_PER_GUARDIA_24H,
-  HOURS_PER_GUARDIA_12H
+  HOURS_PER_GUARDIA_12H,
+  getServiceRecargoRanges
 } from '../utils/calendar';
 
 interface ShiftEditorModalProps {
@@ -18,6 +19,8 @@ interface ShiftEditorModalProps {
   agent: Agent | null;
   day: DayInfo | null;
   assignment: DayShiftAssignment | undefined;
+  recargoRanges?: RecargoRange[];
+  onOpenRecargoRanges?: () => void;
   onClose: () => void;
   onSave: (agentId: string, dateStr: string, updatedAssignment: DayShiftAssignment) => void;
 }
@@ -27,6 +30,8 @@ export const ShiftEditorModal: React.FC<ShiftEditorModalProps> = ({
   agent,
   day,
   assignment,
+  recargoRanges,
+  onOpenRecargoRanges,
   onClose,
   onSave,
 }) => {
@@ -479,6 +484,103 @@ export const ShiftEditorModal: React.FC<ShiftEditorModalProps> = ({
                 </span>
                 <span className="text-[10px] bg-rose-200 text-rose-900 px-1.5 py-0.5 rounded font-bold">0 hs</span>
               </button>
+            </div>
+          </div>
+
+          {/* SECCIÓN NUEVA: RANGOS DE RECARGOS HORARIOS CONFIGURADOS */}
+          <div className="p-3 bg-purple-50/40 border border-purple-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-bold text-purple-950 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+                <Timer className="w-3.5 h-3.5 text-purple-700" />
+                <span>Rangos de Recargos para este día</span>
+              </span>
+              {onOpenRecargoRanges && (
+                <button
+                  type="button"
+                  onClick={onOpenRecargoRanges}
+                  className="text-[11px] font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 hover:underline cursor-pointer"
+                  title="Configurar o agregar nuevos rangos de horarios de recargos"
+                >
+                  <span>+ Configurar Rangos</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {(recargoRanges && recargoRanges.length > 0 ? recargoRanges : getServiceRecargoRanges())
+                .filter(r => isBusinessDay ? r.category === 'habil' : (r.category === 'inhabil_activa' || r.category === 'inhabil_pasiva'))
+                .map(range => {
+                  const isHabil = range.category === 'habil';
+                  const isActiva = range.category === 'inhabil_activa';
+
+                  return (
+                    <button
+                      key={range.id}
+                      type="button"
+                      onClick={() => {
+                        if (isHabil) {
+                          setExtraHabil(true);
+                          if (range.startTime.startsWith('20')) {
+                            setExtraHabilTurno('noche');
+                          } else if (range.startTime.startsWith('06') || range.startTime.startsWith('07')) {
+                            setExtraHabilTurno('manana');
+                          } else {
+                            setExtraHabilTurno('tarde');
+                          }
+                        } else if (isActiva) {
+                          if (range.hours >= 24) {
+                            setExtraInhabil24h(true);
+                            setExtraInhabil24hTipo('activa');
+                            setExtraInhabil12h(false);
+                            setExtraInhabilManana(false);
+                            setExtraInhabilTarde(false);
+                          } else if (range.hours >= 12) {
+                            setExtraInhabil12h(true);
+                            setExtraInhabil12hTipo('activa');
+                            setExtraInhabil24h(false);
+                            setExtraInhabilManana(false);
+                            setExtraInhabilTarde(false);
+                          } else if (range.startTime.startsWith('06') || range.startTime.startsWith('07') || range.startTime.startsWith('08')) {
+                            setExtraInhabilManana(true);
+                            setExtraInhabilMananaTipo('activa');
+                          } else {
+                            setExtraInhabilTarde(true);
+                            setExtraInhabilTardeTipo('activa');
+                          }
+                        } else {
+                          // Pasiva
+                          if (range.hours >= 24) {
+                            setExtraInhabil24h(true);
+                            setExtraInhabil24hTipo('pasiva');
+                            setExtraInhabil12h(false);
+                            setExtraInhabilManana(false);
+                            setExtraInhabilTarde(false);
+                          } else if (range.hours >= 12) {
+                            setExtraInhabil12h(true);
+                            setExtraInhabil12hTipo('pasiva');
+                            setExtraInhabil24h(false);
+                            setExtraInhabilManana(false);
+                            setExtraInhabilTarde(false);
+                          } else {
+                            setExtraInhabilTarde(true);
+                            setExtraInhabilTardeTipo('pasiva');
+                          }
+                        }
+                      }}
+                      className={`text-xs py-1 px-2.5 rounded-lg border font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs ${
+                        isHabil
+                          ? 'bg-white border-emerald-300 text-emerald-900 hover:bg-emerald-50'
+                          : isActiva
+                          ? 'bg-white border-purple-300 text-purple-900 hover:bg-purple-50'
+                          : 'bg-white border-amber-300 text-amber-900 hover:bg-amber-50'
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${isHabil ? 'bg-emerald-500' : isActiva ? 'bg-purple-500' : 'bg-amber-500'}`}></span>
+                      <span>{range.name}</span>
+                      <span className="font-mono text-[10px] font-bold text-slate-500">({range.hours}h)</span>
+                    </button>
+                  );
+                })}
             </div>
           </div>
 

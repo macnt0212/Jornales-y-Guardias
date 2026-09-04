@@ -1,5 +1,19 @@
 export type InhabileMode = 'activa' | 'pasiva';
 
+export type RecargoCategory = 'habil' | 'inhabil_activa' | 'inhabil_pasiva';
+
+export interface RecargoRange {
+  id: string;
+  name: string; // ej: "Guardia Tarde", "Recargo Nocturno Hábiles", "Guardia Activa 12hs", etc.
+  category: RecargoCategory; // 'habil' | 'inhabil_activa' | 'inhabil_pasiva'
+  startTime: string; // "13:00"
+  endTime: string; // "20:00"
+  hours: number; // 7
+  label: string; // "13:00 a 20:00 hs"
+  description?: string;
+  isSystemDefault?: boolean;
+}
+
 // Modalidad de prestación del agente en el servicio
 export type WorkModality = 'jornal_y_guardias' | 'solo_guardias' | 'solo_jornal';
 
@@ -26,6 +40,7 @@ export interface HospitalServiceConfig {
   inhabilScheme?: ServiceInhabileScheme; // 'fraccionado_7h' | 'guardia_24h' | 'guardia_12h' | 'flexible'
   inhabil24hHorarioLabel?: string; // ej: "08:00 a 08:00 hs (24 hs)" o "06:00 a 06:00 hs (24 hs)"
   inhabil12hHorarioLabel?: string; // ej: "08:00 a 20:00 hs (12 hs)"
+  recargoRanges?: RecargoRange[]; // Rangos de horarios de recargos (hábiles, inhábiles activas y pasivas)
 }
 
 export interface Agent {

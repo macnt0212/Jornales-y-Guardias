@@ -8,7 +8,8 @@ import {
   HospitalServiceConfig,
   HospitalServiceItem,
   HospitalAuthSession,
-  UserAccount
+  UserAccount,
+  RecargoRange
 } from './types';
 import { 
   DEFAULT_AGENTS, 
@@ -48,6 +49,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { ServiceManagerModal } from './components/ServiceManagerModal';
 import { UserManagerModal } from './components/UserManagerModal';
 import { OperationsManualModal } from './components/OperationsManualModal';
+import { RecargoRangesModal } from './components/RecargoRangesModal';
 import { LoginScreen } from './components/LoginScreen';
 import { CheckCircle, AlertCircle, Info } from 'lucide-react';
 
@@ -84,6 +86,7 @@ export default function App() {
 
   // Modals state
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isRecargoRangesOpen, setIsRecargoRangesOpen] = useState<boolean>(false);
   const [isServiceManagerOpen, setIsServiceManagerOpen] = useState<boolean>(false);
   const [isUserManagerOpen, setIsUserManagerOpen] = useState<boolean>(false);
   const [isManualOpen, setIsManualOpen] = useState<boolean>(false);
@@ -1103,6 +1106,16 @@ export default function App() {
     showToast('✓ Configuración del servicio, personal y feriados guardada exitosamente');
   };
 
+  // Save custom recargo ranges
+  const handleSaveRecargoRanges = (newRanges: RecargoRange[]) => {
+    const updatedConfig: HospitalServiceConfig = {
+      ...(schedule.serviceConfig || DEFAULT_SERVICE_CONFIG),
+      recargoRanges: newRanges,
+    };
+    handleSaveSettings(schedule.agents, schedule.holidays || {}, updatedConfig);
+    showToast(`✓ Se guardaron ${newRanges.length} rangos de recargos`);
+  };
+
   // Overall statistics
   const statsOverview = useMemo(() => {
     let totalJornalHours = 0;
@@ -1190,6 +1203,7 @@ export default function App() {
         onPrint={handlePrint}
         onReset={handleReset}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenRecargoRanges={() => setIsRecargoRangesOpen(true)}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
@@ -1210,6 +1224,7 @@ export default function App() {
             onClearAllJornalesMonth={handleClearAllJornalesMonth}
             onClearAgentMonth={handleClearAgentMonth}
             onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenRecargoRanges={() => setIsRecargoRangesOpen(true)}
             onUpdateAgentName={handleUpdateAgentName}
             onExportExcelVisual={handleExportExcelVisual}
             onExportVisualHtml={handleExportVisualHtml}
@@ -1281,6 +1296,8 @@ export default function App() {
           agent={selectedCell.agent}
           day={selectedCell.day}
           assignment={schedule.assignments[`${selectedCell.agent.id}_${selectedCell.day.dateStr}`]}
+          recargoRanges={schedule.serviceConfig?.recargoRanges}
+          onOpenRecargoRanges={() => setIsRecargoRangesOpen(true)}
           onClose={() => {
             setIsShiftEditorOpen(false);
             setSelectedCell(null);
@@ -1295,6 +1312,14 @@ export default function App() {
         schedule={schedule}
         onClose={() => setIsSettingsOpen(false)}
         onSaveSettings={handleSaveSettings}
+      />
+
+      {/* Recargo Ranges Modal */}
+      <RecargoRangesModal
+        isOpen={isRecargoRangesOpen}
+        serviceConfig={schedule.serviceConfig}
+        onClose={() => setIsRecargoRangesOpen(false)}
+        onSaveRanges={handleSaveRecargoRanges}
       />
 
       {/* Service Manager Modal */}

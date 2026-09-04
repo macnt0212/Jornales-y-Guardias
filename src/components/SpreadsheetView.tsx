@@ -34,7 +34,8 @@ import {
   Building2,
   Briefcase,
   Sun,
-  Moon
+  Moon,
+  Timer
 } from 'lucide-react';
 
 interface SpreadsheetViewProps {
@@ -43,12 +44,13 @@ interface SpreadsheetViewProps {
   onCellClick: (agent: Agent, day: DayInfo) => void;
   onQuickToggleJornal: (agentId: string, dateStr: string) => void;
   onQuickToggleExtraHabil: (agentId: string, dateStr: string) => void;
-  onClearCell?: (agentId: string, dateStr: string) => void;
+  onClearCell: (agentId: string, dateStr: string) => void;
   onClearAllMonth?: () => void;
   onClearAllExtrasMonth?: () => void;
   onClearAllJornalesMonth?: () => void;
   onClearAgentMonth?: (agentId: string) => void;
   onOpenSettings?: () => void;
+  onOpenRecargoRanges?: () => void;
   onUpdateAgentName?: (agentId: string, newName: string, newLegajo?: string) => void;
   onExportExcelVisual?: () => void;
   onExportVisualHtml?: () => void;
@@ -69,6 +71,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
   onClearAllJornalesMonth,
   onClearAgentMonth,
   onOpenSettings,
+  onOpenRecargoRanges,
   onUpdateAgentName,
   onExportExcelVisual,
   onExportVisualHtml,
@@ -175,6 +178,20 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
 
           {/* Table Specific Actions */}
           <div className="flex items-center gap-2">
+            {/* Quick Button for Recargo Ranges */}
+            {onOpenRecargoRanges && (
+              <button
+                type="button"
+                id="btn-table-recargo-ranges"
+                onClick={onOpenRecargoRanges}
+                className="flex items-center gap-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-xs font-bold px-2.5 py-1 rounded shadow-2xs cursor-pointer transition-all"
+                title="Configurar y agregar rangos de horarios de recargos (hábiles, inhábiles activas y pasivas)"
+              >
+                <Timer className="w-3.5 h-3.5 text-purple-600" />
+                <span>Rangos Recargos</span>
+              </button>
+            )}
+
             {/* Direct Quick Excel Download */}
             {onExportExcelVisual && (
               <button

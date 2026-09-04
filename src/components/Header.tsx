@@ -25,7 +25,8 @@ import {
   Calendar,
   Trash2,
   Layers,
-  Award
+  Award,
+  Timer
 } from 'lucide-react';
 import { MONTH_NAMES } from '../utils/calendar';
 import { MonthSchedule, DayInfo, HospitalServiceItem, UserAccount } from '../types';
@@ -60,6 +61,7 @@ interface HeaderProps {
   onPrint: () => void;
   onReset: () => void;
   onOpenSettings: () => void;
+  onOpenRecargoRanges?: () => void;
   activeTab: 'matriz' | 'inhabiles' | 'detalle' | 'liquidacion' | 'consolidado_rrhh';
   setActiveTab: (tab: 'matriz' | 'inhabiles' | 'detalle' | 'liquidacion' | 'consolidado_rrhh') => void;
 }
@@ -99,6 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
   onPrint,
   onReset,
   onOpenSettings,
+  onOpenRecargoRanges,
   activeTab,
   setActiveTab,
 }) => {
@@ -572,7 +575,20 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Personal ({schedule.agents.length})</span>
             </button>
 
-            {/* GRUPO C: EXPORTAR / IMPRIMIR (Menú Unificado) */}
+            {/* GRUPO C: RANGOS DE HORARIOS DE RECARGOS (Hábiles, Inhábiles Activas y Pasivas) */}
+            {onOpenRecargoRanges && (
+              <button
+                id="btn-recargo-ranges"
+                onClick={onOpenRecargoRanges}
+                title="Configurar y agregar rangos de horarios de recargos (hábiles, inhábiles activas y pasivas)"
+                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-lg border border-slate-700 shadow-xs transition-all cursor-pointer"
+              >
+                <Timer className="w-4 h-4 text-purple-400" />
+                <span>Rangos de Recargos</span>
+              </button>
+            )}
+
+            {/* GRUPO D: EXPORTAR / IMPRIMIR (Menú Unificado) */}
             <div className="relative" ref={exportMenuRef}>
               <button
                 id="btn-export-dropdown"
