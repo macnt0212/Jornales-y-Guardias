@@ -233,8 +233,8 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
   <title>Planilla Oficial Guardia e Informática - ${data.monthName} ${data.year}</title>
   <style>
     @page {
-      size: A3 landscape;
-      margin: 8mm;
+      size: landscape;
+      margin: 4mm 5mm;
     }
     * {
       box-sizing: border-box;
@@ -243,18 +243,18 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
       color-adjust: exact !important;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
       background-color: #f1f5f9;
       color: #0f172a;
       margin: 0;
-      padding: 16px;
-      font-size: 11px;
+      padding: 12px;
+      font-size: 12px;
     }
     .container {
       max-width: 100%;
       margin: 0 auto;
       background: #ffffff;
-      padding: 16px;
+      padding: 12px;
       border-radius: 8px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
@@ -263,49 +263,49 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid #0f172a;
-      padding-bottom: 12px;
-      margin-bottom: 12px;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
     }
     .header-title h1 {
       margin: 0;
-      font-size: 18px;
+      font-size: 15px;
       color: #0f172a;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .header-title p {
-      margin: 4px 0 0 0;
-      font-size: 12px;
+      margin: 2px 0 0 0;
+      font-size: 10.5px;
       color: #475569;
       font-weight: 500;
     }
     .badge-month {
       background-color: #047857;
       color: #ffffff;
-      padding: 6px 14px;
+      padding: 5px 12px;
       border-radius: 6px;
       font-weight: bold;
-      font-size: 14px;
+      font-size: 12.5px;
       text-align: right;
     }
     .legend-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       background-color: #f8fafc;
       border: 1px solid #e2e8f0;
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 6px;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       align-items: center;
     }
     .legend-item {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 2px 8px;
+      gap: 3px;
+      padding: 1.5px 6px;
       border-radius: 4px;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: bold;
     }
     table {
@@ -315,38 +315,39 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
     }
     th, td {
       word-wrap: break-word;
+      padding: 2px 1px;
     }
     .summary-card {
-      margin-top: 16px;
+      margin-top: 12px;
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
+      gap: 8px;
       background-color: #f8fafc;
       border: 1px solid #cbd5e1;
-      padding: 12px;
+      padding: 8px;
       border-radius: 6px;
     }
     .summary-box {
       background: #ffffff;
-      padding: 8px;
+      padding: 6px;
       border-radius: 4px;
       border: 1px solid #e2e8f0;
       text-align: center;
     }
     .summary-box .label {
-      font-size: 10px;
+      font-size: 9px;
       color: #64748b;
       font-weight: bold;
       text-transform: uppercase;
     }
     .summary-box .val {
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 900;
       color: #0f172a;
       margin-top: 2px;
     }
     .signature-section {
-      margin-top: 35px;
+      margin-top: 25px;
       display: flex;
       justify-content: space-between;
       page-break-inside: avoid;
@@ -354,29 +355,41 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
     .signature-box {
       width: 28%;
       border-top: 1px solid #000000;
-      padding-top: 6px;
+      padding-top: 4px;
       text-align: center;
-      font-size: 11px;
+      font-size: 9.5px;
       font-weight: bold;
       color: #334155;
     }
     .print-controls {
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       display: flex;
+      align-items: center;
       gap: 10px;
+      background: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 6px;
     }
     .btn {
       background-color: #047857;
       color: #ffffff;
       border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
+      padding: 6px 14px;
+      border-radius: 5px;
       font-weight: bold;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11.5px;
     }
     .btn:hover {
       background-color: #065f46;
+    }
+    .paper-select {
+      font-size: 11.5px;
+      padding: 5px 8px;
+      border-radius: 5px;
+      border: 1px solid #cbd5e1;
+      font-weight: bold;
+      background: white;
     }
     @media print {
       body {
@@ -392,11 +405,33 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
       }
     }
   </style>
+  <script>
+    function changePaperSize(size) {
+      let pageRule = '@page { size: ' + size + ' landscape; margin: 4mm 5mm; }';
+      let styleTag = document.getElementById('dynamic-page-style');
+      if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'dynamic-page-style';
+        document.head.appendChild(styleTag);
+      }
+      styleTag.innerHTML = pageRule;
+    }
+  </script>
 </head>
 <body>
   <div class="container">
     <div class="print-controls">
-      <button class="btn" onclick="window.print()">🖨️ Imprimir / Guardar en PDF con Formato Exacto</button>
+      <button class="btn" onclick="window.print()">🖨️ Imprimir / Guardar en PDF</button>
+      <label style="font-size: 11px; font-weight: bold; color: #1e293b;">
+        Tamaño de Hoja:
+        <select class="paper-select" onchange="changePaperSize(this.value)">
+          <option value="letter" selected>Carta (Letter 8.5 x 11 in)</option>
+          <option value="legal">Oficio (Legal 8.5 x 14 in)</option>
+          <option value="a4">A4 (210 x 297 mm)</option>
+          <option value="a3">A3 (297 x 420 mm)</option>
+        </select>
+      </label>
+      <span style="font-size: 10px; color: #64748b; margin-left: auto;">Orientación recomendada: Horizontal (Landscape)</span>
     </div>
 
     <div class="header">
@@ -538,7 +573,7 @@ export function exportToWord(schedule: MonthSchedule, days: DayInfo[]) {
     }
     body {
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 9.5pt;
+      font-size: 12pt;
       color: #0f172a;
     }
     table {
@@ -717,7 +752,7 @@ export function exportToExcelVisual(schedule: MonthSchedule, days: DayInfo[]) {
   <style>
     body {
       font-family: Arial, sans-serif;
-      font-size: 9pt;
+      font-size: 12pt;
       color: #0f172a;
     }
     table {

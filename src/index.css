@@ -1,29 +1,99 @@
 @import "tailwindcss";
 
 @layer utilities {
-  /* Print Styles */
+  /* Default print page rule: landscape with compact margins to maximize printable width */
+  @page {
+    size: landscape;
+    margin: 4mm 3mm 4mm 3mm;
+  }
+
+  /* Print Media Query */
   @media print {
     @page {
-      size: A3 landscape;
-      margin: 8mm 6mm;
+      size: landscape;
+      margin: 4mm 3mm 4mm 3mm;
+    }
+
+    /* Dynamic Font Scaling & Family in Print */
+    body, table, th, td, div, span, p, h1, h2, h3, h4, tfoot {
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+    }
+
+    body.print-scale-arial12 {
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+      font-size: 12pt !important;
+    }
+    body.print-scale-arial12 table {
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+      font-size: 12pt !important;
+    }
+    body.print-scale-arial12 th,
+    body.print-scale-arial12 td {
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+      font-size: 12pt !important;
+      line-height: 1.25 !important;
+    }
+    body.print-scale-arial12 .print-split-container td {
+      font-size: 12pt !important;
+    }
+    body.print-scale-arial12 .badge-code,
+    body.print-scale-arial12 .shift-code {
+      font-size: 12pt !important;
+      font-weight: 900 !important;
+    }
+
+    body.print-scale-normal {
+      font-size: 9.5px !important;
+    }
+    body.print-scale-normal table {
+      font-size: 9px !important;
+    }
+
+    body.print-scale-large {
+      font-size: 11px !important;
+    }
+    body.print-scale-large table {
+      font-size: 10.5px !important;
+    }
+
+    body.print-scale-xlarge {
+      font-size: 12.5px !important;
+    }
+    body.print-scale-xlarge table {
+      font-size: 12px !important;
+    }
+
+    /* In two-page or quincena mode, each cell has double width, so text is naturally large */
+    body.print-mode-two-pages table,
+    body.print-mode-quincena table {
+      font-size: 12pt !important;
     }
 
     * {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
       color-adjust: exact !important;
+      box-sizing: border-box !important;
     }
 
-    body {
+    html, body {
       background: white !important;
-      color: #0f172a !important;
-      font-size: 10px !important;
+      color: #000000 !important;
+      line-height: 1.2 !important;
       padding: 0 !important;
       margin: 0 !important;
+      width: 100% !important;
     }
 
-    header, nav, button, .no-print {
+    header, nav, button, .no-print, #btn-export-dropdown, #btn-clear-cells-menu, #btn-table-recargo-ranges {
       display: none !important;
+    }
+
+    main {
+      max-width: 100% !important;
+      width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
     }
 
     .overflow-x-auto, .max-h-\[700px\], .max-h-\[680px\] {
@@ -36,12 +106,38 @@
       box-shadow: none !important;
       padding: 0 !important;
       width: 100% !important;
+      margin: 0 !important;
     }
 
+    /* Page Breaks for Two-Page Printing */
+    .print-page-1 {
+      page-break-after: always !important;
+      break-after: page !important;
+    }
+
+    .print-page-2 {
+      page-break-before: always !important;
+      break-before: page !important;
+    }
+
+    .print-break-inside-avoid {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    .print-single-page-sheet {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+      width: 100% !important;
+    }
+
+    /* Table specifications for Letter and Legal */
     table {
       page-break-inside: auto;
       width: 100% !important;
-      font-size: 9px !important;
+      table-layout: fixed !important;
       border-collapse: collapse !important;
     }
 
@@ -56,6 +152,26 @@
 
     tfoot {
       display: table-footer-group !important;
+    }
+
+    th, td {
+      border: 1px solid #475569 !important;
+      padding: 2px 1px !important;
+      word-break: break-word !important;
+      overflow: hidden !important;
+    }
+
+    /* High contrast text and borders for black & white laser printers */
+    body.print-high-contrast th,
+    body.print-high-contrast td {
+      border: 1px solid #000000 !important;
+      color: #000000 !important;
+    }
+
+    /* Disable sticky positioning and shadows in print */
+    th.sticky, td.sticky {
+      position: static !important;
+      box-shadow: none !important;
     }
   }
 }

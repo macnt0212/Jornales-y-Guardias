@@ -173,3 +173,23 @@ export interface HospitalAuthSession {
   loginTime: string;
 }
 
+export type PrintPaperSize = 'letter' | 'legal' | 'a4';
+export type PrintBadgeDetail = 'compact_hours' | 'codes_only';
+export type PrintPageSplit = 'two_pages' | 'single_page' | 'quincena_1' | 'quincena_2';
+export type PrintFontSizeScale = 'arial12' | 'normal' | 'large' | 'xlarge';
+export type PrintTotalsMode = 'full' | 'compact';
+
+export interface PrintSettings {
+  paperSize: PrintPaperSize; // 'letter' | 'legal' | 'a4'
+  badgeDetail: PrintBadgeDetail; // 'compact_hours' | 'codes_only'
+  viewMode: 'double' | 'compact';
+  pageSplit: PrintPageSplit; // 'two_pages' (2 hojas grandes y legibles) | 'single_page' (1 hoja completa) | 'quincena_1' | 'quincena_2'
+  fontSizeScale: PrintFontSizeScale; // 'arial12' (Estándar Oficial) | 'normal' | 'large' | 'xlarge'
+  fontFamily?: 'arial' | 'system'; // 'arial' (Recomendado para adm. pública) | 'system'
+  totalsMode: PrintTotalsMode; // 'full' (todas las 8 columnas) | 'compact' (3 columnas esenciales)
+  includeHeader: boolean;
+  includeLegend: boolean;
+  includeSignatures: boolean;
+  highContrast: boolean;
+}
+

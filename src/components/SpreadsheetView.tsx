@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { MonthSchedule, DayInfo, Agent, DayShiftAssignment } from '../types';
+import React, { useState, useMemo } from 'react';
+import { MonthSchedule, DayInfo, Agent, DayShiftAssignment, PrintSettings } from '../types';
 import { 
   calculateAgentStats, 
   HOURS_PER_SHIFT, 
@@ -9,6 +9,8 @@ import {
   getAgentJornalShift,
   getContraturnoShiftForAgent
 } from '../utils/calendar';
+import { PrintSplitView } from './PrintSplitView';
+import { PrintSinglePageView } from './PrintSinglePageView';
 import { 
   CheckCircle2, 
   AlertCircle, 
@@ -35,7 +37,9 @@ import {
   Briefcase,
   Sun,
   Moon,
-  Timer
+  Timer,
+  SlidersHorizontal,
+  Eye
 } from 'lucide-react';
 
 interface SpreadsheetViewProps {
@@ -57,6 +61,9 @@ interface SpreadsheetViewProps {
   onExportWord?: () => void;
   onExportExcel?: () => void;
   onPrint?: () => void;
+  printSettings?: PrintSettings;
+  onOpenPrintModal?: () => void;
+  isPreviewMode?: boolean;
 }
 
 export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
@@ -78,14 +85,55 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
   onExportWord,
   onExportExcel,
   onPrint,
+  printSettings,
+  onOpenPrintModal,
+  isPreviewMode,
 }) => {
   const [hoveredCell, setHoveredCell] = useState<{ agentId: string; dateStr: string; type?: 'jornal' | 'extra' } | null>(null);
   const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
   const [tempName, setTempName] = useState<string>('');
   const [tempLegajo, setTempLegajo] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'double' | 'compact'>('double');
+  const [internalViewMode, setInternalViewMode] = useState<'double' | 'compact'>('double');
   const [showClearMenu, setShowClearMenu] = useState<boolean>(false);
   const [showHelpBanner, setShowHelpBanner] = useState<boolean>(false);
+
+  const viewMode = printSettings?.viewMode || internalViewMode;
+  const setViewMode = setInternalViewMode;
+
+  // Totales acumulados para el pie de tabla oficial
+  const serviceTotals = useMemo(() => {
+    let diasJornal = 0;
+    let horasJornal = 0;
+    let diasExtraHabil = 0;
+    let horasExtraHabil = 0;
+    let horasInhabilActiva = 0;
+    let horasInhabilPasiva = 0;
+    let totalHorasExtras = 0;
+    let totalHorasMes = 0;
+
+    schedule.agents.forEach(agent => {
+      const stats = calculateAgentStats(agent, schedule, days);
+      diasJornal += stats.diasJornal;
+      horasJornal += stats.horasJornal;
+      diasExtraHabil += stats.diasExtraHabil;
+      horasExtraHabil += stats.horasExtraHabil;
+      horasInhabilActiva += stats.horasInhabilActiva;
+      horasInhabilPasiva += stats.horasInhabilPasiva;
+      totalHorasExtras += stats.totalHorasExtras;
+      totalHorasMes += stats.totalHorasMes;
+    });
+
+    return {
+      diasJornal,
+      horasJornal,
+      diasExtraHabil,
+      horasExtraHabil,
+      horasInhabilActiva,
+      horasInhabilPasiva,
+      totalHorasExtras,
+      totalHorasMes,
+    };
+  }, [schedule, days]);
 
   const startEditAgent = (agent: Agent) => {
     setEditingAgentId(agent.id);
@@ -205,6 +253,29 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
               </button>
             )}
 
+            {/* Botón Imprimir / Ajustar Carta & Oficio */}
+            <button
+              type="button"
+              id="btn-table-print-sheet"
+              onClick={() => {
+                if (onOpenPrintModal) {
+                  onOpenPrintModal();
+                } else if (onPrint) {
+                  onPrint();
+                } else {
+                  window.print();
+                }
+              }}
+              className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded shadow-2xs cursor-pointer transition-all"
+              title="Ajustar e imprimir planilla oficial optimizada para hoja Carta (Letter) u Oficio (Legal)"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Imprimir</span>
+              <span className="hidden sm:inline text-[9px] bg-blue-900/60 px-1 py-0.2 rounded font-normal text-blue-100">
+                Carta / Oficio
+              </span>
+            </button>
+
             {/* Menu Borrar / Vaciar Celdas */}
             <div className="relative">
               <button
@@ -314,15 +385,104 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
           </div>
         </div>
 
-        {/* Scrollable Spreadsheet Table */}
-        <div className="overflow-x-auto max-h-[700px]">
+        {/* Banner Informativo cuando está activa la Vista Previa de Impresión */}
+        {isPreviewMode && (
+          <div className="m-4 bg-emerald-950 text-white p-3.5 rounded-xl border-2 border-emerald-500 shadow-md flex flex-wrap items-center justify-between gap-3 print:hidden">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-800 text-white flex items-center justify-center font-bold shadow-xs">
+                <Eye className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-black text-sm text-emerald-100 flex items-center gap-2">
+                  Vista Previa de Impresión Oficial Activa
+                  <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded shadow-2xs uppercase">
+                    {printSettings?.pageSplit === 'two_pages' 
+                      ? '✓ 2 Hojas (Quincenas - Letra Grande)' 
+                      : printSettings?.pageSplit === 'single_page' 
+                      ? '1 Sola Hoja (Mes Completo)' 
+                      : printSettings?.pageSplit === 'quincena_1' 
+                      ? '1ª Quincena Únicamente' 
+                      : '2ª Quincena Únicamente'}
+                  </span>
+                </h4>
+                <p className="text-xs text-emerald-300/90 mt-0.5">
+                  Mostrando exactamente cómo saldrá en papel {printSettings?.paperSize === 'legal' ? 'Oficio / Legal' : 'Carta / Letter'} • Tipografía: <b>{printSettings?.fontSizeScale === 'arial12' ? 'Arial 12 (Oficial)' : printSettings?.fontSizeScale === 'xlarge' ? 'Extra Grande' : printSettings?.fontSizeScale === 'large' ? 'Grande' : 'Normal'}</b>
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {onOpenPrintModal && (
+                <button
+                  type="button"
+                  onClick={onOpenPrintModal}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs border border-slate-600"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  Cambiar Formato
+                </button>
+              )}
+              {onPrint && (
+                <button
+                  type="button"
+                  onClick={onPrint}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Imprimir Ahora
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* VISTA PARA IMPRESIÓN Y VISTA PREVIA (2 HOJAS O 1 HOJA ÚNICA COMPLETA) */}
+        {printSettings?.pageSplit !== 'single_page' ? (
+          <PrintSplitView 
+            schedule={schedule} 
+            days={days} 
+            printSettings={printSettings || {
+              paperSize: 'letter',
+              badgeDetail: 'compact_hours',
+              viewMode: 'double',
+              pageSplit: 'two_pages',
+              fontSizeScale: 'arial12',
+              totalsMode: 'compact',
+              includeHeader: true,
+              includeLegend: true,
+              includeSignatures: true,
+              highContrast: true,
+            }} 
+            isPreviewMode={isPreviewMode ?? false} 
+          />
+        ) : (
+          <PrintSinglePageView 
+            schedule={schedule} 
+            days={days} 
+            printSettings={printSettings || {
+              paperSize: 'letter',
+              badgeDetail: 'codes_only',
+              viewMode: 'double',
+              pageSplit: 'single_page',
+              fontSizeScale: 'arial12',
+              totalsMode: 'compact',
+              includeHeader: true,
+              includeLegend: true,
+              includeSignatures: true,
+              highContrast: true,
+            }} 
+            isPreviewMode={isPreviewMode ?? false} 
+          />
+        )}
+
+        {/* Tabla Interactiva de Edición en Pantalla (Oculta en Impresión y en Modo Vista Previa) */}
+        <div className={`overflow-x-auto max-h-[700px] print:hidden ${isPreviewMode ? 'hidden' : ''}`}>
           <table className="w-full text-xs text-left border-collapse">
             <thead className="bg-slate-800 text-white sticky top-0 z-20 shadow-xs">
               {/* Row 1: Weekday Names & Group Totals */}
               <tr className="border-b border-slate-700">
                 <th 
                   rowSpan={2}
-                  className="p-2.5 font-bold text-xs uppercase tracking-wider bg-slate-900 border-r border-slate-700 min-w-[210px] w-[210px] sticky left-0 z-30 shadow-[2px_0_5px_rgba(0,0,0,0.15)]"
+                  className="p-2.5 font-bold text-xs uppercase tracking-wider bg-slate-900 border-r border-slate-700 min-w-[210px] w-[210px] sticky left-0 z-30 shadow-[2px_0_5px_rgba(0,0,0,0.15)] print:min-w-0 print:w-[105px] print:max-w-[110px] print:p-1 print:text-[8.5px] print:shadow-none"
                 >
                   Personal del Servicio
                 </th>
@@ -337,29 +497,29 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                   return (
                     <th
                       key={`day-${day.dateStr}`}
-                      className={`p-1 text-center font-medium text-[11px] border-r border-slate-700 min-w-[34px] ${bgClass}`}
+                      className={`p-1 text-center font-medium text-[11px] border-r border-slate-700 min-w-[34px] print:min-w-0 print:w-auto print:p-0.5 ${bgClass}`}
                       title={`${day.dayNameLong} ${day.dayNumber} ${isHoliday ? `(Feriado: ${day.holidayName})` : ''}`}
                     >
-                      <div>{day.dayNameShort}</div>
-                      <div className="font-bold text-xs">{day.dayNumber}</div>
+                      <div className="print:text-[7.5px] print:leading-none">{day.dayNameShort.slice(0, 2)}</div>
+                      <div className="font-bold text-xs print:text-[8.5px] print:leading-none print:mt-0.5">{day.dayNumber}</div>
                     </th>
                   );
                 })}
 
                 {/* Header Groups for Totals */}
-                <th colSpan={2} className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700">
+                <th colSpan={2} className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
                   Jornal
                 </th>
-                <th colSpan={2} className="p-1 text-center font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700">
+                <th colSpan={2} className="p-1 text-center font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
                   Ext. Hábil
                 </th>
-                <th colSpan={2} className="p-1 text-center font-bold bg-purple-950 text-purple-100 border-r border-slate-700">
+                <th colSpan={2} className="p-1 text-center font-bold bg-purple-950 text-purple-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
                   Inhábiles
                 </th>
-                <th className="p-1 text-center font-bold bg-emerald-900 text-white border-r border-slate-700">
+                <th className="p-1 text-center font-bold bg-emerald-900 text-white border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
                   Total
                 </th>
-                <th className="p-1 text-center font-black bg-slate-950 text-white">
+                <th className="p-1 text-center font-black bg-slate-950 text-white print:text-[8px] print:p-0.5 print:min-w-0 print:w-auto">
                   TOTAL
                 </th>
               </tr>
@@ -369,14 +529,14 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                 {days.map(d => (
                   <th key={`h2-${d.dateStr}`} className="hidden"></th>
                 ))}
-                <th className="p-1 text-center bg-blue-950/70 border-r border-slate-700 font-semibold">Días</th>
-                <th className="p-1 text-center bg-blue-950/90 border-r border-slate-700 font-semibold">Hs</th>
-                <th className="p-1 text-center bg-emerald-950/70 border-r border-slate-700 font-semibold">Días</th>
-                <th className="p-1 text-center bg-emerald-950/90 border-r border-slate-700 font-semibold">Hs</th>
-                <th className="p-1 text-center bg-purple-950/70 border-r border-slate-700 font-semibold">Activas</th>
-                <th className="p-1 text-center bg-amber-950/70 border-r border-slate-700 font-semibold">Pasivas</th>
-                <th className="p-1 text-center bg-emerald-900 font-bold border-r border-slate-700">Hs Ext</th>
-                <th className="p-1 text-center bg-slate-900 font-bold">Total Hs</th>
+                <th className="p-1 text-center bg-blue-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Días</th>
+                <th className="p-1 text-center bg-blue-950/90 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Hs</th>
+                <th className="p-1 text-center bg-emerald-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Días</th>
+                <th className="p-1 text-center bg-emerald-950/90 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Hs</th>
+                <th className="p-1 text-center bg-purple-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Act.</th>
+                <th className="p-1 text-center bg-amber-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Pas.</th>
+                <th className="p-1 text-center bg-emerald-900 font-bold border-r border-slate-700 print:text-[7px] print:p-0.5">Extras</th>
+                <th className="p-1 text-center bg-slate-900 font-bold print:text-[7.5px] print:p-0.5">Total</th>
               </tr>
             </thead>
 
@@ -422,7 +582,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                         <td 
                           id={`agent-row-${agent.id}`}
                           rowSpan={2}
-                          className="p-2.5 sticky left-0 z-10 bg-white border-r border-b-2 border-slate-300 shadow-[2px_0_5px_rgba(0,0,0,0.06)] align-top"
+                          className="p-2.5 sticky left-0 z-10 bg-white border-r border-b-2 border-slate-300 shadow-[2px_0_5px_rgba(0,0,0,0.06)] align-top print:min-w-0 print:w-[105px] print:max-w-[110px] print:p-1 print:shadow-none"
                         >
                           {editingAgentId === agent.id ? (
                             <div className="flex flex-col gap-1.5 p-1 bg-white border border-emerald-400 rounded-md shadow-xs">
@@ -477,9 +637,9 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                             </div>
                           ) : (
                             <div className="group relative">
-                              <div className="font-bold text-slate-900 text-xs flex items-center justify-between gap-1.5">
+                              <div className="font-bold text-slate-900 text-xs print:text-[8.5px] print:leading-tight flex items-center justify-between gap-1.5">
                                 <span className="truncate" title={agent.name}>{agent.name}</span>
-                                <div className="flex items-center gap-1 shrink-0">
+                                <div className="flex items-center gap-1 shrink-0 print:hidden">
                                   {agent.isJefe && (
                                     <span className="text-[10px] font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200 px-1.5 py-0.2 rounded shrink-0">
                                       Jefe
@@ -495,36 +655,36 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                                   </button>
                                 </div>
                               </div>
-                              <div className="text-[11px] text-slate-600 flex items-center justify-between gap-2 mt-0.5">
+                              <div className="text-[11px] print:text-[7.5px] text-slate-600 flex items-center justify-between gap-2 mt-0.5 print:mt-0">
                                 <span className="truncate">{agent.roleLabel}</span>
-                                <span className="font-mono text-[10px] text-slate-400 shrink-0 font-medium">{agent.legajo}</span>
+                                <span className="font-mono text-[10px] print:text-[7.5px] text-slate-400 print:text-slate-600 shrink-0 font-medium">{agent.legajo}</span>
                               </div>
 
                               {/* Work Modality & Shift Badge */}
-                              <div className="mt-1 flex items-center gap-1 flex-wrap">
+                              <div className="mt-1 print:mt-0.5 flex items-center gap-1 flex-wrap">
                                 {modality === 'solo_guardias' ? (
-                                  <span className="inline-block text-[9px] font-bold px-1.5 py-0.2 rounded bg-teal-100 text-teal-900 border border-teal-300" title={`Jornal en otra institución: ${agent.externalInstitution || 'Externa'}`}>
-                                    🏥 Solo Guardias {agent.externalInstitution ? `(${agent.externalInstitution})` : ''}
+                                  <span className="inline-block text-[9px] print:text-[6.5px] print:py-0 font-bold px-1.5 py-0.2 rounded bg-teal-100 text-teal-900 border border-teal-300" title={`Jornal en otra institución: ${agent.externalInstitution || 'Externa'}`}>
+                                    Solo Guardias
                                   </span>
                                 ) : modality === 'solo_jornal' ? (
-                                  <span className="inline-block text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300" title="Solo Jornal (Sin horas extras ni guardias)">
-                                    ⏱️ Solo Jornal ({jTurno === 'tarde' ? 'Tarde 13-20h' : jTurno === 'noche' ? 'Noche 20-07h' : 'Mañana 06-13h'})
+                                  <span className="inline-block text-[9px] print:text-[6.5px] print:py-0 font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300" title="Solo Jornal (Sin horas extras ni guardias)">
+                                    Solo Jornal ({jTurno === 'tarde' ? 'Tarde' : jTurno === 'noche' ? 'Noche' : 'Mañ.'})
                                   </span>
                                 ) : (
-                                  <span className="inline-block text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-900 border border-blue-300" title="Jornal Ordinario + Guardias en Contraturno">
-                                    {jTurno === 'tarde' ? '🌇 Jornal Tarde (13-20)' : jTurno === 'noche' ? '🌙 Jornal Noche (20-07)' : '☀️ Jornal Mañana (06-13)'}
+                                  <span className="inline-block text-[9px] print:text-[6.5px] print:py-0 font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-900 border border-blue-300" title="Jornal Ordinario + Guardias en Contraturno">
+                                    {jTurno === 'tarde' ? 'J. Tarde' : jTurno === 'noche' ? 'J. Noche' : 'J. Mañana'}
                                   </span>
                                 )}
 
                                 {isAgentOnlyInhabilePasiva(agent) && (
-                                  <span className="text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.2 rounded shrink-0" title="Régimen Exclusivo: Únicamente Inhábiles Pasivas">
-                                    Solo Inh. Pasivas
+                                  <span className="text-[9px] print:text-[6.5px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.2 rounded shrink-0" title="Régimen Exclusivo: Únicamente Inhábiles Pasivas">
+                                    Solo Pasivas
                                   </span>
                                 )}
                               </div>
 
-                              {/* Row Identification Notes */}
-                              <div className="mt-2 pt-1.5 border-t border-slate-200 flex flex-col gap-0.5 text-[9.5px]">
+                              {/* Row Identification Notes (Hidden in Print) */}
+                              <div className="mt-2 pt-1.5 border-t border-slate-200 flex flex-col gap-0.5 text-[9.5px] print:hidden">
                                 <div className="flex items-center gap-1 font-bold text-blue-700">
                                   <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                                   <span>
@@ -559,11 +719,17 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                           if (isHoliday) bg = 'bg-rose-50/50';
                           else if (isWeekend) bg = 'bg-amber-50/30';
 
-                          const shiftCode = assign?.jornalTurno === 'tarde' 
-                            ? 'JT (13-20)' 
+                          const jPrefix = assign?.jornalTurno === 'tarde' 
+                            ? 'JT' 
                             : assign?.jornalTurno === 'noche' 
-                            ? 'JN (20-07)' 
-                            : (jTurno === 'tarde' ? 'JT (13-20)' : jTurno === 'noche' ? 'JN (20-07)' : 'JM (6-13)');
+                            ? 'JN' 
+                            : (jTurno === 'tarde' ? 'JT' : jTurno === 'noche' ? 'JN' : 'JM');
+                          const jHours = assign?.jornalTurno === 'tarde' 
+                            ? '13-20' 
+                            : assign?.jornalTurno === 'noche' 
+                            ? '20-07' 
+                            : (jTurno === 'tarde' ? '13-20' : jTurno === 'noche' ? '20-07' : '06-13');
+                          const shiftCode = `${jPrefix} (${jHours})`;
 
                           return (
                             <td
@@ -572,7 +738,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                               onClick={() => onCellClick(agent, day)}
                               onMouseEnter={() => setHoveredCell({ agentId: agent.id, dateStr: day.dateStr, type: 'jornal' })}
                               onMouseLeave={() => setHoveredCell(null)}
-                              className={`p-1 text-center border-r border-slate-200 cursor-pointer transition-all ${bg} ${
+                              className={`p-1 print:p-0.5 text-center border-r border-slate-200 cursor-pointer transition-all ${bg} ${
                                 isHovered ? 'ring-2 ring-blue-500 ring-inset bg-blue-100/60' : ''
                               }`}
                               title={
@@ -581,17 +747,25 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                                   : `Jornal Ordinario:\n${agent.name} - ${day.dayNameLong} ${day.dayNumber}\n${hasJornal ? `✓ ${shiftCode} (7 hs)` : 'Descanso / Sin Jornal'}`
                               }
                             >
-                              <div className="flex items-center justify-center min-h-[26px]">
+                              <div className="flex items-center justify-center min-h-[26px] print:min-h-0">
                                 {modality === 'solo_guardias' ? (
-                                  <span className="text-[9px] font-semibold text-teal-800 bg-teal-50 px-1 py-0.2 rounded border border-teal-200" title="Jornal cumplido en otra institución">
+                                  <span className="text-[9px] print:text-[6.5px] font-semibold text-teal-800 bg-teal-50 px-1 py-0.2 rounded border border-teal-200" title="Jornal cumplido en otra institución">
                                     [Ext]
                                   </span>
                                 ) : hasJornal ? (
-                                  <span className="w-full py-0.5 text-[9.5px] font-bold bg-blue-100 text-blue-900 border border-blue-300 rounded leading-tight shadow-2xs">
-                                    {shiftCode}
-                                  </span>
+                                  <>
+                                    <span className="print:hidden w-full py-0.5 text-[9.5px] font-bold bg-blue-100 text-blue-900 border border-blue-300 rounded leading-tight shadow-2xs">
+                                      {shiftCode}
+                                    </span>
+                                    <div className="hidden print:flex flex-col items-center justify-center w-full leading-none">
+                                      <span className="font-black text-[8px] text-blue-950">{jPrefix}</span>
+                                      {printSettings?.badgeDetail !== 'minimal' && (
+                                        <span className="text-[6px] font-bold text-blue-800 tracking-tighter">{jHours}</span>
+                                      )}
+                                    </div>
+                                  </>
                                 ) : (
-                                  <span className="text-[11px] text-slate-300 font-mono">-</span>
+                                  <span className="text-[11px] print:text-[8px] text-slate-300 font-mono">-</span>
                                 )}
                               </div>
                             </td>
@@ -599,24 +773,24 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                         })}
 
                         {/* Totales Jornal Fila 1 */}
-                        <td className="p-1.5 text-center font-bold text-blue-900 bg-blue-50/80 border-r border-slate-200">
+                        <td className="p-1.5 print:p-0.5 text-center font-bold text-blue-900 bg-blue-50/80 border-r border-slate-200 print:text-[8px]">
                           {stats.diasJornal}
                         </td>
-                        <td className="p-1.5 text-center font-black text-blue-950 bg-blue-100/80 border-r border-slate-200">
+                        <td className="p-1.5 print:p-0.5 text-center font-black text-blue-950 bg-blue-100/80 border-r border-slate-200 print:text-[8px]">
                           {stats.horasJornal}h
                         </td>
 
                         {/* Totales Fila 1 (Vacíos para Extras que van en Fila 2) */}
-                        <td colSpan={2} className="p-1 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px]">
-                          (Ver fila extras)
+                        <td colSpan={2} className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
+                          (Ver extras)
                         </td>
-                        <td colSpan={2} className="p-1 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px]">
-                          (Ver fila extras)
+                        <td colSpan={2} className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
+                          (Ver extras)
                         </td>
-                        <td className="p-1 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px]">
+                        <td className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
                           -
                         </td>
-                        <td rowSpan={2} className="p-1.5 text-center font-black text-slate-900 bg-slate-200/90 text-sm align-middle border-b-2 border-slate-300">
+                        <td rowSpan={2} className="p-1.5 print:p-0.5 text-center font-black text-slate-900 bg-slate-200/90 text-sm print:text-[9.5px] align-middle border-b-2 border-slate-300">
                           {stats.totalHorasMes}h
                         </td>
                       </tr>
@@ -642,11 +816,17 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                           if (isHoliday) bg = 'bg-rose-50/70';
                           else if (isWeekend) bg = 'bg-amber-50/50';
 
-                          const extraCode = assign?.extraHabilTurno === 'manana'
-                            ? 'EM (6-13)'
+                          const ePrefix = assign?.extraHabilTurno === 'manana'
+                            ? 'EM'
                             : assign?.extraHabilTurno === 'noche'
-                            ? 'EN (20-07)'
-                            : (cTurno === 'manana' ? 'EM (6-13)' : 'ET (13-20)');
+                            ? 'EN'
+                            : (cTurno === 'manana' ? 'EM' : 'ET');
+                          const eHours = assign?.extraHabilTurno === 'manana'
+                            ? '6-13'
+                            : assign?.extraHabilTurno === 'noche'
+                            ? '20-07'
+                            : (cTurno === 'manana' ? '6-13' : '13-20');
+                          const extraCode = `${ePrefix} (${eHours})`;
 
                           return (
                             <td
@@ -655,7 +835,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                               onClick={() => onCellClick(agent, day)}
                               onMouseEnter={() => setHoveredCell({ agentId: agent.id, dateStr: day.dateStr, type: 'extra' })}
                               onMouseLeave={() => setHoveredCell(null)}
-                              className={`p-1 text-center border-r border-slate-200 cursor-pointer transition-all ${bg} ${
+                              className={`p-1 print:p-0.5 text-center border-r border-slate-200 cursor-pointer transition-all ${bg} ${
                                 isHovered ? 'ring-2 ring-emerald-500 ring-inset bg-emerald-100/60' : ''
                               }`}
                               title={`Horas Extras:\n${agent.name} - ${day.dayNameLong} ${day.dayNumber}\n${
@@ -666,68 +846,116 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                                 hasInhabilT ? `• Inhábil Tarde (${assign?.extraInhabilTardeTipo || 'activa'})\n` : ''
                               }${!hasAnyExtra ? 'Sin horas extras' : ''}`}
                             >
-                              <div className="flex flex-col items-center justify-center gap-0.5 min-h-[30px]">
+                              <div className="flex flex-col items-center justify-center gap-0.5 min-h-[30px] print:min-h-0">
                                 {/* Badge Extra Hábil en Contraturno */}
                                 {hasExtraHabil && (
-                                  <span className="w-full py-0.5 text-[8.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 rounded leading-tight shadow-2xs">
-                                    {extraCode}
-                                  </span>
+                                  <>
+                                    <span className="print:hidden w-full py-0.5 text-[8.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 rounded leading-tight shadow-2xs">
+                                      {extraCode}
+                                    </span>
+                                    <div className="hidden print:flex flex-col items-center justify-center w-full leading-none">
+                                      <span className="font-black text-[8px] text-emerald-950">{ePrefix}</span>
+                                      {printSettings?.badgeDetail !== 'minimal' && (
+                                        <span className="text-[6px] font-bold text-emerald-800 tracking-tighter">{eHours}</span>
+                                      )}
+                                    </div>
+                                  </>
                                 )}
 
                                 {/* Badge Guardia 24 Horas */}
                                 {hasInhabil24h && (
-                                  <span 
-                                    className={`w-full py-0.5 text-[8.5px] font-black border rounded px-0.5 leading-tight shadow-2xs ${
-                                      assign?.extraInhabil24hTipo === 'activa'
-                                        ? 'bg-purple-700 text-white border-purple-900'
-                                        : 'bg-amber-600 text-white border-amber-800'
-                                    }`}
-                                  >
-                                    {assign?.extraInhabil24hTipo === 'activa' ? 'G24A (24h)' : 'G24P (24h)'}
-                                  </span>
+                                  <>
+                                    <span 
+                                      className={`print:hidden w-full py-0.5 text-[8.5px] font-black border rounded px-0.5 leading-tight shadow-2xs ${
+                                        assign?.extraInhabil24hTipo === 'activa'
+                                          ? 'bg-purple-700 text-white border-purple-900'
+                                          : 'bg-amber-600 text-white border-amber-800'
+                                      }`}
+                                    >
+                                      {assign?.extraInhabil24hTipo === 'activa' ? 'G24A (24h)' : 'G24P (24h)'}
+                                    </span>
+                                    <div className="hidden print:flex flex-col items-center justify-center w-full leading-none">
+                                      <span className={`font-black text-[8px] ${assign?.extraInhabil24hTipo === 'activa' ? 'text-purple-950' : 'text-amber-950'}`}>
+                                        {assign?.extraInhabil24hTipo === 'activa' ? '24A' : '24P'}
+                                      </span>
+                                      {printSettings?.badgeDetail !== 'minimal' && (
+                                        <span className="text-[6px] font-bold text-slate-700">24h</span>
+                                      )}
+                                    </div>
+                                  </>
                                 )}
 
                                 {/* Badge Guardia 12 Horas */}
                                 {hasInhabil12h && (
-                                  <span 
-                                    className={`w-full py-0.5 text-[8.5px] font-bold border rounded px-0.5 leading-tight shadow-2xs ${
-                                      assign?.extraInhabil12hTipo === 'activa'
-                                        ? 'bg-indigo-100 text-indigo-950 border-indigo-300'
-                                        : 'bg-amber-100 text-amber-950 border-amber-300'
-                                    }`}
-                                  >
-                                    {assign?.extraInhabil12hTipo === 'activa' ? 'G12A (12h)' : 'G12P (12h)'}
-                                  </span>
+                                  <>
+                                    <span 
+                                      className={`print:hidden w-full py-0.5 text-[8.5px] font-bold border rounded px-0.5 leading-tight shadow-2xs ${
+                                        assign?.extraInhabil12hTipo === 'activa'
+                                          ? 'bg-indigo-100 text-indigo-950 border-indigo-300'
+                                          : 'bg-amber-100 text-amber-950 border-amber-300'
+                                      }`}
+                                    >
+                                      {assign?.extraInhabil12hTipo === 'activa' ? 'G12A (12h)' : 'G12P (12h)'}
+                                    </span>
+                                    <div className="hidden print:flex flex-col items-center justify-center w-full leading-none">
+                                      <span className={`font-black text-[8px] ${assign?.extraInhabil12hTipo === 'activa' ? 'text-indigo-950' : 'text-amber-950'}`}>
+                                        {assign?.extraInhabil12hTipo === 'activa' ? '12A' : '12P'}
+                                      </span>
+                                      {printSettings?.badgeDetail !== 'minimal' && (
+                                        <span className="text-[6px] font-bold text-slate-700">12h</span>
+                                      )}
+                                    </div>
+                                  </>
                                 )}
 
                                 {/* Badge Inhábil Mañana (06:00 a 13:00) */}
                                 {hasInhabilM && (
-                                  <span 
-                                    className={`w-full py-0.5 text-[8.5px] font-bold border rounded px-0.5 leading-tight shadow-2xs ${
-                                      assign?.extraInhabilMananaTipo === 'activa'
-                                        ? 'bg-purple-100 text-purple-900 border-purple-300'
-                                        : 'bg-amber-100 text-amber-900 border-amber-300'
-                                    }`}
-                                  >
-                                    {assign?.extraInhabilMananaTipo === 'activa' ? 'IA (6-13)' : 'IP (6-13)'}
-                                  </span>
+                                  <>
+                                    <span 
+                                      className={`print:hidden w-full py-0.5 text-[8.5px] font-bold border rounded px-0.5 leading-tight shadow-2xs ${
+                                        assign?.extraInhabilMananaTipo === 'activa'
+                                          ? 'bg-purple-100 text-purple-900 border-purple-300'
+                                          : 'bg-amber-100 text-amber-900 border-amber-300'
+                                      }`}
+                                    >
+                                      {assign?.extraInhabilMananaTipo === 'activa' ? 'IA (6-13)' : 'IP (6-13)'}
+                                    </span>
+                                    <div className="hidden print:flex flex-col items-center justify-center w-full leading-none">
+                                      <span className={`font-black text-[8px] ${assign?.extraInhabilMananaTipo === 'activa' ? 'text-purple-950' : 'text-amber-950'}`}>
+                                        {assign?.extraInhabilMananaTipo === 'activa' ? 'IAM' : 'IPM'}
+                                      </span>
+                                      {printSettings?.badgeDetail !== 'minimal' && (
+                                        <span className="text-[6px] font-bold text-slate-700">6-13</span>
+                                      )}
+                                    </div>
+                                  </>
                                 )}
 
                                 {/* Badge Inhábil Tarde (13:00 a 20:00) */}
                                 {hasInhabilT && (
-                                  <span 
-                                    className={`w-full py-0.5 text-[8.5px] font-bold border rounded px-0.5 leading-tight shadow-2xs ${
-                                      assign?.extraInhabilTardeTipo === 'activa'
-                                        ? 'bg-purple-100 text-purple-900 border-purple-300'
-                                        : 'bg-amber-100 text-amber-900 border-amber-300'
-                                    }`}
-                                  >
-                                    {assign?.extraInhabilTardeTipo === 'activa' ? 'IA (13-20)' : 'IP (13-20)'}
-                                  </span>
+                                  <>
+                                    <span 
+                                      className={`print:hidden w-full py-0.5 text-[8.5px] font-bold border rounded px-0.5 leading-tight shadow-2xs ${
+                                        assign?.extraInhabilTardeTipo === 'activa'
+                                          ? 'bg-purple-100 text-purple-900 border-purple-300'
+                                          : 'bg-amber-100 text-amber-900 border-amber-300'
+                                      }`}
+                                    >
+                                      {assign?.extraInhabilTardeTipo === 'activa' ? 'IA (13-20)' : 'IP (13-20)'}
+                                    </span>
+                                    <div className="hidden print:flex flex-col items-center justify-center w-full leading-none">
+                                      <span className={`font-black text-[8px] ${assign?.extraInhabilTardeTipo === 'activa' ? 'text-purple-950' : 'text-amber-950'}`}>
+                                        {assign?.extraInhabilTardeTipo === 'activa' ? 'IAT' : 'IPT'}
+                                      </span>
+                                      {printSettings?.badgeDetail !== 'minimal' && (
+                                        <span className="text-[6px] font-bold text-slate-700">13-20</span>
+                                      )}
+                                    </div>
+                                  </>
                                 )}
 
                                 {!hasAnyExtra && (
-                                  <span className="text-[11px] text-slate-300 font-mono">-</span>
+                                  <span className="text-[11px] print:text-[8px] text-slate-300 font-mono">-</span>
                                 )}
                               </div>
                             </td>
@@ -735,28 +963,28 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                         })}
 
                         {/* Totales Fila 2 (Jornal ya mostrado en Fila 1) */}
-                        <td colSpan={2} className="p-1 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px]">
+                        <td colSpan={2} className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
                           (Jornal arriba)
                         </td>
 
                         {/* Totales Extras Hábiles */}
-                        <td className="p-1.5 text-center font-bold text-emerald-900 bg-emerald-50/80 border-r border-slate-200">
+                        <td className="p-1.5 print:p-0.5 text-center font-bold text-emerald-900 bg-emerald-50/80 border-r border-slate-200 print:text-[8px]">
                           {stats.diasExtraHabil}
                         </td>
-                        <td className="p-1.5 text-center font-black text-emerald-950 bg-emerald-100/80 border-r border-slate-200">
+                        <td className="p-1.5 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-100/80 border-r border-slate-200 print:text-[8px]">
                           {stats.horasExtraHabil}h
                         </td>
 
                         {/* Totales Inhábiles */}
-                        <td className="p-1.5 text-center font-bold text-purple-900 bg-purple-100/60 border-r border-slate-200">
+                        <td className="p-1.5 print:p-0.5 text-center font-bold text-purple-900 bg-purple-100/60 border-r border-slate-200 print:text-[8px]">
                           {stats.horasInhabilActiva}h
                         </td>
-                        <td className="p-1.5 text-center font-bold text-amber-900 bg-amber-100/60 border-r border-slate-200">
+                        <td className="p-1.5 print:p-0.5 text-center font-bold text-amber-900 bg-amber-100/60 border-r border-slate-200 print:text-[8px]">
                           {stats.horasInhabilPasiva}h
                         </td>
 
                         {/* Total Extras */}
-                        <td className="p-1.5 text-center font-black text-emerald-950 bg-emerald-200/90 border-r border-slate-200">
+                        <td className="p-1.5 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-200/90 border-r border-slate-200 print:text-[8px]">
                           {stats.totalHorasExtras}h
                         </td>
                       </tr>
@@ -873,19 +1101,66 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                       })}
 
                       {/* Totales Compactos */}
-                      <td className="p-1 text-center font-bold text-blue-900 bg-blue-50 border-r border-slate-200">{stats.diasJornal}</td>
-                      <td className="p-1 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-200">{stats.horasJornal}h</td>
-                      <td className="p-1 text-center font-bold text-emerald-900 bg-emerald-50 border-r border-slate-200">{stats.diasExtraHabil}</td>
-                      <td className="p-1 text-center font-black text-emerald-950 bg-emerald-100 border-r border-slate-200">{stats.horasExtraHabil}h</td>
-                      <td className="p-1 text-center font-bold text-purple-900 bg-purple-100/60 border-r border-slate-200">{stats.horasInhabilActiva}h</td>
-                      <td className="p-1 text-center font-bold text-amber-900 bg-amber-100/60 border-r border-slate-200">{stats.horasInhabilPasiva}h</td>
-                      <td className="p-1 text-center font-black text-emerald-950 bg-emerald-200 border-r border-slate-200">{stats.totalHorasExtras}h</td>
-                      <td className="p-1 text-center font-black text-slate-900 bg-slate-200">{stats.totalHorasMes}h</td>
+                      <td className="p-1 print:p-0.5 text-center font-bold text-blue-900 bg-blue-50 border-r border-slate-200 print:text-[8px]">{stats.diasJornal}</td>
+                      <td className="p-1 print:p-0.5 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-200 print:text-[8px]">{stats.horasJornal}h</td>
+                      <td className="p-1 print:p-0.5 text-center font-bold text-emerald-900 bg-emerald-50 border-r border-slate-200 print:text-[8px]">{stats.diasExtraHabil}</td>
+                      <td className="p-1 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-100 border-r border-slate-200 print:text-[8px]">{stats.horasExtraHabil}h</td>
+                      <td className="p-1 print:p-0.5 text-center font-bold text-purple-900 bg-purple-100/60 border-r border-slate-200 print:text-[8px]">{stats.horasInhabilActiva}h</td>
+                      <td className="p-1 print:p-0.5 text-center font-bold text-amber-900 bg-amber-100/60 border-r border-slate-200 print:text-[8px]">{stats.horasInhabilPasiva}h</td>
+                      <td className="p-1 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-200 border-r border-slate-200 print:text-[8px]">{stats.totalHorasExtras}h</td>
+                      <td className="p-1 print:p-0.5 text-center font-black text-slate-900 bg-slate-200 print:text-[9.5px]">{stats.totalHorasMes}h</td>
                     </tr>
                   );
                 }
               })}
             </tbody>
+
+            {/* Totales Generales del Servicio para Pantalla e Impresión */}
+            <tfoot className="bg-slate-900 text-white font-bold print:bg-slate-200 print:text-slate-900 border-t-2 border-slate-400">
+              <tr>
+                <td className="p-2 print:p-0.5 text-left font-black text-xs print:text-[8px] uppercase tracking-wide bg-slate-800 print:bg-slate-200 sticky left-0 z-10">
+                  TOTAL SERVICIO
+                </td>
+                {days.map((day) => {
+                  let activeCount = 0;
+                  schedule.agents.forEach(a => {
+                    const assign = schedule.assignments[`${a.id}_${day.dateStr}`];
+                    if (assign?.jornal || assign?.extraHabil || assign?.extraInhabil24h || assign?.extraInhabil12h || assign?.extraInhabilManana || assign?.extraInhabilTarde) {
+                      activeCount++;
+                    }
+                  });
+                  return (
+                    <td key={`footer-day-${day.dateStr}`} className="p-1 print:p-0.5 text-center text-[9px] print:text-[7px] text-slate-300 print:text-slate-700 border-r border-slate-700 print:border-slate-300">
+                      {activeCount > 0 ? activeCount : '-'}
+                    </td>
+                  );
+                })}
+                <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-blue-950 text-blue-200 print:bg-blue-100 print:text-blue-950 border-r border-slate-700">
+                  {serviceTotals.diasJornal}
+                </td>
+                <td className="p-1 print:p-0.5 text-center font-black text-[10px] print:text-[8px] bg-blue-900 text-white print:bg-blue-200 print:text-blue-950 border-r border-slate-700">
+                  {serviceTotals.horasJornal}h
+                </td>
+                <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-emerald-950 text-emerald-200 print:bg-emerald-100 print:text-emerald-950 border-r border-slate-700">
+                  {serviceTotals.diasExtraHabil}
+                </td>
+                <td className="p-1 print:p-0.5 text-center font-black text-[10px] print:text-[8px] bg-emerald-900 text-white print:bg-emerald-200 print:text-emerald-950 border-r border-slate-700">
+                  {serviceTotals.horasExtraHabil}h
+                </td>
+                <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-purple-950 text-purple-200 print:bg-purple-100 print:text-purple-950 border-r border-slate-700">
+                  {serviceTotals.horasInhabilActiva}h
+                </td>
+                <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-amber-950 text-amber-200 print:bg-amber-100 print:text-amber-950 border-r border-slate-700">
+                  {serviceTotals.horasInhabilPasiva}h
+                </td>
+                <td className="p-1 print:p-0.5 text-center font-black text-[10px] print:text-[8px] bg-emerald-800 text-white print:bg-emerald-200 print:text-emerald-950 border-r border-slate-700">
+                  {serviceTotals.totalHorasExtras}h
+                </td>
+                <td className="p-1 print:p-0.5 text-center font-black text-xs print:text-[9.5px] bg-emerald-950 text-white print:bg-slate-300 print:text-slate-950">
+                  {serviceTotals.totalHorasMes}h
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>

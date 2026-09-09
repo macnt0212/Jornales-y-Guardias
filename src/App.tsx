@@ -9,7 +9,8 @@ import {
   HospitalServiceItem,
   HospitalAuthSession,
   UserAccount,
-  RecargoRange
+  RecargoRange,
+  PrintSettings
 } from './types';
 import { 
   DEFAULT_AGENTS, 
@@ -50,6 +51,7 @@ import { ServiceManagerModal } from './components/ServiceManagerModal';
 import { UserManagerModal } from './components/UserManagerModal';
 import { OperationsManualModal } from './components/OperationsManualModal';
 import { RecargoRangesModal } from './components/RecargoRangesModal';
+import { PrintConfigModal } from './components/PrintConfigModal';
 import { LoginScreen } from './components/LoginScreen';
 import { CheckCircle, AlertCircle, Info } from 'lucide-react';
 
@@ -93,6 +95,49 @@ export default function App() {
   const [userManagerTab, setUserManagerTab] = useState<'list' | 'create'>('list');
   const [isShiftEditorOpen, setIsShiftEditorOpen] = useState<boolean>(false);
   const [selectedCell, setSelectedCell] = useState<{ agent: Agent; day: DayInfo } | null>(null);
+
+  // Print Configuration Modal state (Carta / Oficio legibility)
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
+  const [isPrintPreviewActive, setIsPrintPreviewActive] = useState<boolean>(false);
+  const [printSettings, setPrintSettings] = useState<PrintSettings>({
+    paperSize: 'letter',
+    badgeDetail: 'compact_hours',
+    viewMode: 'double',
+    pageSplit: 'two_pages', // Por defecto 2 hojas para máxima legibilidad y tipografía grande
+    fontSizeScale: 'arial12', // Arial 12 reglamentario por defecto
+    fontFamily: 'arial',     // Fuente Arial oficial
+    totalsMode: 'compact',
+    includeHeader: true,
+    includeLegend: true,
+    includeSignatures: true,
+    highContrast: true,
+  });
+
+  const handleUpdatePrintSettings = (updated: Partial<PrintSettings>) => {
+    setPrintSettings(prev => ({ ...prev, ...updated }));
+  };
+
+  const handlePrintNow = () => {
+    document.body.classList.remove(
+      'print-paper-letter', 'print-paper-legal', 'print-paper-a4',
+      'print-scale-arial12', 'print-scale-normal', 'print-scale-large', 'print-scale-xlarge',
+      'print-font-arial', 'print-mode-two-pages', 'print-mode-quincena', 'print-high-contrast'
+    );
+    document.body.classList.add(`print-paper-${printSettings.paperSize}`);
+    document.body.classList.add(`print-scale-${printSettings.fontSizeScale}`);
+    if (printSettings.fontFamily === 'arial' || printSettings.fontSizeScale === 'arial12') {
+      document.body.classList.add('print-font-arial');
+    }
+    if (printSettings.pageSplit === 'two_pages') {
+      document.body.classList.add('print-mode-two-pages');
+    } else if (printSettings.pageSplit === 'quincena_1' || printSettings.pageSplit === 'quincena_2') {
+      document.body.classList.add('print-mode-quincena');
+    }
+    if (printSettings.highContrast) {
+      document.body.classList.add('print-high-contrast');
+    }
+    window.print();
+  };
 
   // Toast notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -425,9 +470,9 @@ export default function App() {
     showToast(`✓ Planilla Excel básica (.xlsx) descargada correctamente`);
   };
 
-  // Print Window
+  // Print Window / Open Print Config Dialog
   const handlePrint = () => {
-    window.print();
+    setIsPrintModalOpen(true);
   };
 
   // Reset Schedule
@@ -1231,6 +1276,9 @@ export default function App() {
             onExportWord={handleExportWord}
             onExportExcel={handleExportExcel}
             onPrint={handlePrint}
+            printSettings={printSettings}
+            onOpenPrintModal={() => setIsPrintModalOpen(true)}
+            isPreviewMode={isPrintPreviewActive}
           />
         )}
 
@@ -1354,6 +1402,20 @@ export default function App() {
         onClose={() => setIsManualOpen(false)}
         serviceName={schedule.serviceConfig?.serviceName}
         isRRHH={session.user.role === 'rrhh'}
+      />
+
+      {/* Print Configuration Modal (Optimized for Letter & Legal) */}
+      <PrintConfigModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        schedule={schedule}
+        days={days}
+        printSettings={printSettings}
+        onUpdateSettings={handleUpdatePrintSettings}
+        onPrintNow={handlePrintNow}
+        onExportVisualHtml={handleExportVisualHtml}
+        isPreviewMode={isPrintPreviewActive}
+        onTogglePreviewMode={() => setIsPrintPreviewActive(!isPrintPreviewActive)}
       />
     </div>
   );
