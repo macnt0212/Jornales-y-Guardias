@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MonthSchedule, DayInfo, Agent, DayShiftAssignment, PrintSettings } from '../types';
 import { 
   calculateAgentStats, 
@@ -39,7 +39,9 @@ import {
   Moon,
   Timer,
   SlidersHorizontal,
-  Eye
+  Eye,
+  Maximize,
+  Minimize
 } from 'lucide-react';
 
 interface SpreadsheetViewProps {
@@ -96,6 +98,27 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
   const [internalViewMode, setInternalViewMode] = useState<'double' | 'compact'>('double');
   const [showClearMenu, setShowClearMenu] = useState<boolean>(false);
   const [showHelpBanner, setShowHelpBanner] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  };
 
   const viewMode = printSettings?.viewMode || internalViewMode;
   const setViewMode = setInternalViewMode;
@@ -274,6 +297,31 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
               <span className="hidden sm:inline text-[9px] bg-blue-900/60 px-1 py-0.2 rounded font-normal text-blue-100">
                 Carta / Oficio
               </span>
+            </button>
+
+            {/* Botón Pantalla Completa */}
+            <button
+              type="button"
+              id="btn-table-fullscreen"
+              onClick={toggleFullscreen}
+              className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded shadow-2xs cursor-pointer transition-all border ${
+                isFullscreen
+                  ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
+                  : 'bg-emerald-800 hover:bg-emerald-700 text-white border-emerald-600'
+              }`}
+              title={isFullscreen ? "Restaurar tamaño normal de pantalla (Esc)" : "Expandir la planilla a toda la pantalla"}
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Restaurar</span>
+                </>
+              ) : (
+                <>
+                  <Maximize className="w-3.5 h-3.5 text-emerald-200" />
+                  <span>Pantalla Completa</span>
+                </>
+              )}
             </button>
 
             {/* Menu Borrar / Vaciar Celdas */}
@@ -475,14 +523,14 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
         )}
 
         {/* Tabla Interactiva de Edición en Pantalla (Oculta en Impresión y en Modo Vista Previa) */}
-        <div className={`overflow-x-auto max-h-[700px] print:hidden ${isPreviewMode ? 'hidden' : ''}`}>
-          <table className="w-full text-xs text-left border-collapse">
+        <div className={`overflow-x-auto overflow-y-auto max-h-[calc(100vh-210px)] min-h-[520px] scrollbar-thin border-t border-slate-200 print:hidden ${isPreviewMode ? 'hidden' : ''}`}>
+          <table className="w-full text-xs text-left border-collapse select-none">
             <thead className="bg-slate-800 text-white sticky top-0 z-20 shadow-xs">
               {/* Row 1: Weekday Names & Group Totals */}
               <tr className="border-b border-slate-700">
                 <th 
                   rowSpan={2}
-                  className="p-2.5 font-bold text-xs uppercase tracking-wider bg-slate-900 border-r border-slate-700 min-w-[210px] w-[210px] sticky left-0 z-30 shadow-[2px_0_5px_rgba(0,0,0,0.15)] print:min-w-0 print:w-[105px] print:max-w-[110px] print:p-1 print:text-[8.5px] print:shadow-none"
+                  className="p-2.5 font-bold text-xs uppercase tracking-wider bg-slate-900 border-r border-slate-700 min-w-[210px] w-[220px] sticky left-0 z-30 shadow-[3px_0_6px_rgba(0,0,0,0.18)] print:min-w-0 print:w-[105px] print:max-w-[110px] print:p-1 print:text-[8.5px] print:shadow-none"
                 >
                   Personal del Servicio
                 </th>
@@ -497,7 +545,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                   return (
                     <th
                       key={`day-${day.dateStr}`}
-                      className={`p-1 text-center font-medium text-[11px] border-r border-slate-700 min-w-[34px] print:min-w-0 print:w-auto print:p-0.5 ${bgClass}`}
+                      className={`p-1 text-center font-medium text-[11px] border-r border-slate-700 min-w-[34px] sm:min-w-[36px] md:min-w-[38px] xl:min-w-[42px] print:min-w-0 print:w-auto print:p-0.5 ${bgClass}`}
                       title={`${day.dayNameLong} ${day.dayNumber} ${isHoliday ? `(Feriado: ${day.holidayName})` : ''}`}
                     >
                       <div className="print:text-[7.5px] print:leading-none">{day.dayNameShort.slice(0, 2)}</div>

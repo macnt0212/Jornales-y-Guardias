@@ -1253,8 +1253,8 @@ export default function App() {
         setActiveTab={setActiveTab}
       />
 
-      {/* Main Body Content according to Active Tab */}
-      <main className="max-w-7xl w-full mx-auto px-4 py-3 sm:px-6 lg:px-8 flex-1">
+      {/* Main Body Content according to Active Tab - Full Width Presentation */}
+      <main className="w-full px-2 sm:px-4 lg:px-5 py-2.5 flex-1 flex flex-col">
 
         {activeTab === 'matriz' && (
           <SpreadsheetView

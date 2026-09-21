@@ -30,7 +30,9 @@ import {
   LayoutGrid,
   FileCheck2,
   FolderTree,
-  CalendarDays
+  CalendarDays,
+  Maximize,
+  Minimize
 } from 'lucide-react';
 import { MONTH_NAMES } from '../utils/calendar';
 import { MonthSchedule, DayInfo, HospitalServiceItem, UserAccount } from '../types';
@@ -117,6 +119,27 @@ export const Header: React.FC<HeaderProps> = ({
   const [isShiftsMenuOpen, setIsShiftsMenuOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  };
 
   // References to close on outside click
   const monthPickerRef = useRef<HTMLDivElement>(null);
@@ -188,7 +211,7 @@ export const Header: React.FC<HeaderProps> = ({
           - Centro: Navegador de Mes y Año (con Popover rápido)
           - Derecha: Operador, Manual y Salida
           ──────────────────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8 border-b border-slate-800/90">
+      <div className="w-full px-3 sm:px-5 lg:px-6 py-2 border-b border-slate-800/90">
         <div className="flex flex-wrap items-center justify-between gap-3">
           
           {/* 1.1 IDENTIDAD Y SERVICIO */}
@@ -379,6 +402,31 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             )}
 
+            {/* Botón Pantalla Completa */}
+            <button
+              type="button"
+              id="btn-header-fullscreen"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Restaurar tamaño de ventana normal (Esc)" : "Ver la planilla en toda la pantalla (Pantalla Completa)"}
+              className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold ${
+                isFullscreen 
+                  ? 'bg-amber-950/80 text-amber-300 border-amber-500/80 hover:bg-amber-900' 
+                  : 'bg-emerald-950/70 text-emerald-300 border-emerald-500/60 hover:bg-emerald-900/90 hover:text-white hover:border-emerald-400'
+              }`}
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Restaurar</span>
+                </>
+              ) : (
+                <>
+                  <Maximize className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">Pantalla Completa</span>
+                </>
+              )}
+            </button>
+
             {onOpenManual && (
               <button
                 onClick={onOpenManual}
@@ -398,8 +446,8 @@ export const Header: React.FC<HeaderProps> = ({
           NIVEL 2: MENÚ DE VISTAS PRINCIPALES (PESTAÑAS DE NAVEGACIÓN)
           Diseño ordenado, claro y de rápido acceso visual
           ──────────────────────────────────────────────────────────────── */}
-      <div className="bg-slate-900 px-4 py-2 sm:px-6 lg:px-8 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
+      <div className="bg-slate-900 px-3 sm:px-5 lg:px-6 py-2 border-b border-slate-800">
+        <div className="w-full mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
           
           <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none" aria-label="Menú Principal">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 hidden lg:inline mr-1">
@@ -516,8 +564,8 @@ export const Header: React.FC<HeaderProps> = ({
           NIVEL 3: BARRA DE HERRAMIENTAS Y ACCIONES ORGANIZADAS
           Agrupadas por propósito: Turnos, Personal, Documentos y Horas
           ──────────────────────────────────────────────────────────────── */}
-      <div className="bg-slate-950 px-4 py-2 sm:px-6 lg:px-8 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+      <div className="bg-slate-950 px-3 sm:px-5 lg:px-6 py-2 border-b border-slate-800">
+        <div className="w-full mx-auto flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
           
           {/* GRUPOS DE BOTONES OPERATIVOS */}
           <div className="flex items-center gap-2.5 flex-wrap">
