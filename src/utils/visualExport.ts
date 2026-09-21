@@ -190,7 +190,6 @@ function buildVisualTableHtml(schedule: MonthSchedule, days: DayInfo[]) {
         <td colspan="2" style="background-color: #f8fafc; color: #94a3b8; text-align: center; border: 1px solid #cbd5e1; font-size: 9px;">(Ver abajo)</td>
         <td colspan="2" style="background-color: #f8fafc; color: #94a3b8; text-align: center; border: 1px solid #cbd5e1; font-size: 9px;">(Ver abajo)</td>
         <td style="background-color: #f8fafc; color: #94a3b8; text-align: center; border: 1px solid #cbd5e1; font-size: 9px;">-</td>
-        <td rowspan="2" style="background-color: #e2e8f0; color: #0f172a; font-weight: 900; text-align: center; vertical-align: middle; border: 1px solid #94a3b8; border-bottom: 2px solid #475569; font-size: 13px;">${stats.totalHorasMes}h</td>
       </tr>
 
       <!-- FILA 2: EXTRAS -->
@@ -469,7 +468,6 @@ export function exportVisualHtml(schedule: MonthSchedule, days: DayInfo[]) {
           <th colspan="2" style="background-color: #065f46; color: #ffffff; border: 1px solid #334155; padding: 4px; text-align: center; font-size: 9.5px;">EXT. HÁBIL</th>
           <th colspan="2" style="background-color: #581c87; color: #ffffff; border: 1px solid #334155; padding: 4px; text-align: center; font-size: 9.5px;">INHÁBILES</th>
           <th style="background-color: #047857; color: #ffffff; border: 1px solid #334155; padding: 4px; text-align: center; font-size: 9.5px;">TOT. EXT</th>
-          <th rowspan="2" style="width: 50px; background-color: #022c22; color: #ffffff; border: 1px solid #334155; padding: 4px; text-align: center; font-size: 11px;">TOTAL MES</th>
         </tr>
         <tr>
           ${data.daysHeaderRow2}
@@ -632,7 +630,6 @@ export function exportToWord(schedule: MonthSchedule, days: DayInfo[]) {
           <th colspan="2" style="background-color: #065f46; color: #ffffff; text-align: center; font-size: 8pt;">EXT. HÁBIL</th>
           <th colspan="2" style="background-color: #581c87; color: #ffffff; text-align: center; font-size: 8pt;">INHÁBILES</th>
           <th style="background-color: #047857; color: #ffffff; text-align: center; font-size: 8pt;">TOT. EXT</th>
-          <th rowspan="2" style="width: 45pt; background-color: #022c22; color: #ffffff; text-align: center; font-size: 9.5pt;">TOTAL MES</th>
         </tr>
         <tr>
           ${data.daysHeaderRow2}
@@ -769,7 +766,7 @@ export function exportToExcelVisual(schedule: MonthSchedule, days: DayInfo[]) {
 <body>
   <table>
     <tr>
-      <td colspan="${days.length + 9}" style="background-color: #0f172a; color: #ffffff; font-size: 14pt; font-weight: bold; text-align: left; padding: 10pt;">
+      <td colspan="${days.length + 8}" style="background-color: #0f172a; color: #ffffff; font-size: 14pt; font-weight: bold; text-align: left; padding: 10pt;">
         ${data.serviceConfig.hospitalName || 'HOSPITAL CENTRAL DE EMERGENCIAS'} - ${data.serviceConfig.serviceName || 'SERVICIO DE INFORMÁTICA'}
         <div style="font-size: 10pt; color: #a7f3d0; font-weight: normal; margin-top: 3pt;">
           PLANILLA MENSUAL DE TURNOS Y GUARDIAS - PERÍODO: ${data.monthName.toUpperCase()} ${data.year}
@@ -777,7 +774,7 @@ export function exportToExcelVisual(schedule: MonthSchedule, days: DayInfo[]) {
       </td>
     </tr>
     <tr>
-      <td colspan="${days.length + 9}" style="background-color: #f8fafc; font-size: 8.5pt; text-align: left; padding: 5pt; border: 0.5pt solid #94a3b8;">
+      <td colspan="${days.length + 8}" style="background-color: #f8fafc; font-size: 8.5pt; text-align: left; padding: 5pt; border: 0.5pt solid #94a3b8;">
         <b>REFERENCIAS:</b> 
         JM/JT: Jornal Ordinario | EM/ET: Extra Hábil Contraturno | G24A/G24P: Guardia 24hs Inhábil | G12A/G12P: Guardia 12hs Inhábil | IA/IP: Inhábil 7hs | [Ext]: Jornal Externo
       </td>
@@ -789,7 +786,6 @@ export function exportToExcelVisual(schedule: MonthSchedule, days: DayInfo[]) {
       <th colspan="2" style="background-color: #065f46; color: #ffffff; font-size: 8.5pt;">EXT. HÁBIL</th>
       <th colspan="2" style="background-color: #581c87; color: #ffffff; font-size: 8.5pt;">INHÁBILES</th>
       <th style="background-color: #047857; color: #ffffff; font-size: 8.5pt;">TOT. EXT</th>
-      <th rowspan="2" style="background-color: #022c22; color: #ffffff; font-size: 10pt; font-weight: bold; width: 45pt;">TOTAL MES</th>
     </tr>
     <tr>
       ${data.daysHeaderRow2}
@@ -811,7 +807,6 @@ export function exportToExcelVisual(schedule: MonthSchedule, days: DayInfo[]) {
       <td style="background-color: #581c87; color: #ffffff; font-size: 9.5pt; font-weight: bold;">${data.totalInhabActivaHoras}h</td>
       <td style="background-color: #78350f; color: #ffffff; font-size: 9.5pt; font-weight: bold;">${data.totalInhabPasivaHoras}h</td>
       <td style="background-color: #047857; color: #ffffff; font-size: 10pt; font-weight: 900;">${data.totalExtraHabilHoras + data.totalInhabActivaHoras + data.totalInhabPasivaHoras}h</td>
-      <td style="background-color: #022c22; color: #ffffff; font-size: 11pt; font-weight: 900;">${data.totalGeneral}h</td>
     </tr>
   </table>
 </body>

@@ -101,7 +101,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
   const [showClearMenu, setShowClearMenu] = useState<boolean>(false);
   const [showHelpBanner, setShowHelpBanner] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [showTotals, setShowTotals] = useState<boolean>(false); // Planilla sin totales por defecto según solicitud
+  const [showTotals, setShowTotals] = useState<boolean>(true); // Mostrar columnas sin el total mensual según solicitud
 
   useEffect(() => {
     const handleFsChange = () => {
@@ -602,10 +602,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                       Inhábiles
                     </th>
                     <th className="p-1 text-center font-bold bg-emerald-900 text-white border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
-                      Total
-                    </th>
-                    <th className="p-1 text-center font-black bg-slate-950 text-white print:text-[8px] print:p-0.5 print:min-w-0 print:w-auto">
-                      TOTAL
+                      Total Extras
                     </th>
                   </>
                 )}
@@ -624,7 +621,6 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                   <th className="p-1 text-center bg-purple-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Act.</th>
                   <th className="p-1 text-center bg-amber-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Pas.</th>
                   <th className="p-1 text-center bg-emerald-900 font-bold border-r border-slate-700 print:text-[7px] print:p-0.5">Extras</th>
-                  <th className="p-1 text-center bg-slate-900 font-bold print:text-[7.5px] print:p-0.5">Total</th>
                 </tr>
               )}
             </thead>
@@ -632,7 +628,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
             <tbody className="divide-y divide-slate-300 text-slate-800">
               {schedule.agents.length === 0 && (
                 <tr>
-                  <td colSpan={days.length + (showTotals ? 9 : 1)} className="py-16 text-center bg-slate-50">
+                  <td colSpan={days.length + (showTotals ? 8 : 1)} className="py-16 text-center bg-slate-50">
                     <div className="max-w-md mx-auto flex flex-col items-center justify-center gap-3 text-slate-500">
                       <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
                         <Users className="w-7 h-7" />
@@ -880,9 +876,6 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                             </td>
                             <td className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
                               -
-                            </td>
-                            <td rowSpan={2} className="p-1.5 print:p-0.5 text-center font-black text-slate-900 bg-slate-200/90 text-sm print:text-[9.5px] align-middle border-b-2 border-slate-300">
-                              {stats.totalHorasMes}h
                             </td>
                           </>
                         )}
@@ -1207,7 +1200,6 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                           <td className="p-1 print:p-0.5 text-center font-bold text-purple-900 bg-purple-100/60 border-r border-slate-200 print:text-[8px]">{stats.horasInhabilActiva}h</td>
                           <td className="p-1 print:p-0.5 text-center font-bold text-amber-900 bg-amber-100/60 border-r border-slate-200 print:text-[8px]">{stats.horasInhabilPasiva}h</td>
                           <td className="p-1 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-200 border-r border-slate-200 print:text-[8px]">{stats.totalHorasExtras}h</td>
-                          <td className="p-1 print:p-0.5 text-center font-black text-slate-900 bg-slate-200 print:text-[9.5px]">{stats.totalHorasMes}h</td>
                         </>
                       )}
                     </tr>
@@ -1258,9 +1250,6 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                     </td>
                     <td className="p-1 print:p-0.5 text-center font-black text-[10px] print:text-[8px] bg-emerald-800 text-white print:bg-emerald-200 print:text-emerald-950 border-r border-slate-700">
                       {serviceTotals.totalHorasExtras}h
-                    </td>
-                    <td className="p-1 print:p-0.5 text-center font-black text-xs print:text-[9.5px] bg-emerald-950 text-white print:bg-slate-300 print:text-slate-950">
-                      {serviceTotals.totalHorasMes}h
                     </td>
                   </>
                 )}

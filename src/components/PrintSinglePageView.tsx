@@ -161,9 +161,8 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
               {!isNoTotals && (
                 isCompactTotals ? (
                   <>
-                    <th className="p-0.5 text-[8px] font-bold bg-blue-950 text-blue-100 border-r border-slate-700" style={{ width: '4.5%' }}>JORN</th>
-                    <th className="p-0.5 text-[8px] font-bold bg-purple-950 text-purple-100 border-r border-slate-700" style={{ width: '4.5%' }}>EXT</th>
-                    <th className="p-0.5 text-[8px] font-black bg-emerald-950 text-emerald-100 border-r border-slate-700" style={{ width: '5%' }}>TOTAL</th>
+                    <th className="p-0.5 text-[8px] font-bold bg-blue-950 text-blue-100 border-r border-slate-700" style={{ width: '5%' }}>JORN</th>
+                    <th className="p-0.5 text-[8px] font-bold bg-purple-950 text-purple-100 border-r border-slate-700" style={{ width: '5%' }}>EXTRAS</th>
                   </>
                 ) : (
                   <>
@@ -174,7 +173,6 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
                     <th className="p-0.5 text-[7px] font-bold bg-purple-950 text-purple-100 border-r border-slate-700">H.IA</th>
                     <th className="p-0.5 text-[7px] font-bold bg-amber-950 text-amber-100 border-r border-slate-700">H.IP</th>
                     <th className="p-0.5 text-[7px] font-black bg-purple-950 text-purple-100 border-r border-slate-700">T.EXT</th>
-                    <th className="p-0.5 text-[7px] font-black bg-emerald-950 text-emerald-100 border-r border-slate-700">T.MES</th>
                   </>
                 )
               )}
@@ -206,7 +204,6 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
                   <>
                     <th className="p-0.5 text-[7.5px] font-bold bg-blue-900 text-white border-r border-slate-700">Hs</th>
                     <th className="p-0.5 text-[7.5px] font-bold bg-purple-900 text-white border-r border-slate-700">Hs</th>
-                    <th className="p-0.5 text-[7.5px] font-black bg-emerald-900 text-white border-r border-slate-700">Hs</th>
                   </>
                 ) : (
                   <>
@@ -217,7 +214,6 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
                     <th className="p-0.5 text-[6.5px] font-bold bg-purple-900 text-white border-r border-slate-700">Hs</th>
                     <th className="p-0.5 text-[6.5px] font-bold bg-amber-900 text-white border-r border-slate-700">Hs</th>
                     <th className="p-0.5 text-[6.5px] font-black bg-purple-900 text-white border-r border-slate-700">Hs</th>
-                    <th className="p-0.5 text-[6.5px] font-black bg-emerald-900 text-white border-r border-slate-700">Hs</th>
                   </>
                 )
               )}
@@ -298,9 +294,6 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
                           <td className="p-0.5 text-center font-bold text-purple-900 bg-purple-50/40 border-r border-slate-300 text-[10px]">
                             {stats.totalHorasExtras}
                           </td>
-                          <td rowSpan={2} className="p-0.5 text-center font-black text-emerald-950 bg-emerald-100/60 border-r border-slate-400 text-[11px] align-middle border-b">
-                            {stats.totalHorasMes}
-                          </td>
                         </>
                       ) : (
                         <>
@@ -324,9 +317,6 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
                           </td>
                           <td className="p-0.5 text-center font-black text-purple-950 bg-purple-100/60 border-r border-slate-300 text-[9.5px]">
                             {stats.totalHorasExtras}
-                          </td>
-                          <td rowSpan={2} className="p-0.5 text-center font-black text-emerald-950 bg-emerald-100/70 border-r border-slate-400 text-[11px] align-middle border-b">
-                            {stats.totalHorasMes}
                           </td>
                         </>
                       )
@@ -445,9 +435,6 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
                     <td className="p-0.5 text-purple-200 bg-purple-950 border-r border-slate-700 text-[9.5px]">
                       {fullTotals.totalHorasExtras}
                     </td>
-                    <td className="p-0.5 text-emerald-300 bg-emerald-950 text-[11px] font-black">
-                      {fullTotals.totalHorasMes}
-                    </td>
                   </>
                 ) : (
                   <>
@@ -458,7 +445,6 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
                     <td className="p-0.5 text-[8px] bg-purple-950 text-purple-200 border-r border-slate-700">{fullTotals.horasInhabilActiva}</td>
                     <td className="p-0.5 text-[8px] bg-amber-950 text-amber-200 border-r border-slate-700">{fullTotals.horasInhabilPasiva}</td>
                     <td className="p-0.5 text-[8.5px] bg-purple-950 text-purple-200 border-r border-slate-700">{fullTotals.totalHorasExtras}</td>
-                    <td className="p-0.5 text-[10px] bg-emerald-950 text-emerald-300 font-black">{fullTotals.totalHorasMes}</td>
                   </>
                 )
               )}

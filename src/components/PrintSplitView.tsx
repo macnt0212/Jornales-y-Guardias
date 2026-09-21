@@ -160,14 +160,9 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                 })}
                 {/* Subtotales Quincena 1 */}
                 {!isNoTotals && (
-                  <>
-                    <th colSpan={3} className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 text-[10px]">
-                      Subtotales 1ª Quincena
-                    </th>
-                    <th className="p-1 text-center font-black bg-slate-950 text-white text-[10px]">
-                      Total Q1
-                    </th>
-                  </>
+                  <th colSpan={3} className="p-1 text-center font-bold bg-blue-950 text-blue-100 text-[10px]">
+                    Subtotales 1ª Quincena
+                  </th>
                 )}
               </tr>
 
@@ -176,8 +171,7 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                 <tr className="border-b border-slate-600 text-[9.5px] text-slate-300">
                   <th className="p-1 text-center bg-blue-900 font-semibold border-r border-slate-700">Días J</th>
                   <th className="p-1 text-center bg-blue-950 font-semibold border-r border-slate-700">Hs J</th>
-                  <th className="p-1 text-center bg-emerald-950 font-semibold border-r border-slate-700">Hs Ext</th>
-                  <th className="p-1 text-center bg-slate-900 font-bold">Total Hs</th>
+                  <th className="p-1 text-center bg-emerald-950 font-semibold">Hs Ext</th>
                 </tr>
               )}
             </thead>
@@ -248,11 +242,8 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                           <td className="p-1 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-300 text-xs">
                             {statsQ1.horasJornal}h
                           </td>
-                          <td className="p-1 text-center font-bold text-emerald-900 bg-emerald-50 border-r border-slate-300 text-xs">
+                          <td className="p-1 text-center font-bold text-emerald-900 bg-emerald-50 text-xs">
                             {statsQ1.totalHorasExtras}h
-                          </td>
-                          <td className="p-1 text-center font-black text-slate-950 bg-slate-200 text-xs">
-                            {statsQ1.totalHorasMes}h
                           </td>
                         </>
                       )}
@@ -365,11 +356,8 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                     <td className="p-1 text-center font-black text-xs bg-blue-800 border-r border-slate-700">
                       {q1Totals.horasJornal}h
                     </td>
-                    <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">
+                    <td className="p-1 text-center font-black text-xs bg-emerald-800">
                       {q1Totals.horasExtras}h
-                    </td>
-                    <td className="p-1 text-center font-black text-sm bg-slate-950 text-emerald-400">
-                      {q1Totals.totalHoras}h
                     </td>
                   </>
                 )}
@@ -444,11 +432,8 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                       <th className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 text-[10px]">
                         Hs Jornal
                       </th>
-                      <th className="p-1 text-center font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700 text-[10px]">
+                      <th className="p-1 text-center font-bold bg-emerald-950 text-emerald-100 text-[10px]">
                         Hs Extras
-                      </th>
-                      <th className="p-1 text-center font-black bg-slate-950 text-white text-[10.5px]">
-                        TOTAL MES
                       </th>
                     </>
                   ) : (
@@ -462,11 +447,8 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                       <th colSpan={2} className="p-1 text-center font-bold bg-purple-950 text-purple-100 border-r border-slate-700 text-[9.5px]">
                         Inhábiles
                       </th>
-                      <th className="p-1 text-center font-bold bg-emerald-900 text-white border-r border-slate-700 text-[9.5px]">
+                      <th className="p-1 text-center font-bold bg-emerald-900 text-white text-[9.5px]">
                         Extras
-                      </th>
-                      <th className="p-1 text-center font-black bg-slate-950 text-white text-[10px]">
-                        TOTAL
                       </th>
                     </>
                   )
@@ -481,8 +463,7 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                   <th className="p-0.5 text-center bg-emerald-950 border-r border-slate-700">Hs</th>
                   <th className="p-0.5 text-center bg-purple-900 border-r border-slate-700">Act.</th>
                   <th className="p-0.5 text-center bg-amber-900 border-r border-slate-700">Pas.</th>
-                  <th className="p-0.5 text-center bg-emerald-800 border-r border-slate-700">Total</th>
-                  <th className="p-0.5 text-center bg-slate-900 font-bold">Mes</th>
+                  <th className="p-0.5 text-center bg-emerald-800">Total</th>
                 </tr>
               )}
             </thead>
@@ -551,11 +532,8 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                             <td className="p-1 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-300 text-xs">
                               {statsFull.horasJornal}h
                             </td>
-                            <td className="p-1 text-center font-black text-emerald-950 bg-emerald-100 border-r border-slate-300 text-xs">
+                            <td className="p-1 text-center font-black text-emerald-950 bg-emerald-100 text-xs">
                               {statsFull.totalHorasExtras}h
-                            </td>
-                            <td className="p-1 text-center font-black text-slate-950 bg-slate-200 text-sm">
-                              {statsFull.totalHorasMes}h
                             </td>
                           </>
                         ) : (
@@ -578,11 +556,8 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                             <td className="p-1 text-center font-bold text-amber-900 bg-amber-50 border-r border-slate-300 text-xs">
                               {statsFull.horasInhabilPasiva}h
                             </td>
-                            <td className="p-1 text-center font-black text-emerald-950 bg-emerald-200 border-r border-slate-300 text-xs">
+                            <td className="p-1 text-center font-black text-emerald-950 bg-emerald-200 text-xs">
                               {statsFull.totalHorasExtras}h
-                            </td>
-                            <td className="p-1 text-center font-black text-slate-950 bg-slate-300 text-sm">
-                              {statsFull.totalHorasMes}h
                             </td>
                           </>
                         )
@@ -697,11 +672,8 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                       <td className="p-1 text-center font-black text-xs bg-blue-800 border-r border-slate-700">
                         {fullTotals.horasJornal}h
                       </td>
-                      <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">
+                      <td className="p-1 text-center font-black text-xs bg-emerald-800">
                         {fullTotals.totalHorasExtras}h
-                      </td>
-                      <td className="p-1 text-center font-black text-sm bg-slate-950 text-emerald-400">
-                        {fullTotals.totalHorasMes}h
                       </td>
                     </>
                   ) : (
@@ -712,8 +684,7 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                       <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">{fullTotals.horasExtraHabil}h</td>
                       <td className="p-1 text-center font-bold text-xs bg-purple-900 border-r border-slate-700">{fullTotals.horasInhabilActiva}h</td>
                       <td className="p-1 text-center font-bold text-xs bg-amber-900 border-r border-slate-700">{fullTotals.horasInhabilPasiva}h</td>
-                      <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">{fullTotals.totalHorasExtras}h</td>
-                      <td className="p-1 text-center font-black text-sm bg-slate-950 text-emerald-400">{fullTotals.totalHorasMes}h</td>
+                      <td className="p-1 text-center font-black text-xs bg-emerald-800">{fullTotals.totalHorasExtras}h</td>
                     </>
                   )
                 )}
