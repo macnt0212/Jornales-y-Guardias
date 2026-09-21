@@ -26,7 +26,11 @@ import {
   Trash2,
   Layers,
   Award,
-  Timer
+  Timer,
+  LayoutGrid,
+  FileCheck2,
+  FolderTree,
+  CalendarDays
 } from 'lucide-react';
 import { MONTH_NAMES } from '../utils/calendar';
 import { MonthSchedule, DayInfo, HospitalServiceItem, UserAccount } from '../types';
@@ -168,8 +172,6 @@ export const Header: React.FC<HeaderProps> = ({
 
   const availableYears = [2025, 2026, 2027, 2028];
 
-  const businessDaysCount = days.filter(d => !d.isWeekend && !d.isHoliday).length;
-  const nonBusinessDaysCount = days.filter(d => d.isWeekend || d.isHoliday).length;
   const totalExtrasHours = totalExtHabilHours + totalInhabActivaHours + totalInhabPasivaHours;
   const totalGeneralHours = totalJornalHours + totalExtrasHours;
 
@@ -181,23 +183,23 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="bg-slate-900 text-white border-b border-slate-800 shadow-md no-print select-none">
       
       {/* ────────────────────────────────────────────────────────────────
-          NIVEL 1: BARRA INSTITUCIONAL Y CONTEXTO OPERATIVO
+          NIVEL 1: BARRA INSTITUCIONAL Y SELECTOR DE PERÍODO
           - Izquierda: Hospital + Servicio Activo
-          - Centro: Selector de Período (Mes/Año Integrado con Popover)
-          - Derecha: Perfil de Operador + Ayuda + Salir
+          - Centro: Navegador de Mes y Año (con Popover rápido)
+          - Derecha: Operador, Manual y Salida
           ──────────────────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8 border-b border-slate-800/80">
+      <div className="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8 border-b border-slate-800/90">
         <div className="flex flex-wrap items-center justify-between gap-3">
           
-          {/* 1.1 IDENTIDAD Y SERVICIO HOSPITALARIO */}
-          <div className="flex items-center gap-2.5 min-w-0">
+          {/* 1.1 IDENTIDAD Y SERVICIO */}
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-md shrink-0 ring-1 ring-emerald-400/40">
               <Hospital className="w-5 h-5" />
             </div>
             
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 leading-none">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-800/60">
                   {schedule.serviceConfig?.hospitalSubtitle || 'MDH • Gobierno de Formosa'}
                 </span>
                 <span className="text-[11px] text-slate-400 hidden xl:inline">
@@ -214,7 +216,7 @@ export const Header: React.FC<HeaderProps> = ({
                       value={activeServiceId}
                       onChange={(e) => onSelectService(e.target.value)}
                       title="Seleccionar Servicio Hospitalario"
-                      className="bg-slate-800 text-emerald-300 text-xs font-bold py-0.5 px-2 rounded border border-emerald-600/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[200px] truncate"
+                      className="bg-slate-800 text-emerald-300 text-xs font-bold py-0.5 px-2 rounded border border-emerald-600/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[220px] truncate"
                     >
                       {services.map((s) => (
                         <option key={s.id} value={s.id}>
@@ -244,7 +246,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* 1.2 SELECTOR CENTRAL DE PERÍODO (MES Y AÑO) - Limpio, directo y sin estorbar */}
+          {/* 1.2 SELECTOR CENTRAL DE MES Y AÑO */}
           <div className="relative order-3 sm:order-2 mx-auto sm:mx-0" ref={monthPickerRef}>
             <div className="flex items-center bg-slate-800/90 rounded-lg p-0.5 border border-slate-700 shadow-inner">
               <button
@@ -261,12 +263,12 @@ export const Header: React.FC<HeaderProps> = ({
                 type="button"
                 id="btn-open-month-popover"
                 onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs sm:text-sm font-extrabold text-white hover:text-emerald-300 rounded-md transition-colors cursor-pointer"
+                className="flex items-center gap-2 px-3 py-1 text-xs sm:text-sm font-extrabold text-white hover:text-emerald-300 rounded-md transition-colors cursor-pointer"
                 title="Haga clic para cambiar de mes o año rápidamente"
               >
-                <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                <Calendar className="w-4 h-4 text-emerald-400" />
                 <span>{MONTH_NAMES[schedule.month - 1]} {schedule.year}</span>
-                <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isMonthPickerOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isMonthPickerOpen ? 'rotate-180' : ''}`} />
               </button>
 
               <button
@@ -280,7 +282,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
 
-            {/* POPOVER DESPLEGABLE DE MESES Y AÑOS */}
+            {/* Popover Desplegable de Meses y Años */}
             {isMonthPickerOpen && (
               <div className="absolute left-1/2 -translate-x-1/2 mt-1.5 w-72 bg-slate-900 border border-slate-700 text-slate-100 rounded-xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2">
@@ -381,7 +383,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={onOpenManual}
                 title="Manual de Operaciones y Flujo Oficial (PDF)"
-                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-colors cursor-pointer flex items-center gap-1 text-xs font-medium"
+                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-medium"
               >
                 <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="hidden xl:inline">Manual</span>
@@ -393,316 +395,371 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* ────────────────────────────────────────────────────────────────
-          NIVEL 2: BARRA DE NAVEGACIÓN PRINCIPAL (MENÚ DE PESTAÑAS)
-          Ocupa todo el ancho de la pantalla sin desborde horizontal ni barras de desplazamiento
+          NIVEL 2: MENÚ DE VISTAS PRINCIPALES (PESTAÑAS DE NAVEGACIÓN)
+          Diseño ordenado, claro y de rápido acceso visual
           ──────────────────────────────────────────────────────────────── */}
-      <div className="bg-slate-900 border-b border-slate-800 px-4 py-2 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <nav className="flex items-center gap-2 flex-wrap" aria-label="Menú Principal del Sistema">
+      <div className="bg-slate-900 px-4 py-2 sm:px-6 lg:px-8 border-b border-slate-800">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
+          
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none" aria-label="Menú Principal">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 hidden lg:inline mr-1">
+              Vistas:
+            </span>
+
+            {/* Pestaña 1: Planilla Matriz */}
             <button
               id="tab-matriz"
               onClick={() => setActiveTab('matriz')}
-              className={`flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-bold text-xs sm:text-sm transition-all cursor-pointer border shrink-0 ${
                 activeTab === 'matriz'
-                  ? 'bg-emerald-600 text-white shadow-md ring-1 ring-emerald-400'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  ? 'bg-emerald-600 text-white border-emerald-400 shadow-md ring-1 ring-emerald-400/40'
+                  : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
-              <span>Planilla Matriz</span>
+              <FileSpreadsheet className={`w-4 h-4 ${activeTab === 'matriz' ? 'text-white' : 'text-emerald-400'}`} />
+              <div className="text-left leading-tight">
+                <span>Planilla Matriz</span>
+                <span className="block text-[9px] font-normal opacity-80">Cronograma general</span>
+              </div>
             </button>
 
+            {/* Pestaña 2: Guardias Inhábiles */}
             <button
               id="tab-inhabiles"
               onClick={() => setActiveTab('inhabiles')}
-              className={`flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-bold text-xs sm:text-sm transition-all cursor-pointer border shrink-0 ${
                 activeTab === 'inhabiles'
-                  ? 'bg-amber-600 text-white shadow-md ring-1 ring-amber-400'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  ? 'bg-amber-600 text-white border-amber-400 shadow-md ring-1 ring-amber-400/40'
+                  : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <Clock className="w-4 h-4 text-amber-300" />
-              <span>Guardias Inhábiles</span>
+              <Clock className={`w-4 h-4 ${activeTab === 'inhabiles' ? 'text-white' : 'text-amber-400'}`} />
+              <div className="text-left leading-tight">
+                <span>Guardias Inhábiles</span>
+                <span className="block text-[9px] font-normal opacity-80">Sábados, domingos y feriados</span>
+              </div>
             </button>
 
+            {/* Pestaña 3: Resumen Liquidación */}
             <button
               id="tab-liquidacion"
               onClick={() => setActiveTab('liquidacion')}
-              className={`flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-bold text-xs sm:text-sm transition-all cursor-pointer border shrink-0 ${
                 activeTab === 'liquidacion'
-                  ? 'bg-indigo-600 text-white shadow-md ring-1 ring-indigo-400'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  ? 'bg-indigo-600 text-white border-indigo-400 shadow-md ring-1 ring-indigo-400/40'
+                  : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <CheckCircle2 className="w-4 h-4 text-indigo-300" />
-              <span>Resumen Liquidación</span>
+              <CheckCircle2 className={`w-4 h-4 ${activeTab === 'liquidacion' ? 'text-white' : 'text-indigo-400'}`} />
+              <div className="text-left leading-tight">
+                <span>Liquidación</span>
+                <span className="block text-[9px] font-normal opacity-80">Cómputo oficial de horas</span>
+              </div>
             </button>
 
+            {/* Pestaña 4: Fichas de Agentes */}
             <button
               id="tab-detalle"
               onClick={() => setActiveTab('detalle')}
-              className={`flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-bold text-xs sm:text-sm transition-all cursor-pointer border shrink-0 ${
                 activeTab === 'detalle'
-                  ? 'bg-blue-600 text-white shadow-md ring-1 ring-blue-400'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  ? 'bg-blue-600 text-white border-blue-400 shadow-md ring-1 ring-blue-400/40'
+                  : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <Users className="w-4 h-4 text-blue-300" />
-              <span>Fichas de Agentes</span>
+              <Users className={`w-4 h-4 ${activeTab === 'detalle' ? 'text-white' : 'text-blue-400'}`} />
+              <div className="text-left leading-tight">
+                <span>Fichas de Agentes</span>
+                <span className="block text-[9px] font-normal opacity-80">Detalle individual</span>
+              </div>
             </button>
 
+            {/* Pestaña 5: Consolidado RRHH (si es RRHH) */}
             {isRRHH && (
               <button
                 id="tab-consolidado-rrhh"
                 onClick={() => setActiveTab('consolidado_rrhh')}
-                className={`flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-bold text-xs sm:text-sm transition-all cursor-pointer border shrink-0 ${
                   activeTab === 'consolidado_rrhh'
-                    ? 'bg-amber-700 text-white shadow-md ring-1 ring-amber-400'
-                    : 'text-amber-300 hover:text-white hover:bg-amber-950/70 border border-amber-700/50'
+                    ? 'bg-amber-700 text-white border-amber-400 shadow-md ring-1 ring-amber-400/40'
+                    : 'bg-amber-950/60 text-amber-300 border-amber-700/60 hover:bg-amber-900/80 hover:text-white'
                 }`}
               >
                 <Crown className="w-4 h-4 text-amber-400" />
-                <span>Consolidado RRHH</span>
+                <div className="text-left leading-tight">
+                  <span>Consolidado RRHH</span>
+                  <span className="block text-[9px] font-normal opacity-80">Supervisión integral</span>
+                </div>
               </button>
             )}
-          </nav>
+          </div>
+
+          {/* Acceso Rápido Directo a Imprimir desde la Barra de Menú */}
+          <div className="hidden sm:flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              id="btn-quick-print-header"
+              onClick={onPrint}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow-sm border border-blue-400/60 transition-all cursor-pointer"
+              title="Abrir configurador de impresión oficial (Carta / Oficio y Arial 12)"
+            >
+              <Printer className="w-4 h-4 text-blue-200" />
+              <span>Imprimir Planilla</span>
+              <span className="text-[9px] bg-blue-900/80 text-blue-200 px-1 py-0.2 rounded font-bold">Arial 12</span>
+            </button>
+          </div>
+
         </div>
       </div>
 
       {/* ────────────────────────────────────────────────────────────────
-          NIVEL 3: BARRA DE ACCIONES OPERATIVAS (TURNOS, PERSONAL, EXPORTAR, ADMIN)
-          Ubicada más abajo, con espacio dedicado y métricas del servicio
+          NIVEL 3: BARRA DE HERRAMIENTAS Y ACCIONES ORGANIZADAS
+          Agrupadas por propósito: Turnos, Personal, Documentos y Horas
           ──────────────────────────────────────────────────────────────── */}
-      <div className="bg-slate-950/90 px-4 py-2 sm:px-6 lg:px-8 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div className="bg-slate-950 px-4 py-2 sm:px-6 lg:px-8 border-b border-slate-800">
+        <div className="max-w-7xl mx-auto flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
           
-          {/* BOTONES DE OPERACIÓN DIRECTA */}
+          {/* GRUPOS DE BOTONES OPERATIVOS */}
           <div className="flex items-center gap-2.5 flex-wrap">
             
-            {/* GRUPO A: MENÚ DE TURNOS Y ROTACIÓN */}
-            <div className="relative" ref={shiftsMenuRef}>
-              <button
-                id="btn-shifts-operations"
-                type="button"
-                onClick={() => setIsShiftsMenuOpen(!isShiftsMenuOpen)}
-                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-lg border border-slate-700 shadow-xs transition-all cursor-pointer"
-                title="Opciones de carga, rotación automática y vaciado de turnos"
-              >
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <span>Turnos</span>
-                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isShiftsMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
+            {/* ══ GRUPO 1: GESTIÓN DE TURNOS & NÓMINA ══ */}
+            <div className="flex items-center bg-slate-900/90 p-1 rounded-lg border border-slate-800 gap-1.5">
+              <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 px-1 hidden md:inline">
+                Turnos:
+              </span>
 
-              {isShiftsMenuOpen && (
-                <div 
-                  className="absolute left-0 mt-1.5 w-64 bg-slate-900 border border-slate-700 text-slate-100 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
-                  onClick={() => setIsShiftsMenuOpen(false)}
+              {/* Menú Turnos */}
+              <div className="relative" ref={shiftsMenuRef}>
+                <button
+                  id="btn-shifts-operations"
+                  type="button"
+                  onClick={() => setIsShiftsMenuOpen(!isShiftsMenuOpen)}
+                  className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold px-2.5 py-1.5 rounded-md border border-slate-700 shadow-xs transition-all cursor-pointer"
+                  title="Operaciones de rotación y vaciado de turnos"
                 >
-                  <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
-                    Operaciones de Turnos ({MONTH_NAMES[schedule.month - 1]})
-                  </div>
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Acciones de Turnos</span>
+                  <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isShiftsMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-                  {/* Rotación Equitativa */}
-                  <button
-                    onClick={onGenerateBalanced}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-emerald-300"
+                {isShiftsMenuOpen && (
+                  <div 
+                    className="absolute left-0 mt-1.5 w-64 bg-slate-900 border border-slate-700 text-slate-100 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
+                    onClick={() => setIsShiftsMenuOpen(false)}
                   >
-                    <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <div>
-                      <div className="font-bold">Rotación Automática</div>
-                      <div className="text-[10px] text-slate-400">Distribución equitativa según nómina</div>
+                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                      Operaciones de Turnos ({MONTH_NAMES[schedule.month - 1]})
                     </div>
-                  </button>
 
-                  {/* Regla Oficial Duplas (si es Informática) */}
-                  {isInformatica && onApplyOfficialPolicy && (
+                    {/* Rotación Equitativa */}
                     <button
-                      onClick={onApplyOfficialPolicy}
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-amber-300 border-t border-slate-800"
+                      onClick={onGenerateBalanced}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-emerald-300"
                     >
-                      <Award className="w-4 h-4 text-amber-400 shrink-0" />
+                      <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
                       <div>
-                        <div className="font-bold">Aplicar Duplas Oficiales</div>
-                        <div className="text-[10px] text-slate-400">Cantero (Activa), Escobar/Galeano/Amarilla</div>
+                        <div className="font-bold">Rotación Automática</div>
+                        <div className="text-[10px] text-slate-400">Distribución equitativa según nómina</div>
                       </div>
                     </button>
-                  )}
 
-                  <div className="border-t border-slate-800 my-1" />
-                  <div className="px-3 py-1 text-[10px] font-bold text-rose-400 uppercase tracking-wider">
-                    Vaciar / Borrar Celdas
+                    {/* Regla Oficial Duplas (si es Informática) */}
+                    {isInformatica && onApplyOfficialPolicy && (
+                      <button
+                        onClick={onApplyOfficialPolicy}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-amber-300 border-t border-slate-800"
+                      >
+                        <Award className="w-4 h-4 text-amber-400 shrink-0" />
+                        <div>
+                          <div className="font-bold">Aplicar Duplas Oficiales</div>
+                          <div className="text-[10px] text-slate-400">Cantero (Activa), Escobar/Galeano/Amarilla</div>
+                        </div>
+                      </button>
+                    )}
+
+                    <div className="border-t border-slate-800 my-1" />
+                    <div className="px-3 py-1 text-[10px] font-bold text-rose-400 uppercase tracking-wider">
+                      Vaciar / Borrar Celdas
+                    </div>
+
+                    {onClearAllExtrasMonth && (
+                      <button
+                        onClick={onClearAllExtrasMonth}
+                        className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 flex items-center gap-2 text-rose-300 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                        <span>Borrar solo horas extras</span>
+                      </button>
+                    )}
+
+                    {onClearAllJornalesMonth && (
+                      <button
+                        onClick={onClearAllJornalesMonth}
+                        className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 flex items-center gap-2 text-slate-300 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Borrar solo jornales hábiles</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={onReset}
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-rose-950/60 flex items-center gap-2 text-rose-400 font-bold border-t border-slate-800/80 cursor-pointer mt-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                      <span>Vaciar todo el mes (dejar en blanco)</span>
+                    </button>
                   </div>
+                )}
+              </div>
 
-                  {onClearAllExtrasMonth && (
-                    <button
-                      onClick={onClearAllExtrasMonth}
-                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 flex items-center gap-2 text-rose-300 cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-                      <span>Borrar solo horas extras</span>
-                    </button>
-                  )}
+              {/* Botón Nómina de Personal */}
+              <button
+                id="btn-settings-personal"
+                onClick={onOpenSettings}
+                title="Configurar personal del servicio, jornales ordinarios y contraturno"
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold px-2.5 py-1.5 rounded-md border border-slate-700 shadow-xs transition-all cursor-pointer"
+              >
+                <Users className="w-3.5 h-3.5 text-blue-400" />
+                <span>Personal ({schedule.agents.length})</span>
+              </button>
 
-                  {onClearAllJornalesMonth && (
-                    <button
-                      onClick={onClearAllJornalesMonth}
-                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 flex items-center gap-2 text-slate-300 cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Borrar solo jornales hábiles</span>
-                    </button>
-                  )}
-
-                  <button
-                    onClick={onReset}
-                    className="w-full text-left px-3 py-1.5 text-xs hover:bg-rose-950/60 flex items-center gap-2 text-rose-400 font-bold border-t border-slate-800/80 cursor-pointer mt-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                    <span>Vaciar todo el mes (dejar en blanco)</span>
-                  </button>
-                </div>
+              {/* Botón Rangos de Recargos */}
+              {onOpenRecargoRanges && (
+                <button
+                  id="btn-recargo-ranges"
+                  onClick={onOpenRecargoRanges}
+                  title="Configurar rangos de horarios de recargos (hábiles, inhábiles activas y pasivas)"
+                  className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold px-2.5 py-1.5 rounded-md border border-slate-700 shadow-xs transition-all cursor-pointer"
+                >
+                  <Timer className="w-3.5 h-3.5 text-purple-400" />
+                  <span className="hidden sm:inline">Rangos de</span> Recargos
+                </button>
               )}
             </div>
 
-            {/* GRUPO B: NÓMINA DE PERSONAL */}
-            <button
-              id="btn-settings-personal"
-              onClick={onOpenSettings}
-              title="Configurar personal del servicio, jornales ordinarios y contraturno"
-              className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-lg border border-slate-700 shadow-xs transition-all cursor-pointer"
-            >
-              <Users className="w-4 h-4 text-blue-400" />
-              <span>Personal ({schedule.agents.length})</span>
-            </button>
+            {/* ══ GRUPO 2: DOCUMENTOS & EXPORTAR ══ */}
+            <div className="flex items-center bg-slate-900/90 p-1 rounded-lg border border-slate-800 gap-1.5">
+              <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 px-1 hidden md:inline">
+                Documentos:
+              </span>
 
-            {/* GRUPO C: RANGOS DE HORARIOS DE RECARGOS (Hábiles, Inhábiles Activas y Pasivas) */}
-            {onOpenRecargoRanges && (
+              {/* Botón Imprimir (Destacado) */}
               <button
-                id="btn-recargo-ranges"
-                onClick={onOpenRecargoRanges}
-                title="Configurar y agregar rangos de horarios de recargos (hábiles, inhábiles activas y pasivas)"
-                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-lg border border-slate-700 shadow-xs transition-all cursor-pointer"
-              >
-                <Timer className="w-4 h-4 text-purple-400" />
-                <span>Rangos de Recargos</span>
-              </button>
-            )}
-
-            {/* GRUPO D: EXPORTAR / IMPRIMIR (Menú Unificado) */}
-            <div className="relative" ref={exportMenuRef}>
-              <button
-                id="btn-export-dropdown"
+                id="btn-print-toolbar"
                 type="button"
-                onClick={() => setIsExportOpen(!isExportOpen)}
-                className="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer"
+                onClick={onPrint}
+                className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-xs transition-all cursor-pointer"
+                title="Ajustar e imprimir planilla oficial (Carta / Oficio en Arial 12)"
               >
-                <Download className="w-4 h-4" />
-                <span>Exportar</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
+                <Printer className="w-3.5 h-3.5 text-blue-200" />
+                <span>Imprimir</span>
               </button>
 
-              {isExportOpen && (
-                <div 
-                  className="absolute left-0 mt-1.5 w-64 bg-slate-900 border border-slate-700 text-slate-100 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
-                  onClick={() => setIsExportOpen(false)}
+              {/* Menú Exportar */}
+              <div className="relative" ref={exportMenuRef}>
+                <button
+                  id="btn-export-dropdown"
+                  type="button"
+                  onClick={() => setIsExportOpen(!isExportOpen)}
+                  className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-xs transition-all cursor-pointer"
                 >
-                  <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
-                    Formatos Oficiales ({MONTH_NAMES[schedule.month - 1]})
-                  </div>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Exportar</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-                  {/* Excel Formato Visual (.xls) */}
-                  <button
-                    onClick={onExportExcelVisual || onExportExcel}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-emerald-300"
+                {isExportOpen && (
+                  <div 
+                    className="absolute left-0 mt-1.5 w-64 bg-slate-900 border border-slate-700 text-slate-100 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
+                    onClick={() => setIsExportOpen(false)}
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <div>
-                      <div className="font-bold flex items-center gap-1">
-                        Excel Visual (.xls)
-                        <span className="text-[9px] bg-emerald-950 text-emerald-300 px-1 rounded border border-emerald-800">Recomendado</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400">100% idéntico con formato y colores</div>
+                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                      Descargas Oficiales ({MONTH_NAMES[schedule.month - 1]})
                     </div>
-                  </button>
 
-                  {/* Excel Básico (.xlsx) */}
-                  <button
-                    onClick={onExportExcel}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-slate-200 border-t border-slate-800/80"
-                  >
-                    <FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" />
-                    <div>
-                      <div className="font-bold">Excel Estándar (.xlsx)</div>
-                      <div className="text-[10px] text-slate-400">Libro nativo con datos de turnos</div>
-                    </div>
-                  </button>
-
-                  {/* Word (.doc) */}
-                  <button
-                    onClick={onExportWord}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-sky-300 border-t border-slate-800/80"
-                  >
-                    <FileText className="w-4 h-4 text-sky-400 shrink-0" />
-                    <div>
-                      <div className="font-bold">Word Editable (.doc)</div>
-                      <div className="text-[10px] text-slate-400">Tabla editable en Microsoft Word</div>
-                    </div>
-                  </button>
-
-                  {/* Web / PDF exacto (.html) */}
-                  <button
-                    onClick={onExportVisualHtml}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-blue-300 border-t border-slate-800/80"
-                  >
-                    <Globe className="w-4 h-4 text-blue-400 shrink-0" />
-                    <div>
-                      <div className="font-bold">Página Web / PDF (.html)</div>
-                      <div className="text-[10px] text-slate-400">Abre en navegador o guarda como PDF</div>
-                    </div>
-                  </button>
-
-                  {/* Imprimir */}
-                  <button
-                    onClick={onPrint}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-slate-200 border-t border-slate-800/80"
-                  >
-                    <Printer className="w-4 h-4 text-slate-300 shrink-0" />
-                    <div>
-                      <div className="font-bold">Imprimir Planilla</div>
-                      <div className="text-[10px] text-slate-400">Diálogo de impresión directa</div>
-                    </div>
-                  </button>
-
-                  {/* Plantilla en Blanco (.xlsx) */}
-                  {onExportBlankExcel && (
+                    {/* Excel Visual (.xls) */}
                     <button
-                      onClick={onExportBlankExcel}
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-amber-300 border-t border-slate-800"
+                      onClick={onExportExcelVisual || onExportExcel}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-emerald-300"
                     >
-                      <Download className="w-4 h-4 text-amber-400 shrink-0" />
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0" />
                       <div>
-                        <div className="font-bold">Plantilla en Blanco (.xlsx)</div>
-                        <div className="text-[10px] text-slate-400">Descargar formato vacío sin turnos</div>
+                        <div className="font-bold flex items-center gap-1">
+                          Excel Visual (.xls)
+                          <span className="text-[9px] bg-emerald-950 text-emerald-300 px-1 rounded border border-emerald-800">Recomendado</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400">100% idéntico con colores y cuadrícula</div>
                       </div>
                     </button>
-                  )}
-                </div>
-              )}
+
+                    {/* Excel Nativo (.xlsx) */}
+                    <button
+                      onClick={onExportExcel}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-slate-200 border-t border-slate-800/80"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" />
+                      <div>
+                        <div className="font-bold">Excel Estándar (.xlsx)</div>
+                        <div className="text-[10px] text-slate-400">Libro editable nativo</div>
+                      </div>
+                    </button>
+
+                    {/* Word (.doc) */}
+                    <button
+                      onClick={onExportWord}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-sky-300 border-t border-slate-800/80"
+                    >
+                      <FileText className="w-4 h-4 text-sky-400 shrink-0" />
+                      <div>
+                        <div className="font-bold">Word Editable (.doc)</div>
+                        <div className="text-[10px] text-slate-400">Tabla para Microsoft Word</div>
+                      </div>
+                    </button>
+
+                    {/* Web / PDF exacto (.html) */}
+                    <button
+                      onClick={onExportVisualHtml}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-blue-300 border-t border-slate-800/80"
+                    >
+                      <Globe className="w-4 h-4 text-blue-400 shrink-0" />
+                      <div>
+                        <div className="font-bold">Página Web / PDF (.html)</div>
+                        <div className="text-[10px] text-slate-400">Abre en navegador o guarda como PDF</div>
+                      </div>
+                    </button>
+
+                    {/* Plantilla en Blanco (.xlsx) */}
+                    {onExportBlankExcel && (
+                      <button
+                        onClick={onExportBlankExcel}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center gap-2.5 font-medium cursor-pointer text-amber-300 border-t border-slate-800"
+                      >
+                        <Download className="w-4 h-4 text-amber-400 shrink-0" />
+                        <div>
+                          <div className="font-bold">Plantilla en Blanco (.xlsx)</div>
+                          <div className="text-[10px] text-slate-400">Descargar formato vacío sin turnos</div>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* GRUPO D: ADMINISTRACIÓN RRHH (Solo si el usuario es RRHH) */}
+            {/* ══ GRUPO 3: ADMIN RRHH (si es RRHH) ══ */}
             {isRRHH && (
               <div className="relative" ref={adminMenuRef}>
                 <button
                   id="btn-admin-dropdown"
                   type="button"
                   onClick={() => setIsAdminOpen(!isAdminOpen)}
-                  className="flex items-center gap-2 bg-amber-950/80 hover:bg-amber-900 text-amber-300 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-lg border border-amber-700/60 transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 bg-amber-950/80 hover:bg-amber-900 text-amber-300 text-xs font-bold px-3 py-1.5 rounded-lg border border-amber-700/60 transition-all cursor-pointer"
                   title="Herramientas de Administración RRHH"
                 >
-                  <Crown className="w-4 h-4 text-amber-400" />
-                  <span>Admin</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isAdminOpen ? 'rotate-180' : ''}`} />
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Admin RRHH</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${isAdminOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isAdminOpen && (
@@ -759,34 +816,44 @@ export const Header: React.FC<HeaderProps> = ({
 
           </div>
 
-          {/* MÉTRICAS Y HORAS CLAVE DEL MES */}
-          <div className="flex items-center gap-2 sm:gap-3 text-xs flex-wrap">
-            <div className="flex items-center gap-1.5 text-[11px] bg-slate-900/90 px-2 py-1 rounded border border-slate-800">
+          {/* ══ GRUPO 4: RESUMEN DE HORAS Y MÉTRICAS ══ */}
+          <div className="flex items-center gap-2 text-xs flex-wrap bg-slate-900/90 px-2.5 py-1 rounded-lg border border-slate-800">
+            <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 hidden md:inline mr-0.5">
+              Cómputo:
+            </span>
+
+            <div className="flex items-center gap-1 text-[11px]">
               <span className="w-2 h-2 rounded-full bg-blue-400"></span>
               <span className="text-slate-400">Jornal:</span>
               <span className="text-white font-bold">{totalJornalHours}h</span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[11px] bg-slate-900/90 px-2 py-1 rounded border border-slate-800">
+            <span className="text-slate-700">•</span>
+
+            <div className="flex items-center gap-1 text-[11px]">
               <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
               <span className="text-slate-400">Ext. Háb:</span>
               <span className="text-white font-bold">{totalExtHabilHours}h</span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[11px] bg-slate-900/90 px-2 py-1 rounded border border-slate-800">
+            <span className="text-slate-700">•</span>
+
+            <div className="flex items-center gap-1 text-[11px]">
               <span className="w-2 h-2 rounded-full bg-purple-400"></span>
               <span className="text-slate-400">Inh. Act:</span>
               <span className="text-white font-bold">{totalInhabActivaHours}h</span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[11px] bg-slate-900/90 px-2 py-1 rounded border border-slate-800">
+            <span className="text-slate-700">•</span>
+
+            <div className="flex items-center gap-1 text-[11px]">
               <span className="w-2 h-2 rounded-full bg-amber-400"></span>
               <span className="text-slate-400">Inh. Pas:</span>
               <span className="text-white font-bold">{totalInhabPasivaHours}h</span>
             </div>
 
-            <div className="bg-emerald-950 text-emerald-200 px-2.5 py-1 rounded border border-emerald-800/80 font-bold text-xs">
-              Total: <strong className="text-white font-black">{totalGeneralHours}h</strong>
+            <div className="bg-emerald-950 text-emerald-200 px-2 py-0.5 rounded border border-emerald-800 font-black text-[11px] ml-1">
+              Total: <span className="text-white">{totalGeneralHours}h</span>
             </div>
           </div>
 
