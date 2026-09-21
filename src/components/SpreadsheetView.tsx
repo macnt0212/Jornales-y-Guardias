@@ -1,7 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MonthSchedule, DayInfo, Agent, DayShiftAssignment, PrintSettings } from '../types';
 import { 
-  calculateAgentStats, 
   HOURS_PER_SHIFT, 
   MONTH_NAMES, 
   isAgentOnlyInhabilePasiva,
@@ -41,9 +40,7 @@ import {
   SlidersHorizontal,
   Eye,
   Maximize,
-  Minimize,
-  Calculator,
-  EyeOff
+  Minimize
 } from 'lucide-react';
 
 interface SpreadsheetViewProps {
@@ -101,7 +98,6 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
   const [showClearMenu, setShowClearMenu] = useState<boolean>(false);
   const [showHelpBanner, setShowHelpBanner] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [showTotals, setShowTotals] = useState<boolean>(true); // Mostrar columnas sin el total mensual según solicitud
 
   useEffect(() => {
     const handleFsChange = () => {
@@ -125,41 +121,6 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
 
   const viewMode = printSettings?.viewMode || internalViewMode;
   const setViewMode = setInternalViewMode;
-
-  // Totales acumulados para el pie de tabla oficial
-  const serviceTotals = useMemo(() => {
-    let diasJornal = 0;
-    let horasJornal = 0;
-    let diasExtraHabil = 0;
-    let horasExtraHabil = 0;
-    let horasInhabilActiva = 0;
-    let horasInhabilPasiva = 0;
-    let totalHorasExtras = 0;
-    let totalHorasMes = 0;
-
-    schedule.agents.forEach(agent => {
-      const stats = calculateAgentStats(agent, schedule, days);
-      diasJornal += stats.diasJornal;
-      horasJornal += stats.horasJornal;
-      diasExtraHabil += stats.diasExtraHabil;
-      horasExtraHabil += stats.horasExtraHabil;
-      horasInhabilActiva += stats.horasInhabilActiva;
-      horasInhabilPasiva += stats.horasInhabilPasiva;
-      totalHorasExtras += stats.totalHorasExtras;
-      totalHorasMes += stats.totalHorasMes;
-    });
-
-    return {
-      diasJornal,
-      horasJornal,
-      diasExtraHabil,
-      horasExtraHabil,
-      horasInhabilActiva,
-      horasInhabilPasiva,
-      totalHorasExtras,
-      totalHorasMes,
-    };
-  }, [schedule, days]);
 
   const startEditAgent = (agent: Agent) => {
     setEditingAgentId(agent.id);
@@ -327,37 +288,6 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
               )}
             </button>
 
-            {/* Botón Ocultar / Mostrar Totales */}
-            <button
-              type="button"
-              id="btn-toggle-totals"
-              onClick={() => setShowTotals(!showTotals)}
-              className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded shadow-2xs cursor-pointer transition-all border ${
-                showTotals
-                  ? 'bg-blue-900 text-white border-blue-700 hover:bg-blue-800'
-                  : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
-              }`}
-              title={
-                showTotals
-                  ? "Ocultar columnas de totales para despejar la planilla y maximizar el espacio de los 31 días"
-                  : "Mostrar columnas de totales generales del mes (Jornal, Extras, Total)"
-              }
-            >
-              {showTotals ? (
-                <>
-                  <EyeOff className="w-3.5 h-3.5 text-blue-300" />
-                  <span>Ocultar Totales</span>
-                </>
-              ) : (
-                <>
-                  <Calculator className="w-3.5 h-3.5 text-slate-600" />
-                  <span>Mostrar Totales</span>
-                  <span className="text-[9.5px] bg-slate-200 text-slate-700 px-1 py-0.2 rounded font-normal">
-                    Ocultos
-                  </span>
-                </>
-              )}
-            </button>
 
             {/* Menu Borrar / Vaciar Celdas */}
             <div className="relative">
@@ -561,10 +491,9 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
         <div className={`overflow-x-auto overflow-y-auto max-h-[calc(100vh-210px)] min-h-[520px] scrollbar-thin border-t border-slate-200 print:hidden ${isPreviewMode ? 'hidden' : ''}`}>
           <table className="w-full text-xs text-left border-collapse select-none">
             <thead className="bg-slate-800 text-white sticky top-0 z-20 shadow-xs">
-              {/* Row 1: Weekday Names & Group Totals */}
+              {/* Row 1: Weekday Names */}
               <tr className="border-b border-slate-700">
                 <th 
-                  rowSpan={showTotals ? 2 : 1}
                   className="p-2.5 font-bold text-xs uppercase tracking-wider bg-slate-900 border-r border-slate-700 min-w-[210px] w-[220px] sticky left-0 z-30 shadow-[3px_0_6px_rgba(0,0,0,0.18)] print:min-w-0 print:w-[105px] print:max-w-[110px] print:p-1 print:text-[8.5px] print:shadow-none"
                 >
                   Personal del Servicio
@@ -588,47 +517,13 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                     </th>
                   );
                 })}
-
-                {/* Header Groups for Totals (Ocultables) */}
-                {showTotals && (
-                  <>
-                    <th colSpan={2} className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
-                      Jornal
-                    </th>
-                    <th colSpan={2} className="p-1 text-center font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
-                      Ext. Hábil
-                    </th>
-                    <th colSpan={2} className="p-1 text-center font-bold bg-purple-950 text-purple-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
-                      Inhábiles
-                    </th>
-                    <th className="p-1 text-center font-bold bg-emerald-900 text-white border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
-                      Total Extras
-                    </th>
-                  </>
-                )}
               </tr>
-
-              {/* Row 2: Subheaders for Totals */}
-              {showTotals && (
-                <tr className="border-b border-slate-600 text-[10px] text-slate-300">
-                  {days.map(d => (
-                    <th key={`h2-${d.dateStr}`} className="hidden"></th>
-                  ))}
-                  <th className="p-1 text-center bg-blue-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Días</th>
-                  <th className="p-1 text-center bg-blue-950/90 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Hs</th>
-                  <th className="p-1 text-center bg-emerald-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Días</th>
-                  <th className="p-1 text-center bg-emerald-950/90 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Hs</th>
-                  <th className="p-1 text-center bg-purple-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Act.</th>
-                  <th className="p-1 text-center bg-amber-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Pas.</th>
-                  <th className="p-1 text-center bg-emerald-900 font-bold border-r border-slate-700 print:text-[7px] print:p-0.5">Extras</th>
-                </tr>
-              )}
             </thead>
 
             <tbody className="divide-y divide-slate-300 text-slate-800">
               {schedule.agents.length === 0 && (
                 <tr>
-                  <td colSpan={days.length + (showTotals ? 8 : 1)} className="py-16 text-center bg-slate-50">
+                  <td colSpan={days.length + 1} className="py-16 text-center bg-slate-50">
                     <div className="max-w-md mx-auto flex flex-col items-center justify-center gap-3 text-slate-500">
                       <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
                         <Users className="w-7 h-7" />
@@ -651,7 +546,6 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
               )}
 
               {schedule.agents.map((agent, index) => {
-                const stats = calculateAgentStats(agent, schedule, days);
                 const isEven = index % 2 === 0;
                 const modality = getAgentWorkModality(agent);
                 const jTurno = getAgentJornalShift(agent);
@@ -856,29 +750,6 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                             </td>
                           );
                         })}
-
-                        {/* Totales Jornal Fila 1 */}
-                        {showTotals && (
-                          <>
-                            <td className="p-1.5 print:p-0.5 text-center font-bold text-blue-900 bg-blue-50/80 border-r border-slate-200 print:text-[8px]">
-                              {stats.diasJornal}
-                            </td>
-                            <td className="p-1.5 print:p-0.5 text-center font-black text-blue-950 bg-blue-100/80 border-r border-slate-200 print:text-[8px]">
-                              {stats.horasJornal}h
-                            </td>
-
-                            {/* Totales Fila 1 (Vacíos para Extras que van en Fila 2) */}
-                            <td colSpan={2} className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
-                              (Ver extras)
-                            </td>
-                            <td colSpan={2} className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
-                              (Ver extras)
-                            </td>
-                            <td className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
-                              -
-                            </td>
-                          </>
-                        )}
                       </tr>
 
                       {/* FILA 2: HORAS EXTRAS HÁBILES E INHÁBILES */}
