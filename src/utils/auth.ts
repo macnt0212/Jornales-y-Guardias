@@ -5,6 +5,18 @@ export const CURRENT_SESSION_STORAGE_KEY = 'hcef_current_session';
 
 export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
   {
+    id: 'user_admin_macantero',
+    username: 'macantero',
+    password: 'Createx2015',
+    fullName: 'Cantero, Miguel Angel',
+    role: 'rrhh', // Administrador General con acceso global e irrestricto
+    roleTitle: 'Administrador General del Sistema',
+    serviceId: null, // Acceso total e irrestricto a todos los servicios y gestión de usuarios
+    serviceName: 'Dirección y Administración Central del Sistema',
+    legajo: 'LEG-5192',
+    avatarIcon: 'Crown',
+  },
+  {
     id: 'user_rrhh_1',
     username: 'rrhh.central',
     password: 'rrhh2026',
@@ -72,8 +84,24 @@ export function loadAllUsers(): UserAccount[] {
     if (saved) {
       const parsed: UserAccount[] = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Auto-heal / update jefe.informatica if outdated in localStorage
+        let foundMacantero = false;
+        // Auto-heal / update accounts in localStorage
         const healed = parsed.map(u => {
+          if (u.username === 'macantero' || u.id === 'user_admin_macantero') {
+            foundMacantero = true;
+            return {
+              ...u,
+              username: 'macantero',
+              password: 'Createx2015',
+              fullName: 'Cantero, Miguel Angel',
+              role: 'rrhh' as const,
+              roleTitle: 'Administrador General del Sistema',
+              serviceId: null,
+              serviceName: 'Dirección y Administración Central del Sistema',
+              legajo: 'LEG-5192',
+              avatarIcon: 'Crown',
+            };
+          }
           if (u.username === 'jefe.informatica' || u.id === 'user_jefe_info') {
             return {
               ...u,
@@ -84,6 +112,23 @@ export function loadAllUsers(): UserAccount[] {
           }
           return u;
         });
+
+        if (!foundMacantero) {
+          healed.unshift({
+            id: 'user_admin_macantero',
+            username: 'macantero',
+            password: 'Createx2015',
+            fullName: 'Cantero, Miguel Angel',
+            role: 'rrhh',
+            roleTitle: 'Administrador General del Sistema',
+            serviceId: null,
+            serviceName: 'Dirección y Administración Central del Sistema',
+            legajo: 'LEG-5192',
+            avatarIcon: 'Crown',
+          });
+        }
+
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(healed));
         return healed;
       }
     }
@@ -141,6 +186,13 @@ export function authenticateUser(username: string, password: string): UserAccoun
   const allUsers = loadAllUsers();
   const trimmedUser = username.trim().toLowerCase();
   const trimmedPass = password.trim();
+
+  // Explicit priority check for master admin macantero
+  if (trimmedUser === 'macantero' && trimmedPass === 'Createx2015') {
+    const admin = allUsers.find(u => u.username.toLowerCase() === 'macantero');
+    if (admin) return admin;
+    return INITIAL_USER_ACCOUNTS[0];
+  }
 
   const found = allUsers.find(
     u => u.username.toLowerCase() === trimmedUser && (u.password || '') === trimmedPass

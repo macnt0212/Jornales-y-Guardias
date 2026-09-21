@@ -125,7 +125,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onOpen
                   id="input-username"
                   required
                   autoFocus
-                  placeholder="ej: jefe.guardia, jefe.informatica, rrhh.central"
+                  placeholder="ej: macantero, rrhh.central, jefe.informatica"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-medium"
@@ -166,7 +166,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onOpen
                 <Building2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 <div className="min-w-0">
                   <span className="font-bold block truncate text-white">
-                    {matchedUser.role === 'rrhh' ? '👑 Dirección de Recursos Humanos (Administración General)' : `Servicio Asignado: ${matchedUser.serviceName}`}
+                    {matchedUser.role === 'rrhh' ? '👑 Administración Central y Recursos Humanos (Acceso Global)' : `Servicio Asignado: ${matchedUser.serviceName}`}
                   </span>
                   <span className="text-[11px] text-emerald-300 block truncate">
                     Responsable: {matchedUser.fullName} {matchedUser.legajo ? `(${matchedUser.legajo})` : ''}
@@ -191,6 +191,113 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onOpen
               )}
             </button>
           </form>
+
+          {/* Quick Access / Cuentas Habilitadas en 1 Clic */}
+          <div className="mt-5 pt-4 border-t border-slate-800">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Cuentas Habilitadas (Clic para autocompletar)
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {/* Botón Principal: macantero Administrador */}
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('macantero');
+                  setPassword('Createx2015');
+                }}
+                className="col-span-1 sm:col-span-2 text-left p-2.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-950/70 border border-emerald-600/60 hover:border-emerald-500 transition-all cursor-pointer group shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-emerald-300 group-hover:text-emerald-200 flex items-center gap-1.5">
+                    👑 macantero (Administrador General)
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-700">
+                    Createx2015
+                  </span>
+                </div>
+                <div className="text-[10px] text-emerald-300/80 mt-0.5">Cantero, Miguel Angel • Acceso total a todos los servicios y gestión de usuarios</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('jefe.informatica');
+                  setPassword('info2026');
+                }}
+                className="text-left p-2 rounded-lg bg-slate-950/70 hover:bg-slate-800 border border-slate-800 hover:border-emerald-600/60 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-300 group-hover:text-emerald-200">
+                    💻 Informática
+                  </span>
+                  <span className="text-[9.5px] font-mono text-slate-500 group-hover:text-slate-300">
+                    info2026
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-400 truncate">Cantero, Miguel Angel</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('rrhh.central');
+                  setPassword('rrhh2026');
+                }}
+                className="text-left p-2 rounded-lg bg-slate-950/70 hover:bg-slate-800 border border-slate-800 hover:border-amber-600/60 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-300 group-hover:text-amber-200">
+                    📋 Admin RRHH
+                  </span>
+                  <span className="text-[9.5px] font-mono text-slate-500 group-hover:text-slate-300">
+                    rrhh2026
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-400 truncate">Supervisión Central</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('jefe.guardia');
+                  setPassword('guardia2026');
+                }}
+                className="text-left p-2 rounded-lg bg-slate-950/70 hover:bg-slate-800 border border-slate-800 hover:border-blue-600/60 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-blue-300 group-hover:text-blue-200">
+                    🩺 Guardia Médica
+                  </span>
+                  <span className="text-[9.5px] font-mono text-slate-500 group-hover:text-slate-300">
+                    guardia2026
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-400 truncate">Dr. Benítez, Carlos</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('jefe.enfermeria');
+                  setPassword('enfermeria2026');
+                }}
+                className="text-left p-2 rounded-lg bg-slate-950/70 hover:bg-slate-800 border border-slate-800 hover:border-rose-600/60 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-rose-300 group-hover:text-rose-200">
+                    ❤️ Enfermería
+                  </span>
+                  <span className="text-[9.5px] font-mono text-slate-500 group-hover:text-slate-300">
+                    enfermeria2026
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-400 truncate">Lic. Sosa, Patricia</div>
+              </button>
+            </div>
+          </div>
 
           {/* Bottom Security / Privacy Badge & Manual Button */}
           <div className="mt-5 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
