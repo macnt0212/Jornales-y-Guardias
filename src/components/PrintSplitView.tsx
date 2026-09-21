@@ -25,6 +25,7 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
   const daysQ1 = days.slice(0, 15);
   const daysQ2 = days.slice(15);
   const isArial12 = printSettings.fontSizeScale === 'arial12';
+  const isNoTotals = printSettings.totalsMode === 'none';
 
   const shouldRenderQ1 = printSettings.pageSplit === 'two_pages' || printSettings.pageSplit === 'quincena_1';
   const shouldRenderQ2 = printSettings.pageSplit === 'two_pages' || printSettings.pageSplit === 'quincena_2';
@@ -158,21 +159,27 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                   );
                 })}
                 {/* Subtotales Quincena 1 */}
-                <th colSpan={3} className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 text-[10px]">
-                  Subtotales 1ª Quincena
-                </th>
-                <th className="p-1 text-center font-black bg-slate-950 text-white text-[10px]">
-                  Total Q1
-                </th>
+                {!isNoTotals && (
+                  <>
+                    <th colSpan={3} className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 text-[10px]">
+                      Subtotales 1ª Quincena
+                    </th>
+                    <th className="p-1 text-center font-black bg-slate-950 text-white text-[10px]">
+                      Total Q1
+                    </th>
+                  </>
+                )}
               </tr>
 
               {/* Fila 2 Subcabecera Totales */}
-              <tr className="border-b border-slate-600 text-[9.5px] text-slate-300">
-                <th className="p-1 text-center bg-blue-900 font-semibold border-r border-slate-700">Días J</th>
-                <th className="p-1 text-center bg-blue-950 font-semibold border-r border-slate-700">Hs J</th>
-                <th className="p-1 text-center bg-emerald-950 font-semibold border-r border-slate-700">Hs Ext</th>
-                <th className="p-1 text-center bg-slate-900 font-bold">Total Hs</th>
-              </tr>
+              {!isNoTotals && (
+                <tr className="border-b border-slate-600 text-[9.5px] text-slate-300">
+                  <th className="p-1 text-center bg-blue-900 font-semibold border-r border-slate-700">Días J</th>
+                  <th className="p-1 text-center bg-blue-950 font-semibold border-r border-slate-700">Hs J</th>
+                  <th className="p-1 text-center bg-emerald-950 font-semibold border-r border-slate-700">Hs Ext</th>
+                  <th className="p-1 text-center bg-slate-900 font-bold">Total Hs</th>
+                </tr>
+              )}
             </thead>
 
             <tbody className="divide-y divide-slate-300">
@@ -233,18 +240,22 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                       })}
 
                       {/* Subtotales Fila 1 */}
-                      <td className="p-1 text-center font-bold text-blue-900 bg-blue-50 border-r border-slate-300 text-xs">
-                        {statsQ1.diasJornal}
-                      </td>
-                      <td className="p-1 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-300 text-xs">
-                        {statsQ1.horasJornal}h
-                      </td>
-                      <td className="p-1 text-center font-bold text-emerald-900 bg-emerald-50 border-r border-slate-300 text-xs">
-                        {statsQ1.totalHorasExtras}h
-                      </td>
-                      <td className="p-1 text-center font-black text-slate-950 bg-slate-200 text-xs">
-                        {statsQ1.totalHorasMes}h
-                      </td>
+                      {!isNoTotals && (
+                        <>
+                          <td className="p-1 text-center font-bold text-blue-900 bg-blue-50 border-r border-slate-300 text-xs">
+                            {statsQ1.diasJornal}
+                          </td>
+                          <td className="p-1 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-300 text-xs">
+                            {statsQ1.horasJornal}h
+                          </td>
+                          <td className="p-1 text-center font-bold text-emerald-900 bg-emerald-50 border-r border-slate-300 text-xs">
+                            {statsQ1.totalHorasExtras}h
+                          </td>
+                          <td className="p-1 text-center font-black text-slate-950 bg-slate-200 text-xs">
+                            {statsQ1.totalHorasMes}h
+                          </td>
+                        </>
+                      )}
                     </tr>
 
                     {/* Fila 2: Extras */}
@@ -315,9 +326,11 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                       })}
 
                       {/* Repetición visual de subtotales Fila 2 */}
-                      <td colSpan={4} className="p-1 text-center text-slate-400 bg-slate-100 text-[10px] font-medium border-l border-slate-300">
-                        (Totales 1ª Quincena arriba)
-                      </td>
+                      {!isNoTotals && (
+                        <td colSpan={4} className="p-1 text-center text-slate-400 bg-slate-100 text-[10px] font-medium border-l border-slate-300">
+                          (Totales 1ª Quincena arriba)
+                        </td>
+                      )}
                     </tr>
                   </React.Fragment>
                 );
@@ -328,7 +341,7 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
             <tfoot className="bg-slate-900 text-white font-bold border-t-2 border-slate-400">
               <tr>
                 <td className="p-2 text-left font-black text-xs uppercase bg-slate-800">
-                  TOTAL SERVICIO Q1
+                  {isNoTotals ? 'PERSONAL EN TURNO Q1' : 'TOTAL SERVICIO Q1'}
                 </td>
                 {daysQ1.map((day) => {
                   let activeCount = 0;
@@ -344,18 +357,22 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                     </td>
                   );
                 })}
-                <td className="p-1 text-center font-bold text-xs bg-blue-900 border-r border-slate-700">
-                  {q1Totals.diasJornal}
-                </td>
-                <td className="p-1 text-center font-black text-xs bg-blue-800 border-r border-slate-700">
-                  {q1Totals.horasJornal}h
-                </td>
-                <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">
-                  {q1Totals.horasExtras}h
-                </td>
-                <td className="p-1 text-center font-black text-sm bg-slate-950 text-emerald-400">
-                  {q1Totals.totalHoras}h
-                </td>
+                {!isNoTotals && (
+                  <>
+                    <td className="p-1 text-center font-bold text-xs bg-blue-900 border-r border-slate-700">
+                      {q1Totals.diasJornal}
+                    </td>
+                    <td className="p-1 text-center font-black text-xs bg-blue-800 border-r border-slate-700">
+                      {q1Totals.horasJornal}h
+                    </td>
+                    <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">
+                      {q1Totals.horasExtras}h
+                    </td>
+                    <td className="p-1 text-center font-black text-sm bg-slate-950 text-emerald-400">
+                      {q1Totals.totalHoras}h
+                    </td>
+                  </>
+                )}
               </tr>
             </tfoot>
           </table>
@@ -421,40 +438,42 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                 })}
 
                 {/* Columnas de Totales Acumulados del Mes */}
-                {printSettings.totalsMode === 'compact' ? (
-                  <>
-                    <th className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 text-[10px]">
-                      Hs Jornal
-                    </th>
-                    <th className="p-1 text-center font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700 text-[10px]">
-                      Hs Extras
-                    </th>
-                    <th className="p-1 text-center font-black bg-slate-950 text-white text-[10.5px]">
-                      TOTAL MES
-                    </th>
-                  </>
-                ) : (
-                  <>
-                    <th colSpan={2} className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 text-[9.5px]">
-                      Jornal
-                    </th>
-                    <th colSpan={2} className="p-1 text-center font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700 text-[9.5px]">
-                      Ext. Hábil
-                    </th>
-                    <th colSpan={2} className="p-1 text-center font-bold bg-purple-950 text-purple-100 border-r border-slate-700 text-[9.5px]">
-                      Inhábiles
-                    </th>
-                    <th className="p-1 text-center font-bold bg-emerald-900 text-white border-r border-slate-700 text-[9.5px]">
-                      Extras
-                    </th>
-                    <th className="p-1 text-center font-black bg-slate-950 text-white text-[10px]">
-                      TOTAL
-                    </th>
-                  </>
+                {!isNoTotals && (
+                  printSettings.totalsMode === 'compact' ? (
+                    <>
+                      <th className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 text-[10px]">
+                        Hs Jornal
+                      </th>
+                      <th className="p-1 text-center font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700 text-[10px]">
+                        Hs Extras
+                      </th>
+                      <th className="p-1 text-center font-black bg-slate-950 text-white text-[10.5px]">
+                        TOTAL MES
+                      </th>
+                    </>
+                  ) : (
+                    <>
+                      <th colSpan={2} className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 text-[9.5px]">
+                        Jornal
+                      </th>
+                      <th colSpan={2} className="p-1 text-center font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700 text-[9.5px]">
+                        Ext. Hábil
+                      </th>
+                      <th colSpan={2} className="p-1 text-center font-bold bg-purple-950 text-purple-100 border-r border-slate-700 text-[9.5px]">
+                        Inhábiles
+                      </th>
+                      <th className="p-1 text-center font-bold bg-emerald-900 text-white border-r border-slate-700 text-[9.5px]">
+                        Extras
+                      </th>
+                      <th className="p-1 text-center font-black bg-slate-950 text-white text-[10px]">
+                        TOTAL
+                      </th>
+                    </>
+                  )
                 )}
               </tr>
 
-              {printSettings.totalsMode !== 'compact' && (
+              {!isNoTotals && printSettings.totalsMode !== 'compact' && (
                 <tr className="border-b border-slate-600 text-[9px] text-slate-300">
                   <th className="p-0.5 text-center bg-blue-900 border-r border-slate-700">Días</th>
                   <th className="p-0.5 text-center bg-blue-950 border-r border-slate-700">Hs</th>
@@ -526,45 +545,47 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                       })}
 
                       {/* Totales Acumulados del Mes */}
-                      {printSettings.totalsMode === 'compact' ? (
-                        <>
-                          <td className="p-1 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-300 text-xs">
-                            {statsFull.horasJornal}h
-                          </td>
-                          <td className="p-1 text-center font-black text-emerald-950 bg-emerald-100 border-r border-slate-300 text-xs">
-                            {statsFull.totalHorasExtras}h
-                          </td>
-                          <td className="p-1 text-center font-black text-slate-950 bg-slate-200 text-sm">
-                            {statsFull.totalHorasMes}h
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="p-1 text-center font-bold text-blue-900 bg-blue-50 border-r border-slate-300 text-xs">
-                            {statsFull.diasJornal}
-                          </td>
-                          <td className="p-1 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-300 text-xs">
-                            {statsFull.horasJornal}h
-                          </td>
-                          <td className="p-1 text-center font-bold text-emerald-900 bg-emerald-50 border-r border-slate-300 text-xs">
-                            {statsFull.diasExtraHabil}
-                          </td>
-                          <td className="p-1 text-center font-black text-emerald-950 bg-emerald-100 border-r border-slate-300 text-xs">
-                            {statsFull.horasExtraHabil}h
-                          </td>
-                          <td className="p-1 text-center font-bold text-purple-900 bg-purple-50 border-r border-slate-300 text-xs">
-                            {statsFull.horasInhabilActiva}h
-                          </td>
-                          <td className="p-1 text-center font-bold text-amber-900 bg-amber-50 border-r border-slate-300 text-xs">
-                            {statsFull.horasInhabilPasiva}h
-                          </td>
-                          <td className="p-1 text-center font-black text-emerald-950 bg-emerald-200 border-r border-slate-300 text-xs">
-                            {statsFull.totalHorasExtras}h
-                          </td>
-                          <td className="p-1 text-center font-black text-slate-950 bg-slate-300 text-sm">
-                            {statsFull.totalHorasMes}h
-                          </td>
-                        </>
+                      {!isNoTotals && (
+                        printSettings.totalsMode === 'compact' ? (
+                          <>
+                            <td className="p-1 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-300 text-xs">
+                              {statsFull.horasJornal}h
+                            </td>
+                            <td className="p-1 text-center font-black text-emerald-950 bg-emerald-100 border-r border-slate-300 text-xs">
+                              {statsFull.totalHorasExtras}h
+                            </td>
+                            <td className="p-1 text-center font-black text-slate-950 bg-slate-200 text-sm">
+                              {statsFull.totalHorasMes}h
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="p-1 text-center font-bold text-blue-900 bg-blue-50 border-r border-slate-300 text-xs">
+                              {statsFull.diasJornal}
+                            </td>
+                            <td className="p-1 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-300 text-xs">
+                              {statsFull.horasJornal}h
+                            </td>
+                            <td className="p-1 text-center font-bold text-emerald-900 bg-emerald-50 border-r border-slate-300 text-xs">
+                              {statsFull.diasExtraHabil}
+                            </td>
+                            <td className="p-1 text-center font-black text-emerald-950 bg-emerald-100 border-r border-slate-300 text-xs">
+                              {statsFull.horasExtraHabil}h
+                            </td>
+                            <td className="p-1 text-center font-bold text-purple-900 bg-purple-50 border-r border-slate-300 text-xs">
+                              {statsFull.horasInhabilActiva}h
+                            </td>
+                            <td className="p-1 text-center font-bold text-amber-900 bg-amber-50 border-r border-slate-300 text-xs">
+                              {statsFull.horasInhabilPasiva}h
+                            </td>
+                            <td className="p-1 text-center font-black text-emerald-950 bg-emerald-200 border-r border-slate-300 text-xs">
+                              {statsFull.totalHorasExtras}h
+                            </td>
+                            <td className="p-1 text-center font-black text-slate-950 bg-slate-300 text-sm">
+                              {statsFull.totalHorasMes}h
+                            </td>
+                          </>
+                        )
                       )}
                     </tr>
 
@@ -635,12 +656,14 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                         );
                       })}
 
-                      <td 
-                        colSpan={printSettings.totalsMode === 'compact' ? 3 : 8} 
-                        className="p-1 text-center text-slate-400 bg-slate-100 text-[10px] font-medium border-l border-slate-300"
-                      >
-                        (Cierre mensual consolidado arriba)
-                      </td>
+                      {!isNoTotals && (
+                        <td 
+                          colSpan={printSettings.totalsMode === 'compact' ? 3 : 8} 
+                          className="p-1 text-center text-slate-400 bg-slate-100 text-[10px] font-medium border-l border-slate-300"
+                        >
+                          (Cierre mensual consolidado arriba)
+                        </td>
+                      )}
                     </tr>
                   </React.Fragment>
                 );
@@ -651,7 +674,7 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
             <tfoot className="bg-slate-900 text-white font-bold border-t-2 border-slate-400">
               <tr>
                 <td className="p-2 text-left font-black text-xs uppercase bg-slate-800">
-                  TOTAL SERVICIO MES
+                  {isNoTotals ? 'PERSONAL EN TURNO MES' : 'TOTAL SERVICIO MES'}
                 </td>
                 {daysQ2.map((day) => {
                   let activeCount = 0;
@@ -668,29 +691,31 @@ export const PrintSplitView: React.FC<PrintSplitViewProps> = ({
                   );
                 })}
 
-                {printSettings.totalsMode === 'compact' ? (
-                  <>
-                    <td className="p-1 text-center font-black text-xs bg-blue-800 border-r border-slate-700">
-                      {fullTotals.horasJornal}h
-                    </td>
-                    <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">
-                      {fullTotals.totalHorasExtras}h
-                    </td>
-                    <td className="p-1 text-center font-black text-sm bg-slate-950 text-emerald-400">
-                      {fullTotals.totalHorasMes}h
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td className="p-1 text-center font-bold text-xs bg-blue-900 border-r border-slate-700">{fullTotals.diasJornal}</td>
-                    <td className="p-1 text-center font-black text-xs bg-blue-800 border-r border-slate-700">{fullTotals.horasJornal}h</td>
-                    <td className="p-1 text-center font-bold text-xs bg-emerald-900 border-r border-slate-700">{fullTotals.diasExtraHabil}</td>
-                    <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">{fullTotals.horasExtraHabil}h</td>
-                    <td className="p-1 text-center font-bold text-xs bg-purple-900 border-r border-slate-700">{fullTotals.horasInhabilActiva}h</td>
-                    <td className="p-1 text-center font-bold text-xs bg-amber-900 border-r border-slate-700">{fullTotals.horasInhabilPasiva}h</td>
-                    <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">{fullTotals.totalHorasExtras}h</td>
-                    <td className="p-1 text-center font-black text-sm bg-slate-950 text-emerald-400">{fullTotals.totalHorasMes}h</td>
-                  </>
+                {!isNoTotals && (
+                  printSettings.totalsMode === 'compact' ? (
+                    <>
+                      <td className="p-1 text-center font-black text-xs bg-blue-800 border-r border-slate-700">
+                        {fullTotals.horasJornal}h
+                      </td>
+                      <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">
+                        {fullTotals.totalHorasExtras}h
+                      </td>
+                      <td className="p-1 text-center font-black text-sm bg-slate-950 text-emerald-400">
+                        {fullTotals.totalHorasMes}h
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="p-1 text-center font-bold text-xs bg-blue-900 border-r border-slate-700">{fullTotals.diasJornal}</td>
+                      <td className="p-1 text-center font-black text-xs bg-blue-800 border-r border-slate-700">{fullTotals.horasJornal}h</td>
+                      <td className="p-1 text-center font-bold text-xs bg-emerald-900 border-r border-slate-700">{fullTotals.diasExtraHabil}</td>
+                      <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">{fullTotals.horasExtraHabil}h</td>
+                      <td className="p-1 text-center font-bold text-xs bg-purple-900 border-r border-slate-700">{fullTotals.horasInhabilActiva}h</td>
+                      <td className="p-1 text-center font-bold text-xs bg-amber-900 border-r border-slate-700">{fullTotals.horasInhabilPasiva}h</td>
+                      <td className="p-1 text-center font-black text-xs bg-emerald-800 border-r border-slate-700">{fullTotals.totalHorasExtras}h</td>
+                      <td className="p-1 text-center font-black text-sm bg-slate-950 text-emerald-400">{fullTotals.totalHorasMes}h</td>
+                    </>
+                  )
                 )}
               </tr>
             </tfoot>

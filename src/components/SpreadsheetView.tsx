@@ -41,7 +41,9 @@ import {
   SlidersHorizontal,
   Eye,
   Maximize,
-  Minimize
+  Minimize,
+  Calculator,
+  EyeOff
 } from 'lucide-react';
 
 interface SpreadsheetViewProps {
@@ -99,6 +101,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
   const [showClearMenu, setShowClearMenu] = useState<boolean>(false);
   const [showHelpBanner, setShowHelpBanner] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [showTotals, setShowTotals] = useState<boolean>(false); // Planilla sin totales por defecto según solicitud
 
   useEffect(() => {
     const handleFsChange = () => {
@@ -324,6 +327,38 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
               )}
             </button>
 
+            {/* Botón Ocultar / Mostrar Totales */}
+            <button
+              type="button"
+              id="btn-toggle-totals"
+              onClick={() => setShowTotals(!showTotals)}
+              className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded shadow-2xs cursor-pointer transition-all border ${
+                showTotals
+                  ? 'bg-blue-900 text-white border-blue-700 hover:bg-blue-800'
+                  : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
+              }`}
+              title={
+                showTotals
+                  ? "Ocultar columnas de totales para despejar la planilla y maximizar el espacio de los 31 días"
+                  : "Mostrar columnas de totales generales del mes (Jornal, Extras, Total)"
+              }
+            >
+              {showTotals ? (
+                <>
+                  <EyeOff className="w-3.5 h-3.5 text-blue-300" />
+                  <span>Ocultar Totales</span>
+                </>
+              ) : (
+                <>
+                  <Calculator className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Mostrar Totales</span>
+                  <span className="text-[9.5px] bg-slate-200 text-slate-700 px-1 py-0.2 rounded font-normal">
+                    Ocultos
+                  </span>
+                </>
+              )}
+            </button>
+
             {/* Menu Borrar / Vaciar Celdas */}
             <div className="relative">
               <button
@@ -529,7 +564,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
               {/* Row 1: Weekday Names & Group Totals */}
               <tr className="border-b border-slate-700">
                 <th 
-                  rowSpan={2}
+                  rowSpan={showTotals ? 2 : 1}
                   className="p-2.5 font-bold text-xs uppercase tracking-wider bg-slate-900 border-r border-slate-700 min-w-[210px] w-[220px] sticky left-0 z-30 shadow-[3px_0_6px_rgba(0,0,0,0.18)] print:min-w-0 print:w-[105px] print:max-w-[110px] print:p-1 print:text-[8.5px] print:shadow-none"
                 >
                   Personal del Servicio
@@ -554,44 +589,50 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                   );
                 })}
 
-                {/* Header Groups for Totals */}
-                <th colSpan={2} className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
-                  Jornal
-                </th>
-                <th colSpan={2} className="p-1 text-center font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
-                  Ext. Hábil
-                </th>
-                <th colSpan={2} className="p-1 text-center font-bold bg-purple-950 text-purple-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
-                  Inhábiles
-                </th>
-                <th className="p-1 text-center font-bold bg-emerald-900 text-white border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
-                  Total
-                </th>
-                <th className="p-1 text-center font-black bg-slate-950 text-white print:text-[8px] print:p-0.5 print:min-w-0 print:w-auto">
-                  TOTAL
-                </th>
+                {/* Header Groups for Totals (Ocultables) */}
+                {showTotals && (
+                  <>
+                    <th colSpan={2} className="p-1 text-center font-bold bg-blue-950 text-blue-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
+                      Jornal
+                    </th>
+                    <th colSpan={2} className="p-1 text-center font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
+                      Ext. Hábil
+                    </th>
+                    <th colSpan={2} className="p-1 text-center font-bold bg-purple-950 text-purple-100 border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
+                      Inhábiles
+                    </th>
+                    <th className="p-1 text-center font-bold bg-emerald-900 text-white border-r border-slate-700 print:text-[7.5px] print:p-0.5 print:min-w-0 print:w-auto">
+                      Total
+                    </th>
+                    <th className="p-1 text-center font-black bg-slate-950 text-white print:text-[8px] print:p-0.5 print:min-w-0 print:w-auto">
+                      TOTAL
+                    </th>
+                  </>
+                )}
               </tr>
 
               {/* Row 2: Subheaders for Totals */}
-              <tr className="border-b border-slate-600 text-[10px] text-slate-300">
-                {days.map(d => (
-                  <th key={`h2-${d.dateStr}`} className="hidden"></th>
-                ))}
-                <th className="p-1 text-center bg-blue-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Días</th>
-                <th className="p-1 text-center bg-blue-950/90 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Hs</th>
-                <th className="p-1 text-center bg-emerald-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Días</th>
-                <th className="p-1 text-center bg-emerald-950/90 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Hs</th>
-                <th className="p-1 text-center bg-purple-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Act.</th>
-                <th className="p-1 text-center bg-amber-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Pas.</th>
-                <th className="p-1 text-center bg-emerald-900 font-bold border-r border-slate-700 print:text-[7px] print:p-0.5">Extras</th>
-                <th className="p-1 text-center bg-slate-900 font-bold print:text-[7.5px] print:p-0.5">Total</th>
-              </tr>
+              {showTotals && (
+                <tr className="border-b border-slate-600 text-[10px] text-slate-300">
+                  {days.map(d => (
+                    <th key={`h2-${d.dateStr}`} className="hidden"></th>
+                  ))}
+                  <th className="p-1 text-center bg-blue-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Días</th>
+                  <th className="p-1 text-center bg-blue-950/90 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Hs</th>
+                  <th className="p-1 text-center bg-emerald-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Días</th>
+                  <th className="p-1 text-center bg-emerald-950/90 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Hs</th>
+                  <th className="p-1 text-center bg-purple-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Act.</th>
+                  <th className="p-1 text-center bg-amber-950/70 border-r border-slate-700 font-semibold print:text-[7px] print:p-0.5">Pas.</th>
+                  <th className="p-1 text-center bg-emerald-900 font-bold border-r border-slate-700 print:text-[7px] print:p-0.5">Extras</th>
+                  <th className="p-1 text-center bg-slate-900 font-bold print:text-[7.5px] print:p-0.5">Total</th>
+                </tr>
+              )}
             </thead>
 
             <tbody className="divide-y divide-slate-300 text-slate-800">
               {schedule.agents.length === 0 && (
                 <tr>
-                  <td colSpan={days.length + 9} className="py-16 text-center bg-slate-50">
+                  <td colSpan={days.length + (showTotals ? 9 : 1)} className="py-16 text-center bg-slate-50">
                     <div className="max-w-md mx-auto flex flex-col items-center justify-center gap-3 text-slate-500">
                       <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
                         <Users className="w-7 h-7" />
@@ -821,26 +862,30 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                         })}
 
                         {/* Totales Jornal Fila 1 */}
-                        <td className="p-1.5 print:p-0.5 text-center font-bold text-blue-900 bg-blue-50/80 border-r border-slate-200 print:text-[8px]">
-                          {stats.diasJornal}
-                        </td>
-                        <td className="p-1.5 print:p-0.5 text-center font-black text-blue-950 bg-blue-100/80 border-r border-slate-200 print:text-[8px]">
-                          {stats.horasJornal}h
-                        </td>
+                        {showTotals && (
+                          <>
+                            <td className="p-1.5 print:p-0.5 text-center font-bold text-blue-900 bg-blue-50/80 border-r border-slate-200 print:text-[8px]">
+                              {stats.diasJornal}
+                            </td>
+                            <td className="p-1.5 print:p-0.5 text-center font-black text-blue-950 bg-blue-100/80 border-r border-slate-200 print:text-[8px]">
+                              {stats.horasJornal}h
+                            </td>
 
-                        {/* Totales Fila 1 (Vacíos para Extras que van en Fila 2) */}
-                        <td colSpan={2} className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
-                          (Ver extras)
-                        </td>
-                        <td colSpan={2} className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
-                          (Ver extras)
-                        </td>
-                        <td className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
-                          -
-                        </td>
-                        <td rowSpan={2} className="p-1.5 print:p-0.5 text-center font-black text-slate-900 bg-slate-200/90 text-sm print:text-[9.5px] align-middle border-b-2 border-slate-300">
-                          {stats.totalHorasMes}h
-                        </td>
+                            {/* Totales Fila 1 (Vacíos para Extras que van en Fila 2) */}
+                            <td colSpan={2} className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
+                              (Ver extras)
+                            </td>
+                            <td colSpan={2} className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
+                              (Ver extras)
+                            </td>
+                            <td className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
+                              -
+                            </td>
+                            <td rowSpan={2} className="p-1.5 print:p-0.5 text-center font-black text-slate-900 bg-slate-200/90 text-sm print:text-[9.5px] align-middle border-b-2 border-slate-300">
+                              {stats.totalHorasMes}h
+                            </td>
+                          </>
+                        )}
                       </tr>
 
                       {/* FILA 2: HORAS EXTRAS HÁBILES E INHÁBILES */}
@@ -1011,30 +1056,34 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                         })}
 
                         {/* Totales Fila 2 (Jornal ya mostrado en Fila 1) */}
-                        <td colSpan={2} className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
-                          (Jornal arriba)
-                        </td>
+                        {showTotals && (
+                          <>
+                            <td colSpan={2} className="p-1 print:p-0.5 text-center text-slate-400 bg-slate-50 border-r border-slate-200 text-[10px] print:text-[7px]">
+                              (Jornal arriba)
+                            </td>
 
-                        {/* Totales Extras Hábiles */}
-                        <td className="p-1.5 print:p-0.5 text-center font-bold text-emerald-900 bg-emerald-50/80 border-r border-slate-200 print:text-[8px]">
-                          {stats.diasExtraHabil}
-                        </td>
-                        <td className="p-1.5 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-100/80 border-r border-slate-200 print:text-[8px]">
-                          {stats.horasExtraHabil}h
-                        </td>
+                            {/* Totales Extras Hábiles */}
+                            <td className="p-1.5 print:p-0.5 text-center font-bold text-emerald-900 bg-emerald-50/80 border-r border-slate-200 print:text-[8px]">
+                              {stats.diasExtraHabil}
+                            </td>
+                            <td className="p-1.5 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-100/80 border-r border-slate-200 print:text-[8px]">
+                              {stats.horasExtraHabil}h
+                            </td>
 
-                        {/* Totales Inhábiles */}
-                        <td className="p-1.5 print:p-0.5 text-center font-bold text-purple-900 bg-purple-100/60 border-r border-slate-200 print:text-[8px]">
-                          {stats.horasInhabilActiva}h
-                        </td>
-                        <td className="p-1.5 print:p-0.5 text-center font-bold text-amber-900 bg-amber-100/60 border-r border-slate-200 print:text-[8px]">
-                          {stats.horasInhabilPasiva}h
-                        </td>
+                            {/* Totales Inhábiles */}
+                            <td className="p-1.5 print:p-0.5 text-center font-bold text-purple-900 bg-purple-100/60 border-r border-slate-200 print:text-[8px]">
+                              {stats.horasInhabilActiva}h
+                            </td>
+                            <td className="p-1.5 print:p-0.5 text-center font-bold text-amber-900 bg-amber-100/60 border-r border-slate-200 print:text-[8px]">
+                              {stats.horasInhabilPasiva}h
+                            </td>
 
-                        {/* Total Extras */}
-                        <td className="p-1.5 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-200/90 border-r border-slate-200 print:text-[8px]">
-                          {stats.totalHorasExtras}h
-                        </td>
+                            {/* Total Extras */}
+                            <td className="p-1.5 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-200/90 border-r border-slate-200 print:text-[8px]">
+                              {stats.totalHorasExtras}h
+                            </td>
+                          </>
+                        )}
                       </tr>
                     </React.Fragment>
                   );
@@ -1149,14 +1198,18 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                       })}
 
                       {/* Totales Compactos */}
-                      <td className="p-1 print:p-0.5 text-center font-bold text-blue-900 bg-blue-50 border-r border-slate-200 print:text-[8px]">{stats.diasJornal}</td>
-                      <td className="p-1 print:p-0.5 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-200 print:text-[8px]">{stats.horasJornal}h</td>
-                      <td className="p-1 print:p-0.5 text-center font-bold text-emerald-900 bg-emerald-50 border-r border-slate-200 print:text-[8px]">{stats.diasExtraHabil}</td>
-                      <td className="p-1 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-100 border-r border-slate-200 print:text-[8px]">{stats.horasExtraHabil}h</td>
-                      <td className="p-1 print:p-0.5 text-center font-bold text-purple-900 bg-purple-100/60 border-r border-slate-200 print:text-[8px]">{stats.horasInhabilActiva}h</td>
-                      <td className="p-1 print:p-0.5 text-center font-bold text-amber-900 bg-amber-100/60 border-r border-slate-200 print:text-[8px]">{stats.horasInhabilPasiva}h</td>
-                      <td className="p-1 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-200 border-r border-slate-200 print:text-[8px]">{stats.totalHorasExtras}h</td>
-                      <td className="p-1 print:p-0.5 text-center font-black text-slate-900 bg-slate-200 print:text-[9.5px]">{stats.totalHorasMes}h</td>
+                      {showTotals && (
+                        <>
+                          <td className="p-1 print:p-0.5 text-center font-bold text-blue-900 bg-blue-50 border-r border-slate-200 print:text-[8px]">{stats.diasJornal}</td>
+                          <td className="p-1 print:p-0.5 text-center font-black text-blue-950 bg-blue-100 border-r border-slate-200 print:text-[8px]">{stats.horasJornal}h</td>
+                          <td className="p-1 print:p-0.5 text-center font-bold text-emerald-900 bg-emerald-50 border-r border-slate-200 print:text-[8px]">{stats.diasExtraHabil}</td>
+                          <td className="p-1 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-100 border-r border-slate-200 print:text-[8px]">{stats.horasExtraHabil}h</td>
+                          <td className="p-1 print:p-0.5 text-center font-bold text-purple-900 bg-purple-100/60 border-r border-slate-200 print:text-[8px]">{stats.horasInhabilActiva}h</td>
+                          <td className="p-1 print:p-0.5 text-center font-bold text-amber-900 bg-amber-100/60 border-r border-slate-200 print:text-[8px]">{stats.horasInhabilPasiva}h</td>
+                          <td className="p-1 print:p-0.5 text-center font-black text-emerald-950 bg-emerald-200 border-r border-slate-200 print:text-[8px]">{stats.totalHorasExtras}h</td>
+                          <td className="p-1 print:p-0.5 text-center font-black text-slate-900 bg-slate-200 print:text-[9.5px]">{stats.totalHorasMes}h</td>
+                        </>
+                      )}
                     </tr>
                   );
                 }
@@ -1167,7 +1220,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
             <tfoot className="bg-slate-900 text-white font-bold print:bg-slate-200 print:text-slate-900 border-t-2 border-slate-400">
               <tr>
                 <td className="p-2 print:p-0.5 text-left font-black text-xs print:text-[8px] uppercase tracking-wide bg-slate-800 print:bg-slate-200 sticky left-0 z-10">
-                  TOTAL SERVICIO
+                  {showTotals ? 'TOTAL SERVICIO' : 'PERSONAL EN TURNO'}
                 </td>
                 {days.map((day) => {
                   let activeCount = 0;
@@ -1183,30 +1236,34 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
                     </td>
                   );
                 })}
-                <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-blue-950 text-blue-200 print:bg-blue-100 print:text-blue-950 border-r border-slate-700">
-                  {serviceTotals.diasJornal}
-                </td>
-                <td className="p-1 print:p-0.5 text-center font-black text-[10px] print:text-[8px] bg-blue-900 text-white print:bg-blue-200 print:text-blue-950 border-r border-slate-700">
-                  {serviceTotals.horasJornal}h
-                </td>
-                <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-emerald-950 text-emerald-200 print:bg-emerald-100 print:text-emerald-950 border-r border-slate-700">
-                  {serviceTotals.diasExtraHabil}
-                </td>
-                <td className="p-1 print:p-0.5 text-center font-black text-[10px] print:text-[8px] bg-emerald-900 text-white print:bg-emerald-200 print:text-emerald-950 border-r border-slate-700">
-                  {serviceTotals.horasExtraHabil}h
-                </td>
-                <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-purple-950 text-purple-200 print:bg-purple-100 print:text-purple-950 border-r border-slate-700">
-                  {serviceTotals.horasInhabilActiva}h
-                </td>
-                <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-amber-950 text-amber-200 print:bg-amber-100 print:text-amber-950 border-r border-slate-700">
-                  {serviceTotals.horasInhabilPasiva}h
-                </td>
-                <td className="p-1 print:p-0.5 text-center font-black text-[10px] print:text-[8px] bg-emerald-800 text-white print:bg-emerald-200 print:text-emerald-950 border-r border-slate-700">
-                  {serviceTotals.totalHorasExtras}h
-                </td>
-                <td className="p-1 print:p-0.5 text-center font-black text-xs print:text-[9.5px] bg-emerald-950 text-white print:bg-slate-300 print:text-slate-950">
-                  {serviceTotals.totalHorasMes}h
-                </td>
+                {showTotals && (
+                  <>
+                    <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-blue-950 text-blue-200 print:bg-blue-100 print:text-blue-950 border-r border-slate-700">
+                      {serviceTotals.diasJornal}
+                    </td>
+                    <td className="p-1 print:p-0.5 text-center font-black text-[10px] print:text-[8px] bg-blue-900 text-white print:bg-blue-200 print:text-blue-950 border-r border-slate-700">
+                      {serviceTotals.horasJornal}h
+                    </td>
+                    <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-emerald-950 text-emerald-200 print:bg-emerald-100 print:text-emerald-950 border-r border-slate-700">
+                      {serviceTotals.diasExtraHabil}
+                    </td>
+                    <td className="p-1 print:p-0.5 text-center font-black text-[10px] print:text-[8px] bg-emerald-900 text-white print:bg-emerald-200 print:text-emerald-950 border-r border-slate-700">
+                      {serviceTotals.horasExtraHabil}h
+                    </td>
+                    <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-purple-950 text-purple-200 print:bg-purple-100 print:text-purple-950 border-r border-slate-700">
+                      {serviceTotals.horasInhabilActiva}h
+                    </td>
+                    <td className="p-1 print:p-0.5 text-center font-bold text-[10px] print:text-[8px] bg-amber-950 text-amber-200 print:bg-amber-100 print:text-amber-950 border-r border-slate-700">
+                      {serviceTotals.horasInhabilPasiva}h
+                    </td>
+                    <td className="p-1 print:p-0.5 text-center font-black text-[10px] print:text-[8px] bg-emerald-800 text-white print:bg-emerald-200 print:text-emerald-950 border-r border-slate-700">
+                      {serviceTotals.totalHorasExtras}h
+                    </td>
+                    <td className="p-1 print:p-0.5 text-center font-black text-xs print:text-[9.5px] bg-emerald-950 text-white print:bg-slate-300 print:text-slate-950">
+                      {serviceTotals.totalHorasMes}h
+                    </td>
+                  </>
+                )}
               </tr>
             </tfoot>
           </table>

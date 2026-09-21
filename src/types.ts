@@ -177,7 +177,7 @@ export type PrintPaperSize = 'letter' | 'legal' | 'a4';
 export type PrintBadgeDetail = 'compact_hours' | 'codes_only';
 export type PrintPageSplit = 'two_pages' | 'single_page' | 'quincena_1' | 'quincena_2';
 export type PrintFontSizeScale = 'arial12' | 'normal' | 'large' | 'xlarge';
-export type PrintTotalsMode = 'full' | 'compact';
+export type PrintTotalsMode = 'full' | 'compact' | 'none';
 
 export interface PrintSettings {
   paperSize: PrintPaperSize; // 'letter' | 'legal' | 'a4'

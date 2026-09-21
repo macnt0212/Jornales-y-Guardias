@@ -24,6 +24,7 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
   const monthName = MONTH_NAMES[schedule.month - 1];
   const isLegal = printSettings.paperSize === 'legal';
   const isArial12 = printSettings.fontSizeScale === 'arial12';
+  const isNoTotals = printSettings.totalsMode === 'none';
   const isCompactTotals = printSettings.totalsMode === 'compact';
 
   // Calculate global totals
@@ -157,23 +158,25 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
               })}
 
               {/* Encabezado Grupo Totales */}
-              {isCompactTotals ? (
-                <>
-                  <th className="p-0.5 text-[8px] font-bold bg-blue-950 text-blue-100 border-r border-slate-700" style={{ width: '4.5%' }}>JORN</th>
-                  <th className="p-0.5 text-[8px] font-bold bg-purple-950 text-purple-100 border-r border-slate-700" style={{ width: '4.5%' }}>EXT</th>
-                  <th className="p-0.5 text-[8px] font-black bg-emerald-950 text-emerald-100 border-r border-slate-700" style={{ width: '5%' }}>TOTAL</th>
-                </>
-              ) : (
-                <>
-                  <th className="p-0.5 text-[7px] font-bold bg-blue-950 text-blue-100 border-r border-slate-700">D.J</th>
-                  <th className="p-0.5 text-[7px] font-bold bg-blue-950 text-blue-100 border-r border-slate-700">H.J</th>
-                  <th className="p-0.5 text-[7px] font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700">D.EH</th>
-                  <th className="p-0.5 text-[7px] font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700">H.EH</th>
-                  <th className="p-0.5 text-[7px] font-bold bg-purple-950 text-purple-100 border-r border-slate-700">H.IA</th>
-                  <th className="p-0.5 text-[7px] font-bold bg-amber-950 text-amber-100 border-r border-slate-700">H.IP</th>
-                  <th className="p-0.5 text-[7px] font-black bg-purple-950 text-purple-100 border-r border-slate-700">T.EXT</th>
-                  <th className="p-0.5 text-[7px] font-black bg-emerald-950 text-emerald-100 border-r border-slate-700">T.MES</th>
-                </>
+              {!isNoTotals && (
+                isCompactTotals ? (
+                  <>
+                    <th className="p-0.5 text-[8px] font-bold bg-blue-950 text-blue-100 border-r border-slate-700" style={{ width: '4.5%' }}>JORN</th>
+                    <th className="p-0.5 text-[8px] font-bold bg-purple-950 text-purple-100 border-r border-slate-700" style={{ width: '4.5%' }}>EXT</th>
+                    <th className="p-0.5 text-[8px] font-black bg-emerald-950 text-emerald-100 border-r border-slate-700" style={{ width: '5%' }}>TOTAL</th>
+                  </>
+                ) : (
+                  <>
+                    <th className="p-0.5 text-[7px] font-bold bg-blue-950 text-blue-100 border-r border-slate-700">D.J</th>
+                    <th className="p-0.5 text-[7px] font-bold bg-blue-950 text-blue-100 border-r border-slate-700">H.J</th>
+                    <th className="p-0.5 text-[7px] font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700">D.EH</th>
+                    <th className="p-0.5 text-[7px] font-bold bg-emerald-950 text-emerald-100 border-r border-slate-700">H.EH</th>
+                    <th className="p-0.5 text-[7px] font-bold bg-purple-950 text-purple-100 border-r border-slate-700">H.IA</th>
+                    <th className="p-0.5 text-[7px] font-bold bg-amber-950 text-amber-100 border-r border-slate-700">H.IP</th>
+                    <th className="p-0.5 text-[7px] font-black bg-purple-950 text-purple-100 border-r border-slate-700">T.EXT</th>
+                    <th className="p-0.5 text-[7px] font-black bg-emerald-950 text-emerald-100 border-r border-slate-700">T.MES</th>
+                  </>
+                )
               )}
             </tr>
 
@@ -198,23 +201,25 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
                 );
               })}
 
-              {isCompactTotals ? (
-                <>
-                  <th className="p-0.5 text-[7.5px] font-bold bg-blue-900 text-white border-r border-slate-700">Hs</th>
-                  <th className="p-0.5 text-[7.5px] font-bold bg-purple-900 text-white border-r border-slate-700">Hs</th>
-                  <th className="p-0.5 text-[7.5px] font-black bg-emerald-900 text-white border-r border-slate-700">Hs</th>
-                </>
-              ) : (
-                <>
-                  <th className="p-0.5 text-[6.5px] font-bold bg-blue-900 text-white border-r border-slate-700">Cant</th>
-                  <th className="p-0.5 text-[6.5px] font-bold bg-blue-900 text-white border-r border-slate-700">Hs</th>
-                  <th className="p-0.5 text-[6.5px] font-bold bg-emerald-900 text-white border-r border-slate-700">Cant</th>
-                  <th className="p-0.5 text-[6.5px] font-bold bg-emerald-900 text-white border-r border-slate-700">Hs</th>
-                  <th className="p-0.5 text-[6.5px] font-bold bg-purple-900 text-white border-r border-slate-700">Hs</th>
-                  <th className="p-0.5 text-[6.5px] font-bold bg-amber-900 text-white border-r border-slate-700">Hs</th>
-                  <th className="p-0.5 text-[6.5px] font-black bg-purple-900 text-white border-r border-slate-700">Hs</th>
-                  <th className="p-0.5 text-[6.5px] font-black bg-emerald-900 text-white border-r border-slate-700">Hs</th>
-                </>
+              {!isNoTotals && (
+                isCompactTotals ? (
+                  <>
+                    <th className="p-0.5 text-[7.5px] font-bold bg-blue-900 text-white border-r border-slate-700">Hs</th>
+                    <th className="p-0.5 text-[7.5px] font-bold bg-purple-900 text-white border-r border-slate-700">Hs</th>
+                    <th className="p-0.5 text-[7.5px] font-black bg-emerald-900 text-white border-r border-slate-700">Hs</th>
+                  </>
+                ) : (
+                  <>
+                    <th className="p-0.5 text-[6.5px] font-bold bg-blue-900 text-white border-r border-slate-700">Cant</th>
+                    <th className="p-0.5 text-[6.5px] font-bold bg-blue-900 text-white border-r border-slate-700">Hs</th>
+                    <th className="p-0.5 text-[6.5px] font-bold bg-emerald-900 text-white border-r border-slate-700">Cant</th>
+                    <th className="p-0.5 text-[6.5px] font-bold bg-emerald-900 text-white border-r border-slate-700">Hs</th>
+                    <th className="p-0.5 text-[6.5px] font-bold bg-purple-900 text-white border-r border-slate-700">Hs</th>
+                    <th className="p-0.5 text-[6.5px] font-bold bg-amber-900 text-white border-r border-slate-700">Hs</th>
+                    <th className="p-0.5 text-[6.5px] font-black bg-purple-900 text-white border-r border-slate-700">Hs</th>
+                    <th className="p-0.5 text-[6.5px] font-black bg-emerald-900 text-white border-r border-slate-700">Hs</th>
+                  </>
+                )
               )}
             </tr>
           </thead>
@@ -284,45 +289,47 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
                     })}
 
                     {/* Totales Fila Jornal */}
-                    {isCompactTotals ? (
-                      <>
-                        <td className="p-0.5 text-center font-bold text-blue-900 bg-blue-50/40 border-r border-slate-300 text-[10px]">
-                          {stats.horasJornal}
-                        </td>
-                        <td className="p-0.5 text-center font-bold text-purple-900 bg-purple-50/40 border-r border-slate-300 text-[10px]">
-                          {stats.totalHorasExtras}
-                        </td>
-                        <td rowSpan={2} className="p-0.5 text-center font-black text-emerald-950 bg-emerald-100/60 border-r border-slate-400 text-[11px] align-middle border-b">
-                          {stats.totalHorasMes}
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="p-0.5 text-center font-semibold text-blue-900 bg-blue-50/30 border-r border-slate-300 text-[9px]">
-                          {stats.diasJornal}
-                        </td>
-                        <td className="p-0.5 text-center font-bold text-blue-950 bg-blue-50/50 border-r border-slate-300 text-[9px]">
-                          {stats.horasJornal}
-                        </td>
-                        <td className="p-0.5 text-center text-emerald-900 bg-emerald-50/30 border-r border-slate-300 text-[9px]">
-                          {stats.diasExtraHabil}
-                        </td>
-                        <td className="p-0.5 text-center font-bold text-emerald-950 bg-emerald-50/50 border-r border-slate-300 text-[9px]">
-                          {stats.horasExtraHabil}
-                        </td>
-                        <td className="p-0.5 text-center font-semibold text-purple-950 bg-purple-50/40 border-r border-slate-300 text-[9px]">
-                          {stats.horasInhabilActiva}
-                        </td>
-                        <td className="p-0.5 text-center font-semibold text-amber-950 bg-amber-50/40 border-r border-slate-300 text-[9px]">
-                          {stats.horasInhabilPasiva}
-                        </td>
-                        <td className="p-0.5 text-center font-black text-purple-950 bg-purple-100/60 border-r border-slate-300 text-[9.5px]">
-                          {stats.totalHorasExtras}
-                        </td>
-                        <td rowSpan={2} className="p-0.5 text-center font-black text-emerald-950 bg-emerald-100/70 border-r border-slate-400 text-[11px] align-middle border-b">
-                          {stats.totalHorasMes}
-                        </td>
-                      </>
+                    {!isNoTotals && (
+                      isCompactTotals ? (
+                        <>
+                          <td className="p-0.5 text-center font-bold text-blue-900 bg-blue-50/40 border-r border-slate-300 text-[10px]">
+                            {stats.horasJornal}
+                          </td>
+                          <td className="p-0.5 text-center font-bold text-purple-900 bg-purple-50/40 border-r border-slate-300 text-[10px]">
+                            {stats.totalHorasExtras}
+                          </td>
+                          <td rowSpan={2} className="p-0.5 text-center font-black text-emerald-950 bg-emerald-100/60 border-r border-slate-400 text-[11px] align-middle border-b">
+                            {stats.totalHorasMes}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="p-0.5 text-center font-semibold text-blue-900 bg-blue-50/30 border-r border-slate-300 text-[9px]">
+                            {stats.diasJornal}
+                          </td>
+                          <td className="p-0.5 text-center font-bold text-blue-950 bg-blue-50/50 border-r border-slate-300 text-[9px]">
+                            {stats.horasJornal}
+                          </td>
+                          <td className="p-0.5 text-center text-emerald-900 bg-emerald-50/30 border-r border-slate-300 text-[9px]">
+                            {stats.diasExtraHabil}
+                          </td>
+                          <td className="p-0.5 text-center font-bold text-emerald-950 bg-emerald-50/50 border-r border-slate-300 text-[9px]">
+                            {stats.horasExtraHabil}
+                          </td>
+                          <td className="p-0.5 text-center font-semibold text-purple-950 bg-purple-50/40 border-r border-slate-300 text-[9px]">
+                            {stats.horasInhabilActiva}
+                          </td>
+                          <td className="p-0.5 text-center font-semibold text-amber-950 bg-amber-50/40 border-r border-slate-300 text-[9px]">
+                            {stats.horasInhabilPasiva}
+                          </td>
+                          <td className="p-0.5 text-center font-black text-purple-950 bg-purple-100/60 border-r border-slate-300 text-[9.5px]">
+                            {stats.totalHorasExtras}
+                          </td>
+                          <td rowSpan={2} className="p-0.5 text-center font-black text-emerald-950 bg-emerald-100/70 border-r border-slate-400 text-[11px] align-middle border-b">
+                            {stats.totalHorasMes}
+                          </td>
+                        </>
+                      )
                     )}
                   </tr>
 
@@ -377,21 +384,23 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
                     })}
 
                     {/* Celdas de totales correspondientes a Fila 2 */}
-                    {isCompactTotals ? (
-                      <>
-                        <td className="p-0 text-center text-[7.5px] text-slate-500 bg-blue-50/20 border-r border-slate-300">
-                          jornal
-                        </td>
-                        <td className="p-0 text-center text-[7.5px] text-purple-700 font-bold bg-purple-50/20 border-r border-slate-300">
-                          extras
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td colSpan={7} className="p-0 text-right pr-1 text-[7px] text-slate-500 bg-slate-50 border-r border-slate-300">
-                          Totales de Horas y Guardias
-                        </td>
-                      </>
+                    {!isNoTotals && (
+                      isCompactTotals ? (
+                        <>
+                          <td className="p-0 text-center text-[7.5px] text-slate-500 bg-blue-50/20 border-r border-slate-300">
+                            jornal
+                          </td>
+                          <td className="p-0 text-center text-[7.5px] text-purple-700 font-bold bg-purple-50/20 border-r border-slate-300">
+                            extras
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td colSpan={7} className="p-0 text-right pr-1 text-[7px] text-slate-500 bg-slate-50 border-r border-slate-300">
+                            Totales de Horas y Guardias
+                          </td>
+                        </>
+                      )
                     )}
                   </tr>
                 </React.Fragment>
@@ -403,7 +412,7 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
           <tfoot className="bg-slate-900 text-white font-black text-center border-t-2 border-slate-900">
             <tr>
               <td className="p-1 text-left text-[9px] uppercase tracking-wider bg-slate-950 border-r border-slate-700">
-                TOTALES SERVICIO
+                {isNoTotals ? 'PERSONAL EN TURNO' : 'TOTALES SERVICIO'}
               </td>
 
               {/* Totales por día */}
@@ -427,29 +436,31 @@ export const PrintSinglePageView: React.FC<PrintSinglePageViewProps> = ({
               })}
 
               {/* Totales finales del mes */}
-              {isCompactTotals ? (
-                <>
-                  <td className="p-0.5 text-blue-200 bg-blue-950 border-r border-slate-700 text-[9.5px]">
-                    {fullTotals.horasJornal}
-                  </td>
-                  <td className="p-0.5 text-purple-200 bg-purple-950 border-r border-slate-700 text-[9.5px]">
-                    {fullTotals.totalHorasExtras}
-                  </td>
-                  <td className="p-0.5 text-emerald-300 bg-emerald-950 text-[11px] font-black">
-                    {fullTotals.totalHorasMes}
-                  </td>
-                </>
-              ) : (
-                <>
-                  <td className="p-0.5 text-[8px] bg-blue-950 text-blue-200 border-r border-slate-700">{fullTotals.diasJornal}</td>
-                  <td className="p-0.5 text-[8px] bg-blue-950 text-blue-200 border-r border-slate-700">{fullTotals.horasJornal}</td>
-                  <td className="p-0.5 text-[8px] bg-emerald-950 text-emerald-200 border-r border-slate-700">{fullTotals.diasExtraHabil}</td>
-                  <td className="p-0.5 text-[8px] bg-emerald-950 text-emerald-200 border-r border-slate-700">{fullTotals.horasExtraHabil}</td>
-                  <td className="p-0.5 text-[8px] bg-purple-950 text-purple-200 border-r border-slate-700">{fullTotals.horasInhabilActiva}</td>
-                  <td className="p-0.5 text-[8px] bg-amber-950 text-amber-200 border-r border-slate-700">{fullTotals.horasInhabilPasiva}</td>
-                  <td className="p-0.5 text-[8.5px] bg-purple-950 text-purple-200 border-r border-slate-700">{fullTotals.totalHorasExtras}</td>
-                  <td className="p-0.5 text-[10px] bg-emerald-950 text-emerald-300 font-black">{fullTotals.totalHorasMes}</td>
-                </>
+              {!isNoTotals && (
+                isCompactTotals ? (
+                  <>
+                    <td className="p-0.5 text-blue-200 bg-blue-950 border-r border-slate-700 text-[9.5px]">
+                      {fullTotals.horasJornal}
+                    </td>
+                    <td className="p-0.5 text-purple-200 bg-purple-950 border-r border-slate-700 text-[9.5px]">
+                      {fullTotals.totalHorasExtras}
+                    </td>
+                    <td className="p-0.5 text-emerald-300 bg-emerald-950 text-[11px] font-black">
+                      {fullTotals.totalHorasMes}
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="p-0.5 text-[8px] bg-blue-950 text-blue-200 border-r border-slate-700">{fullTotals.diasJornal}</td>
+                    <td className="p-0.5 text-[8px] bg-blue-950 text-blue-200 border-r border-slate-700">{fullTotals.horasJornal}</td>
+                    <td className="p-0.5 text-[8px] bg-emerald-950 text-emerald-200 border-r border-slate-700">{fullTotals.diasExtraHabil}</td>
+                    <td className="p-0.5 text-[8px] bg-emerald-950 text-emerald-200 border-r border-slate-700">{fullTotals.horasExtraHabil}</td>
+                    <td className="p-0.5 text-[8px] bg-purple-950 text-purple-200 border-r border-slate-700">{fullTotals.horasInhabilActiva}</td>
+                    <td className="p-0.5 text-[8px] bg-amber-950 text-amber-200 border-r border-slate-700">{fullTotals.horasInhabilPasiva}</td>
+                    <td className="p-0.5 text-[8.5px] bg-purple-950 text-purple-200 border-r border-slate-700">{fullTotals.totalHorasExtras}</td>
+                    <td className="p-0.5 text-[10px] bg-emerald-950 text-emerald-300 font-black">{fullTotals.totalHorasMes}</td>
+                  </>
+                )
               )}
             </tr>
           </tfoot>

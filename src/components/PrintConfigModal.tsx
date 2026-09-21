@@ -319,6 +319,22 @@ export const PrintConfigModal: React.FC<PrintConfigModalProps> = ({
               <div className="space-y-1.5">
                 <button
                   type="button"
+                  onClick={() => onUpdateSettings({ totalsMode: 'none' })}
+                  className={`w-full p-2 rounded-lg border text-left cursor-pointer transition-all flex items-center justify-between ${
+                    printSettings.totalsMode === 'none'
+                      ? 'border-emerald-600 bg-emerald-50 font-bold text-emerald-950 ring-1 ring-emerald-500/30'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <div>
+                    <div className="text-xs">🚫 Sin Totales (0 cols - Máximo Ancho)</div>
+                    <div className="text-[9.5px] text-emerald-800 font-medium">Solo los días del mes. Máximo espacio por celda.</div>
+                  </div>
+                  {printSettings.totalsMode === 'none' && <Check className="w-4 h-4 text-emerald-600" />}
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => onUpdateSettings({ totalsMode: 'compact' })}
                   className={`w-full p-2 rounded-lg border text-left cursor-pointer transition-all flex items-center justify-between ${
                     printSettings.totalsMode === 'compact'
@@ -328,7 +344,7 @@ export const PrintConfigModal: React.FC<PrintConfigModalProps> = ({
                 >
                   <div>
                     <div className="text-xs">Totales Esenciales (3 cols)</div>
-                    <div className="text-[9.5px] text-blue-800 font-medium">Jornal + Extras + Total Mes (Da más espacio a los días)</div>
+                    <div className="text-[9.5px] text-blue-800 font-medium">Jornal + Extras + Total Mes</div>
                   </div>
                   {printSettings.totalsMode === 'compact' && <Check className="w-4 h-4 text-blue-600" />}
                 </button>
